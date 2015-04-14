@@ -1,0 +1,1032 @@
+#+TITLE: Pavel Iosad's Emacs init
+#+AUTHOR: Pavel Iosad
+
+* Configuration
+** Use-package
+
+   We use [[http://github.com/jwiegley/use-package][use-package]] to simplify the loading of packages. Thus we start off by installing it.
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+  (require 'use-package)
+    
+#+END_SRC
+
+* Initialization
+
+** Paths
+
+Define the directory for Emacs packages that do not come from repositories
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defvar conf/external-directory "~/Dev/Lisp/Elisp")
+  (add-to-list 'load-path conf/external-directory)
+#+END_SRC
+
+Keep temporary files away from working directories
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defvar conf/temp-directory "~/.emacs.temp.dir")
+  (unless (file-exists-p conf/temp-directory)
+    (mkdir conf/temp-directory))
+#+END_SRC
+
+** OS X specifics
+
+These things are just useful for OS X.
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+  (when (eq system-type 'darwin)
+    (setq delete-by-moving-to-trash t
+          trash-directory "~/.Trash/")
+    ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
+    (when (executable-find "gls")
+      (setq insert-directory-program "gls"))
+    ;; Derive PATH by running a shell so that GUI Emacs sessions have access to it
+    (exec-path-from-shell-initialize))
+  
+  ;; This is a thing for British keyboards, where # is supposed
+  ;; to be Alt-3, which Emacs intercepts and interprets as M-3
+  
+  (global-set-key (kbd "M-3") 
+                  (lambda () 
+                    (interactive) 
+                    (insert "#")))
+  
+#+END_SRC
+
+** Temporary files
+
+Put autosave and backup files into the directory we defined above
+
+#+NAME: init-after
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq backup-directory-alist '((".*" . "~/.saves"))
+        backup-by-copying t      ; don't clobber symlinks
+        delete-old-versions t
+        kept-new-versions 6
+        kept-old-versions 2
+        version-control t)       ; use versioned backups
+#+END_SRC
+
+** Private
+   
+   This configuration file is public, so we want to keep things like
+   passwords out of the way. Anything prefixed with ~private/~ comes
+   from that file. Take care to make sure this isn't publicly
+   accessible (=chmod 600= or --- better yet --- encryption)
+
+   #+NAME: init-before
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (defvar conf/private-file (expand-file-name "private.el" user-emacs-directory))
+     (load conf/private-file 'noerror)
+  #+END_SRC
+
+** Custom
+
+Set alternative location for =custom-set-variables= and =custom-set-faces=, 
+to make sure Emacs doesn't dump them in your =init.el=.
+
+#+NAME: init-after
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (load custom-file 'noerror)
+#+END_SRC
+
+
+* Appearance
+
+** Unneeded chrome
+
+We don't need scroll bars or tool bars
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (when (fboundp 'tool-bar-mode) 
+    (tool-bar-mode -1))
+  (when (fboundp 'scroll-bar-mode) 
+    (scroll-bar-mode -1))
+#+END_SRC
+
+** Theme
+
+This sets the colours of the background and fonts. I find myself coming back to
+[[http://github.com/bbatsov/zenburn][Zenburn]].
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (load-theme 'zenburn t)
+#+END_SRC
+
+** Fonts
+
+I use DejaVu Sans Mono, not because I'm a huge fan of it but because it's a 
+decent monospace font with good support for IPA. If you don't need much IPA
+then feel free to use whatever you want.
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (when (find-font (font-spec :name "DejaVu Sans Mono"))
+    (set-frame-font "DejaVu Sans Mono-15" t t))
+#+END_SRC
+
+** Misc
+
+Highlight the current line: not everyone's cup of tea, of course
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (global-hl-line-mode)
+#+END_SRC
+
+When possible, automatically scroll so that the cursor is in the 
+middle of the window
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package centered-cursor-mode
+               :config
+               (centered-cursor-mode 1))
+#+END_SRC
+
+I find it best to have the Emacs window fit the screen, for all sorts
+of reasons. This an automated way of doing it that will only work on
+some Emacsen, but maybe it'll make its way to the main release soon.
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (when (fboundp 'toggle-frame-maximized)
+    (add-hook 'emacs-startup-hook 'toggle-frame-maximized))
+#+END_SRC
+
+This is to prevent emacs from getting in your way when run from 
+the terminal
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun conf/after-make-frame (frame)
+    (unless (display-graphic-p frame)
+      (when (fboundp 'menu-bar-mode) 
+        (menu-bar-mode -1))
+      (set-face-background 'default "dummy-color" frame)))
+  
+  (add-hook 'after-make-frame 'conf/after-make-frame)
+#+END_SRC
+
+No need for the bell
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq ring-bell-function 'ignore)
+#+END_SRC
+
+Use colours in the shell
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
+#+END_SRC
+
+Never type out 'yes' or 'no'.
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+** Mode-line
+
+I quite like powerline, so here we use that
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package powerline
+               :config
+               (powerline-default-theme))
+#+END_SRC
+
+** Window title
+
+We want that to be informative too
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq frame-title-format
+        '("emacs@" (:eval (system-name)) ": "(:eval (if (buffer-file-name)
+                                                        (abbreviate-file-name (buffer-file-name))
+                                                      "%b")) " [%*]"))
+
+#+END_SRC
+
+
+** Parentheses
+
+Parenface and Rainbow-Delimiters are nice to show matching parentheses.
+This is useful not just for Lisp but also for all sorts of nested 
+structures, like in =forest= trees.
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+    (use-package parenface
+      :disabled t)
+    (use-package rainbow-delimiters
+                 :commands rainbow-delimiters-mode
+                 :init
+                 (dolist (x '(LaTeX-mode-hook lisp-mode-hook emacs-lisp-mode-hook))
+                   (add-hook x 'rainbow-delimiters-mode)))
+#+END_SRC
+
+Highlight matching parentheses, braces, etc.
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (show-paren-mode t)
+#+END_SRC
+
+Automatically insert closing parentheses, braces etc.
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package autopair)
+#+END_SRC
+
+
+* General editing
+
+** Encodings
+
+Use UTF-8 encoding wherever possible:
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (set-default-coding-systems 'utf-8-unix)
+  (set-terminal-coding-system 'utf-8-unix)
+  (set-keyboard-coding-system 'utf-8-unix)
+  (prefer-coding-system 'utf-8-unix)
+#+END_SRC
+
+Even so, ~ansi-term~ doesn't obey:
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defadvice ansi-term (after advise-ansi-term-coding-system)
+    (set-buffer-process-coding-system 'utf-8-unix 'utf-8-unix))
+  (ad-activate 'ansi-term)
+#+END_SRC
+
+** Spelling
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package flyspell
+               :config
+               (setq-default ispell-program-name "/usr/local/bin/aspell")
+               (add-to-list 'ispell-dictionary-alist
+                   '("nynorsk"
+                     "[a-zA-Z\346\370\345\306\330\305]"
+                     "[^a-zA-Z\346\370\345\306\330\305]"
+                     "[']" t ("-C" "-d" "nynorsk") nil utf-8))
+               (add-to-list 'ispell-dictionary-alist
+                            '("gaidhlig"
+                              "[[:alpha:]]"
+                              "[^[:alpha:]]"
+                              "[']" t ("-C" "-d" "gd") nil utf-8))
+               (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")
+               (add-hook 'text-mode-hook 'flyspell-mode)
+               (add-hook 'prog-mode-hook 'flyspell-prog-mode))                 
+#+END_SRC
+
+** Syntax checking
+
+Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the fly.
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package flycheck
+    :commands global-flycheck-mode
+    :config 
+    (global-flycheck-mode 1)
+    (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc)))
+#+END_SRC
+
+** Version control
+
+Magit provides featureful Git integration.
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package magit
+               :commands (magit-status magit-diff magit-log magit-blame-mode))
+#+END_SRC
+
+** Programming modes
+*** Emacs Lisp
+
+This sets up ~eldoc~ as well as forces the recompilation of init files on save
+to speed up Emacs loading.
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package emacs-lisp-mode
+    :init
+    (use-package eldoc
+                 :commands turn-on-eldoc-mode
+                 :init (add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode)))
+#+END_SRC
+
+*** Web
+
+Web mode provides, among other features, syntax highlighting for
+Javascript and CSS embedded in HTML as well as highlighting for
+various templating languages.
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package web-mode
+    :mode (("\\.html?\\'" . web-mode)
+           ("\\.css\\'" . web-mode))
+    :config
+    (setq web-mode-enable-auto-pairing t)
+    :init
+    (add-hook 'web-mode-hook (lambda ()
+                               (set-fill-column 120))))
+#+END_SRC
+
+*** Python
+
+Elpy is a bunch of nice Python utilities. This also sets up automatic checking
+for conformity with the PEP8 style (requires =pip install autopep8=)
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package python
+    :mode ("\\.py\\'" . python-mode)
+    :init
+    (use-package elpy
+      :config (elpy-enable))
+    :config 
+    (use-package py-autopep8
+      :commands py-autopep8-before-save
+      :config
+      (add-hook 'before-save-hook 'py-autopep8-before-save)))
+#+END_SRC
+
+*** Common Lisp
+
+     #+NAME: editing
+     #+BEGIN_SRC emacs-lisp :tangle no
+     (use-package slime
+                  :mode "\\.lisp\\'"
+                  :interpreter "sbcl"
+                  :config
+                  (setq slime-net-coding-system 'utf-8-unix))
+      #+END_SRC
+
+*** R
+
+    #+NAME: editing
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (use-package ess
+        :commands R
+        :mode (("\\.R\\'" . R-mode)
+               ("\\.Rnw\\'" . ess-noweb-mode))
+        :config
+        (add-hook 'ess-mode-hook
+                  (defun my-ess-mode-hook ()
+                    (autopair-mode)))
+        (use-package ess-smart-underscore)
+        (use-package ess-R-data-view)
+        (use-package ess-rutils)
+        (use-package polymode           ; ESS with polymode
+          :config
+          (require 'poly-R)               ; Load necessary modes
+          (require 'poly-markdown)
+          (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
+          (setq 
+           pm-weaver "knitR-ESS"
+           pm-exporter "pandoc"))
+        (setq ess-swv-processor 'knitr)
+      
+        (defun ess-swv-remove-TeX-commands (x)
+          "Helper function: check if car of X is one of the Knitr strings"
+          (let ((swv-cmds '("Knit" "LaTeXKnit")))
+            (unless (member (car x) swv-cmds) x)))
+      
+        (add-hook 'Rnw-mode-hook
+                  (defun my-Rnw-mode-hook ()
+                    "Add commands to AUCTeX's \\[TeX-command-list]."
+                    (unless (and (featurep 'tex-site) (featurep 'tex))
+                      (error "AUCTeX does not seem to be loaded"))
+                    (add-to-list 'TeX-command-list
+                                 '("Knit" "Rscript -e \"library(knitr); knit('%t')\""
+                                   TeX-run-command nil (latex-mode) :help
+                                   "Run Knitr") t)
+                    (add-to-list 'TeX-command-list
+                                 '("LaTeXKnit" "%l %(mode) %s"
+                                   TeX-run-TeX nil (latex-mode) :help
+                                   "Run LaTeX after Knit") t)
+                    (setq-local TeX-command-default "Knit")
+                    (dolist (suffix '("nw" "Snw" "Rnw"))
+                      (add-to-list 'TeX-file-extensions suffix)))))
+    #+END_SRC
+
+*** Stan
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package stan-mode
+    :mode "\\.stan\\'"
+    :config
+    (use-package stan-snippets
+      :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
+#+END_SRC
+
+
+* Working with text
+** General
+
+We probably want our lines wrapped when we're writing
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (add-hook 'text-mode-hook 
+            (lambda ()
+              (visual-line-mode 1)))
+#+END_SRC
+
+#+NAME: editing
+
+Hippie-expand is a nice autocompletion engine
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (global-set-key (kbd "M-/") 'hippie-expand)
+#+END_SRC
+
+** LaTeX
+   #+NAME: editing
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (use-package auctex
+                  :mode ("\\.tex\\'" . LaTeX-mode)
+                  :init
+                  (defun switch-to-biblatex ()
+                    (interactive)
+                    (setq-local reftex-cite-format
+                                '((?\C-m . "\\cite[]{%l}")
+                                  (?f . "\\footcite[][]{%l}")
+                                  (?t . "\\textcite[]{%l}")
+                                  (?p . "\\parencite[]{%l}")
+                                  (?o . "\\citepr[]{%l}")
+                                  (?n . "\\nocite{%l}"))))
+                  (defun insert-feature (arg feature value)
+                    (interactive "P\nMFeature: \nMValue: ")
+                    (insert (format
+                             (if arg
+                                 "\\mbox{\\ensuremath{%s}%s}"
+                               "\\mbox{[\\ensuremath{%s}%s]}")
+                             value feature)))
+                  :config
+                  (add-hook 'LaTeX-mode-hook
+                            (defun my-LaTeX-mode-hook ()
+                              (flyspell-mode 1)
+                              (TeX-fold-mode 1)
+                              ;; This activates the X-SAMPA layout, making
+                              ;; it accessible via C-\
+                              (set-input-method "ipa-x-sampa")
+                              (toggle-input-method)
+     
+                              (outline-minor-mode 1)
+     
+                              ;; If we use the package csquotes (which we
+                              ;; should), typing " now does the right thing
+     
+                              (setq LaTeX-csquotes-close-quote "}"
+                                    LaTeX-csquotes-open-quote "\\enquote{")
+     
+                              (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                              (turn-on-reftex)
+                              (local-set-key (kbd "C-c f") 'insert-feature)
+                              (setq font-latex-match-function-keywords
+                                    '(("ipa" "{")
+                                      ("twe" "{")
+                                      ("mbi" "{")
+                                      "ex" "pex" "pex~" "xe" "a"))
+                              (setq font-latex-match-reference-keywords
+                                    '(("cref" "{")
+                                      ("Cref" "{")))))
+     
+                  (setq outline-minor-mode-prefix "\C-c\C-u"
+                        TeX-parse-self t
+                        TeX-auto-save t
+                        TeX-electric-sub-and-superscript t)
+                  (setq-default LaTeX-engine 'xetex))
+     
+     
+     (use-package f
+       :init
+       (defun find-tex-file (filename)
+         "Create a new .tex file from the template, or open an existing one"
+         (interactive "FNew TeX file name: ")
+         (if (f-exists? filename)
+             (find-file filename)
+           (progn (switch-to-buffer (generate-new-buffer filename))
+                  (insert-file-contents (expand-file-name private/tex-template))
+                  (f-touch filename)
+                  (write-file filename)
+                  (LaTeX-mode))))
+       :commands find-tex-file
+       :bind ("C-c T" . find-tex-file))
+     
+     (use-package reftex
+                  :config
+                  (setq reftex-use-external-file-finders t
+                        reftex-external-file-finders
+                        '(("tex" . "/usr/texbin/kpsewhich -format=.tex %f")
+                          ("bib" . "/usr/texbin/kpsewhich -format=.bib %f"))
+                        reftex-plug-into-AUCTeX t
+                        reftex-cite-prompt-optional-args nil
+                        reftex-cite-cleanup-optional-args t)
+                  (add-to-list 'reftex-bibliography-commands "addbibresource"))
+     
+#+END_SRC
+
+** Org-mode
+
+   Org-mode is very good for all sort of working with plain text, as
+   this file testifies. I use it as my calendar application, so most
+   of the settings are geared towards that. There are various
+   solutions for syncing your org-mode calendar with your phone. The
+   solution I use here is to export the calendar to .ics and upload it
+   somewhere public, from where my iPhone is able to pull it.
+
+   This is just a shortcut to open the main agenda file. Change the
+   path to that in your =private.el.gpg=
+
+   #+NAME: utils
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (global-set-key (kbd "C-x C-a C-w") 
+                     (lambda () 
+                       (interactive) 
+                       (find-file (expand-file-name private/org-file))))
+   #+END_SRC
+
+   The following sets up Org-mode itself
+
+   #+NAME: utils
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (use-package org
+                  :config
+                  (define-key global-map "\C-cl" 'org-store-link)
+                  (define-key global-map "\C-ca" 'org-agenda)
+                  (setq org-log-done t
+                        org-use-property-inheritance t
+                        org-agenda-files (list private/org-file)
+                        org-directory private/org-directory
+                        org-startup-indented t
+                        org-icalendar-timezone "Europe/London"))
+   #+END_SRC
+
+   We might as well tell Emacs where we are at this stage
+
+   #+NAME: utils
+   #+BEGIN_SRC emacs-lisp :tangle no
+     ;; Edinburgh
+     (setq calendar-latitude 55.95)
+     (setq calendar-longitude -3.20)
+   #+END_SRC
+
+** Markdown and pandoc
+   
+   Markdown is a lightweight alternative to HTML. For me, the two main
+   uses are for websites (many site generators understand Markdown so
+   you don't have to write HTML) and conversions from Markdown to
+   other formats via [[http://johnmacfarlane.net/pandoc][pandoc]].
+
+   This bit loads markdown-mode and sets up various customizations.
+
+   #+NAME: editing
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (use-package markdown-mode
+       :mode "\\.\\(m\\(ark\\)?down\\|md\\)$"
+       :config
+       (add-hook 'markdown-mode-hook
+               (defun my-markdown-mode-hook ()
+                 (flyspell-mode)
+                 (reftex-mode)
+                 (setq reftex-default-bibliography '(private/bibliography-file))
+                 (eval-after-load 'reftex-vars
+                   '(progn
+                     (setq-local reftex-cite-format '((?\C-m . "@%l")
+                                                      (?p . "[@%l]")))))
+                 (orgtbl-mode 1)
+                 (yas-minor-mode)
+                 (pandoc-mode)))
+       ;; (setq pandoc-binary "/usr/local/bin/pandoc")
+       (setq pandoc-binary "/Users/pplsuser/Library/Haskell/bin/pandoc")
+          
+       :bind
+       ("C-c f" . pandoc--insert-feature)
+       ("C-c C-s g" . markdown-insert-smallcaps))
+          
+          
+     (defun markdown-insert-smallcaps ()
+       (interactive
+        (if (markdown-use-region-p)
+            ;; Active region
+            (let ((bounds (markdown-unwrap-things-in-region
+                           (region-beginning) (region-end)
+                           markdown-regex-code 2 4)))
+              (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" nil (car bounds) (cdr bounds)))
+          ;; Code markup removal, code markup for word, or empty markup insertion
+          (if (markdown-code-at-point-p)
+              (markdown-unwrap-thing-at-point nil 0 1)
+            (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
+   #+END_SRC
+
+   Now we set up pandoc-mode and add some utility functions
+
+   #+NAME: editing
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (use-package pandoc-mode
+       :defer t
+       :init
+       (defun pandoc--add-references-header (output-format)
+         (if (not (string-equal output-format "latex"))
+             "## References ##"
+           ""))
+
+       (defun pandoc--hline-for-new-slide (output-format)
+         (if (string-equal output-format "revealjs")
+             "---"
+           ""))
+
+       (defun pandoc--pause (output-format)
+         (if (string-equal output-format "revealjs")
+             ". . ."
+           ""))
+
+       (defun pandoc--smallcaps (output-format txt)
+         (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
+
+       (setq my-pandoc-directives
+             '(("references" . pandoc--add-references-header)
+               ("slide" . pandoc--hline-for-new-slide)
+               ("pause" . pandoc--pause)
+               ("sc" . pandoc--smallcaps)))
+
+       (defun pandoc--insert-feature (arg feature value)
+         (interactive "P\nMFeature: \nMValue: ")
+         (insert (format
+                  (if arg
+                      "$%s$%s"
+                    "[$%s$%s]")
+                  value feature)))
+       :config
+       (add-hook 'pandoc-mode-hook
+                 (defun my-pandoc-mode-hook ()
+                   (dolist (x my-pandoc-directives)
+                     (add-to-list 'pandoc-directives x)))))
+
+   #+END_SRC
+
+** BibTeX
+
+This defines a function (call it using =M-x get-bibtex-from-doi=)
+that, given a DOI (or an http://dx.doi.org/ URL) gets a BibTeX entry
+and inserts it at point.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun get-bibtex-from-doi (doi)
+   "Get a BibTeX entry from the DOI"
+   (interactive "MDOI: ")
+   (let ((url-mime-accept-string "text/bibliography;style=bibtex")
+         (clean-doi (replace-regexp-in-string "https?://dx.doi.org/" "" doi)))
+     (with-current-buffer (url-retrieve-synchronously (format "http://dx.doi.org/%s" clean-doi))
+       (switch-to-buffer (current-buffer))
+       (setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
+       (kill-buffer (current-buffer))))
+   (insert (decode-coding-string bibtex-entry 'utf-8))
+   (bibtex-fill-entry))
+#+END_SRC
+
+
+* Other useful utilities
+
+** w3m
+
+Sometimes you want to look things up on the internet without firing up
+a browser. Here, we use w3m (which needs to be installed separately:
+=brew install w3m= on OS X.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package w3m
+               :commands (w3m-browse-url w3m-session-crash-recovery-remove)
+               :init
+               (eval-when-compile
+                 (autoload 'w3m-search-escape-query-string "w3m-search"))
+               :config
+               (setq w3m-use-cookies t))
+#+END_SRC
+
+** Ack
+
+[[http://beyondgrep.com/][Ack]] is a nice alternative to =grep=. For those cases when you need to
+find something inside your sprawling =Documents= folder.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package ack-and-a-half
+               :config
+               (setq ack-and-a-half-prompt-for-directory t))
+#+END_SRC
+
+** Helm
+
+Helm is a powerful engine for completion and narrowing down
+alternatives. No more blind tabbing! This setup follows the
+introduction [[http://tuhdo.github.io/helm-intro.html][here]].
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package helm
+               :bind
+               (("M-x" . helm-M-x)
+                ("M-y" . helm-show-kill-ring)
+                ("C-x b" . helm-mini)
+                ("C-x C-f" . helm-find-files))         
+               :commands (helm-buffers-list
+                          helm-colors
+                          helm-find-files
+                          helm-for-files
+                          helm-google-suggest
+                          helm-mini
+                          helm-help
+                          helm-show-kill-ring
+                          helm-org-keywords
+                          helm-org-headlines
+                          helm-M-x
+                          helm-occur)
+               :config
+               (use-package helm-config)
+               (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
+               (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
+               (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+
+               (when (executable-find "curl")
+                 (setq helm-google-suggest-use-curl-p t))
+
+               (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
+                     helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+                     helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+                     helm-ff-file-name-history-use-recentf t
+                     helm-buffers-fuzzy-matching t
+                     helm-recentf-fuzzy-match t))
+              
+
+#+END_SRC
+
+Helm-backup is a handy tool which puts all your saved files under Git
+source control, by default under =~/.helm-backup=. Disable it if you
+don't want or don't have that much space.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package helm-backup
+               :bind ("C-c b" . helm-backup)
+               :config
+               (add-hook 'after-save-hook 'helm-backup-versioning))
+
+#+END_SRC
+
+** Yasnippet
+
+Yasnippet is a handy framework for storing little bits of code/text that you reuse a lot
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package yasnippet
+    :diminish yas-minor-mode
+    :config (yas-reload-all))
+#+END_SRC
+
+** Various niceties
+
+#+NAME: init-after
+#+BEGIN_SRC emacs-lisp :tangle no
+    (setq x-select-enable-clipboard t)
+
+    (setq display-time-day-and-date t)
+    (setq display-time-string-forms
+          '((format "%s:%s  "
+                    24-hours minutes)
+            (if display-time-day-and-date
+               (format "%s %s %s" dayname monthname day) "")))
+    (setq display-time-interval 30)
+    (display-time-mode 1)
+
+  (use-package sane-term
+    :commands (sane-term sane-term-create)
+    :bind (("C-x t" . sane-term)
+           ("C-x T" . sane-term-create))
+    :config
+    (setq sane-term-shell-command "/bin/zsh"))
+
+#+END_SRC
+
+These are some convenience functions for my own use
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+
+  (defmacro clean-buffer (form)
+    `(save-excursion
+       (goto-char (point-min))
+       ,form))
+
+  (defun unsmart-quotes ()
+    (interactive)
+    (clean-buffer (replace-regexp "[‘’“”]" "'")))
+
+  (defun clean-pandoc-output ()
+    (interactive)
+    (unsmart-quotes)
+    (clean-buffer (replace-string "\\\\fshyp" "/"))
+    (clean-buffer (replace-string "\\\\dash" " -- "))
+    (clean-buffer (replace-regexp "\\\\hyp" "-"))
+    (clean-buffer (replace-string "…" "..."))
+    (clean-buffer (replace-regexp "\\\\iem?" "i.e."))
+    (clean-buffer (replace-regexp "\\\\egm?" "e.g."))
+    (clean-buffer (replace-regexp "\\\\cfm?" "cf.")))
+#+END_SRC
+
+Golden-ratio mode makes sure your window splits are of a sensible size
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package golden-ratio
+    :config
+    (golden-ratio-mode 1))
+#+END_SRC
+
+** Calendar integration
+
+This bit exports the agenda from my org-mode calendar to an iCalendar
+and copies it to a remote server, where it gets picked up by the phone
+calendar app.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (require 'midnight)
+  (midnight-delay-set 'midnight-delay 0)
+  (setq midnight-period 1800)
+  (add-hook 'midnight-hook 
+            (defun my-midnight-hook ()
+               (progn 
+                 (org-export-icalendar-combine-agenda-files)
+                 (async-shell-command (format "scp -F ~/.ssh/config %s %s" 
+                                              org-combined-agenda-icalendar-file private/calendar-destination)))))
+#+END_SRC
+
+** Email
+
+This is just a convenience function to choose a signature at random from four versions
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+
+(defun make-random-signature ()
+  (interactive)
+  (let ((sigs (list
+	       "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n"
+
+	       "Pavel Iosad\nRoinn a' Chànanachais agus Cànain na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
+
+	       "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
+
+	       "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n")))
+     (nth (random (length sigs)) sigs)))
+
+#+END_SRC
+
+I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package mu4e
+    :load-path "/usr/local/Cellar/mu/0.9.11/share/emacs/site-lisp/mu4e/"
+    :config
+    (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
+          mu4e-maildir private/maildir
+          mu4e-drafts-folder "/Drafts"
+          mu4e-sent-folder   "/Sent Items"
+          mu4e-trash-folder  "/Trash"
+          mu4e-refile-folder "/Archive"
+          mu4e-maildir-shortcuts '(("/INBOX"       . ?i)
+                                   ("/Sent Items"  . ?s)
+                                   ("/Trash"       . ?t)
+                                   ("/Archive"     . ?a))
+          smtpmail-queue-mail nil
+          smtpmail-queue-dir   "~/Mail/queue/cur"
+          mu4e-get-mail-command "offlineimap -a ed"
+          mu4e-update-interval 300
+          mu4e-attachment-dir  "~/Downloads"
+          mu4e-view-show-images t
+          mail-user-agent 'mu4e-user-agent
+          user-mail-address "pavel.iosad@ed.ac.uk"
+          user-full-name  "Pavel Iosad"
+          mu4e-compose-complete-only-after "2012-09-15"
+          mu4e-headers-date-format "%d-%m-%Y"
+          message-kill-buffer-on-exit t
+          mu4e-html2text-command "w3m -dump -T text/html"
+          mu4e-compose-signature (make-random-signature) ;; comment this out
+          mu4e-compose-dont-reply-to-self t
+          mu4e-compose-keep-self-cc nil)
+
+    (require 'gnus-dired)
+    ;; make the `gnus-dired-mail-buffers' function also work on
+
+    ;; message-mode derived modes, such as mu4e-compose-mode
+    (defun gnus-dired-mail-buffers ()
+      "Return a list of active message buffers."
+      (let (buffers)
+        (save-current-buffer
+          (dolist (buffer (buffer-list t))
+            (set-buffer buffer)
+            (when (and (derived-mode-p 'message-mode)
+                       (null message-sent-message-via))
+              (push (buffer-name buffer) buffers))))
+        (nreverse buffers)))
+
+    (setq gnus-dired-mail-mode 'mu4e-user-agent)
+    (add-hook 'dired-mode-hook 'turn-on-gnus-dired-mode)
+    (when (fboundp 'imagemagick-register-types)
+      (imagemagick-register-types))
+
+    (add-hook 'mu4e-view-mode-hook
+              (defun my-view-mode-hook ()
+                (visual-line-mode)))
+
+
+    (add-hook 'mu4e-compose-mode-hook
+              (defun my-compose-mode-hook ()
+                (setq mu4e-compose-signature (make-random-signature))
+                (auto-fill-mode)
+                (set-fill-column 72)
+                (flyspell-mode)))
+
+    (setq message-send-mail-function 'message-send-mail-with-sendmail)
+    (setq sendmail-program "/usr/local/bin/msmtp"))
+
+#+END_SRC
+
+** Twitter
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package twittering-mode
+    :config
+    (setq twittering-use-master-password t
+          twittering-icon-mode t                ; Show icons
+          twittering-timer-interval 150         ; Update your timeline each 300 seconds (5 minutes)
+          twittering-url-show-status nil))       ; Keeps the echo area from showing all the http processes
+#+END_SRC
+
+* Configuration layout
+
+Here we define the =emacs.el= file that gets generated by the source
+blocks in our Org document. This is the file that actually gets
+loaded on startup. The placeholders in angled brackets correspond to
+the ~NAME~ directives above the ~SRC~ blocks throughout this document.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+;;; emacs.el --- Emacs configuration generated via Org Babel
+
+;;; Commentary:
+
+;; Do not modify this file by hand.  It was automatically generated
+;; from `emacs.org` in the same directory.  See that file for more
+;; information.
+
+;;; Code:
+
+;; Configuration group: init-before
+<<init-before>>
+
+;; Configuration group: appearance
+<<appearance>>
+
+;; Configuration group: editing
+<<editing>>
+
+;; Configuration group: utilities
+<<utils>>
+
+;; Configuration group: init-after
+<<init-after>>
+
+;; emacs.el ends here
+#+END_SRC
