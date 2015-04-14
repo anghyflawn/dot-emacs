@@ -12,6 +12,7 @@
     
 #+END_SRC
 
+
 * Initialization
 
 ** Paths
@@ -64,7 +65,7 @@ Put autosave and backup files into the directory we defined above
 
 #+NAME: init-after
 #+BEGIN_SRC emacs-lisp :tangle no
-  (setq backup-directory-alist '((".*" . "~/.saves"))
+  (setq backup-directory-alist (list (cons ".*"  (expand-file-name "saves/" conf/temp-directory)))
         backup-by-copying t      ; don't clobber symlinks
         delete-old-versions t
         kept-new-versions 6
@@ -149,7 +150,7 @@ middle of the window
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package centered-cursor-mode
                :config
-               (centered-cursor-mode 1))
+               (global-centered-cursor-mode 1))
 #+END_SRC
 
 I find it best to have the Emacs window fit the screen, for all sorts
@@ -221,17 +222,14 @@ We want that to be informative too
 
 #+END_SRC
 
-
 ** Parentheses
 
-Parenface and Rainbow-Delimiters are nice to show matching parentheses.
-This is useful not just for Lisp but also for all sorts of nested 
-structures, like in =forest= trees.
+Rainbow-Delimiters is nice to show matching parentheses.  This is
+useful not just for Lisp but also for all sorts of nested structures,
+like in =forest= trees.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-    (use-package parenface
-      :disabled t)
     (use-package rainbow-delimiters
                  :commands rainbow-delimiters-mode
                  :init
@@ -250,7 +248,8 @@ Automatically insert closing parentheses, braces etc.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package autopair)
+    (use-package autopair
+      :commands (autopair-mode))
 #+END_SRC
 
 
@@ -282,21 +281,21 @@ Even so, ~ansi-term~ doesn't obey:
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package flyspell
-               :config
-               (setq-default ispell-program-name "/usr/local/bin/aspell")
-               (add-to-list 'ispell-dictionary-alist
-                   '("nynorsk"
-                     "[a-zA-Z\346\370\345\306\330\305]"
-                     "[^a-zA-Z\346\370\345\306\330\305]"
-                     "[']" t ("-C" "-d" "nynorsk") nil utf-8))
-               (add-to-list 'ispell-dictionary-alist
-                            '("gaidhlig"
-                              "[[:alpha:]]"
-                              "[^[:alpha:]]"
-                              "[']" t ("-C" "-d" "gd") nil utf-8))
-               (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")
-               (add-hook 'text-mode-hook 'flyspell-mode)
-               (add-hook 'prog-mode-hook 'flyspell-prog-mode))                 
+    :config
+    (setq-default ispell-program-name "/usr/local/bin/aspell")
+    (add-to-list 'ispell-dictionary-alist
+                 '("nynorsk"
+                   "[a-zA-Z\346\370\345\306\330\305]"
+                   "[^a-zA-Z\346\370\345\306\330\305]"
+                   "[']" t ("-C" "-d" "nynorsk") nil utf-8))
+    (add-to-list 'ispell-dictionary-alist
+                 '("gaidhlig"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "gd") nil utf-8))
+    (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")
+    (add-hook 'text-mode-hook 'flyspell-mode)
+    (add-hook 'prog-mode-hook 'flyspell-prog-mode))                 
 #+END_SRC
 
 ** Syntax checking
@@ -319,14 +318,14 @@ Magit provides featureful Git integration.
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package magit
-               :commands (magit-status magit-diff magit-log magit-blame-mode))
+    :commands (magit-status magit-diff magit-log magit-blame-mode)
+    :bind ("C-x g" . magit-status))
 #+END_SRC
 
 ** Programming modes
 *** Emacs Lisp
 
-This sets up ~eldoc~ as well as forces the recompilation of init files on save
-to speed up Emacs loading.
+This sets up ~eldoc~.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -369,9 +368,8 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
       :config (elpy-enable))
     :config 
     (use-package py-autopep8
-      :commands py-autopep8-before-save
-      :config
-      (add-hook 'before-save-hook 'py-autopep8-before-save)))
+      :commands (py-autopep8-before-save))
+    (add-hook 'before-save-hook 'py-autopep8-before-save))
 #+END_SRC
 
 *** Common Lisp
@@ -469,9 +467,14 @@ Hippie-expand is a nice autocompletion engine
    #+NAME: editing
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package auctex
-                  :mode ("\\.tex\\'" . LaTeX-mode)
+                  :mode (("\\.tex\\'" . LaTeX-mode)
+                         ("\\.Rnw\\'" . ess-noweb-mode))
+                  :commands (LaTeX-mode latex-mode plain-tex-mode)
                   :init
                   (defun switch-to-biblatex ()
+                    "Something in my template seems to conflict with
+                     AUCTeX's automated BibLaTeX support. So, we do
+                     this manually. Feel free to comment out."
                     (interactive)
                     (setq-local reftex-cite-format
                                 '((?\C-m . "\\cite[]{%l}")
@@ -480,14 +483,17 @@ Hippie-expand is a nice autocompletion engine
                                   (?p . "\\parencite[]{%l}")
                                   (?o . "\\citepr[]{%l}")
                                   (?n . "\\nocite{%l}"))))
+     
                   (defun insert-feature (arg feature value)
+                    "This just saves some typing, feel free to comment
+                     out."
                     (interactive "P\nMFeature: \nMValue: ")
                     (insert (format
                              (if arg
                                  "\\mbox{\\ensuremath{%s}%s}"
                                "\\mbox{[\\ensuremath{%s}%s]}")
                              value feature)))
-                  :config
+
                   (add-hook 'LaTeX-mode-hook
                             (defun my-LaTeX-mode-hook ()
                               (flyspell-mode 1)
@@ -496,17 +502,9 @@ Hippie-expand is a nice autocompletion engine
                               ;; it accessible via C-\
                               (set-input-method "ipa-x-sampa")
                               (toggle-input-method)
-     
                               (outline-minor-mode 1)
-     
-                              ;; If we use the package csquotes (which we
-                              ;; should), typing " now does the right thing
-     
-                              (setq LaTeX-csquotes-close-quote "}"
-                                    LaTeX-csquotes-open-quote "\\enquote{")
-     
-                              (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
                               (turn-on-reftex)
+                              (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
                               (local-set-key (kbd "C-c f") 'insert-feature)
                               (setq font-latex-match-function-keywords
                                     '(("ipa" "{")
@@ -515,16 +513,18 @@ Hippie-expand is a nice autocompletion engine
                                       "ex" "pex" "pex~" "xe" "a"))
                               (setq font-latex-match-reference-keywords
                                     '(("cref" "{")
-                                      ("Cref" "{")))))
-     
-                  (setq outline-minor-mode-prefix "\C-c\C-u"
-                        TeX-parse-self t
-                        TeX-auto-save t
-                        TeX-electric-sub-and-superscript t)
-                  (setq-default LaTeX-engine 'xetex))
+                                      ("Cref" "{"))
+                                    outline-minor-mode-prefix "\C-c\C-u"
+                                    TeX-parse-self t
+                                    TeX-auto-save t
+                                    TeX-electric-sub-and-superscript t
+                                    LaTeX-csquotes-close-quote "}"
+                                    LaTeX-csquotes-open-quote "\\enquote{")
+                              (setq-default LaTeX-engine 'xetex))))
      
      
      (use-package f
+     
        :init
        (defun find-tex-file (filename)
          "Create a new .tex file from the template, or open an existing one"
@@ -537,19 +537,8 @@ Hippie-expand is a nice autocompletion engine
                   (write-file filename)
                   (LaTeX-mode))))
        :commands find-tex-file
-       :bind ("C-c T" . find-tex-file))
-     
-     (use-package reftex
-                  :config
-                  (setq reftex-use-external-file-finders t
-                        reftex-external-file-finders
-                        '(("tex" . "/usr/texbin/kpsewhich -format=.tex %f")
-                          ("bib" . "/usr/texbin/kpsewhich -format=.bib %f"))
-                        reftex-plug-into-AUCTeX t
-                        reftex-cite-prompt-optional-args nil
-                        reftex-cite-cleanup-optional-args t)
-                  (add-to-list 'reftex-bibliography-commands "addbibresource"))
-     
+       :bind ("C-c T" . find-tex-file))   
+
 #+END_SRC
 
 ** Org-mode
@@ -585,6 +574,7 @@ Hippie-expand is a nice autocompletion engine
                         org-agenda-files (list private/org-file)
                         org-directory private/org-directory
                         org-startup-indented t
+                        org-src-fontify-natively t
                         org-icalendar-timezone "Europe/London"))
    #+END_SRC
 
@@ -614,8 +604,7 @@ Hippie-expand is a nice autocompletion engine
        (add-hook 'markdown-mode-hook
                (defun my-markdown-mode-hook ()
                  (flyspell-mode)
-                 (reftex-mode)
-                 (setq reftex-default-bibliography '(private/bibliography-file))
+                 (turn-on-reftex)
                  (eval-after-load 'reftex-vars
                    '(progn
                      (setq-local reftex-cite-format '((?\C-m . "@%l")
@@ -712,6 +701,30 @@ and inserts it at point.
    (bibtex-fill-entry))
 #+END_SRC
 
+This sets up RefTeX and BibTeX-mode.
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package reftex
+    :commands (turn-on-reftex)
+    :config
+    (setq reftex-use-external-file-finders t
+          reftex-external-file-finders
+          '(("tex" . "/usr/texbin/kpsewhich -format=.tex %f")
+            ("bib" . "/usr/texbin/kpsewhich -format=.bib %f"))
+          reftex-plug-into-AUCTeX t
+          reftex-default-bibliography `(,private/bibliography-file)
+          reftex-cite-prompt-optional-args nil
+          reftex-cite-cleanup-optional-args t)
+    (add-to-list 'reftex-bibliography-commands "addbibresource"))
+  
+  (use-package bibtex
+    :mode ("\\.bib" . bibtex-mode)
+    :init
+    (setq bibtex-align-at-equal-sign t)
+    (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
+#+END_SRC
+
 
 * Other useful utilities
 
@@ -719,7 +732,9 @@ and inserts it at point.
 
 Sometimes you want to look things up on the internet without firing up
 a browser. Here, we use w3m (which needs to be installed separately:
-=brew install w3m= on OS X.
+=brew install w3m= on OS X. You will also need to install =w3m=
+separately (=M-x install-package RET w3m RET=), as installing it from
+Cask seems to be problematic.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -833,7 +848,7 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
     :bind (("C-x t" . sane-term)
            ("C-x T" . sane-term-create))
     :config
-    (setq sane-term-shell-command "/bin/zsh"))
+    (setq sane-term-shell-command "/bin/zsh")) ;; or your shell of choice
 
 #+END_SRC
 
@@ -918,6 +933,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
     :load-path "/usr/local/Cellar/mu/0.9.11/share/emacs/site-lisp/mu4e/"
+    :commands (mu4e)
     :config
     (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
           mu4e-maildir private/maildir
@@ -942,13 +958,13 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-headers-date-format "%d-%m-%Y"
           message-kill-buffer-on-exit t
           mu4e-html2text-command "w3m -dump -T text/html"
-          mu4e-compose-signature (make-random-signature) ;; comment this out
+          mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
           mu4e-compose-dont-reply-to-self t
           mu4e-compose-keep-self-cc nil)
-
+  
     (require 'gnus-dired)
     ;; make the `gnus-dired-mail-buffers' function also work on
-
+  
     ;; message-mode derived modes, such as mu4e-compose-mode
     (defun gnus-dired-mail-buffers ()
       "Return a list of active message buffers."
@@ -960,40 +976,44 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                        (null message-sent-message-via))
               (push (buffer-name buffer) buffers))))
         (nreverse buffers)))
-
+  
     (setq gnus-dired-mail-mode 'mu4e-user-agent)
     (add-hook 'dired-mode-hook 'turn-on-gnus-dired-mode)
     (when (fboundp 'imagemagick-register-types)
       (imagemagick-register-types))
-
+  
     (add-hook 'mu4e-view-mode-hook
               (defun my-view-mode-hook ()
                 (visual-line-mode)))
-
-
+  
+  
     (add-hook 'mu4e-compose-mode-hook
               (defun my-compose-mode-hook ()
                 (setq mu4e-compose-signature (make-random-signature))
                 (auto-fill-mode)
                 (set-fill-column 72)
                 (flyspell-mode)))
-
+  
     (setq message-send-mail-function 'message-send-mail-with-sendmail)
     (setq sendmail-program "/usr/local/bin/msmtp"))
-
+  
 #+END_SRC
 
 ** Twitter
 
+Use =M-x twit= to start this.
+
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package twittering-mode
+    :commands (twit)
     :config
     (setq twittering-use-master-password t
           twittering-icon-mode t                ; Show icons
           twittering-timer-interval 150         ; Update your timeline each 300 seconds (5 minutes)
           twittering-url-show-status nil))       ; Keeps the echo area from showing all the http processes
 #+END_SRC
+
 
 * Configuration layout
 

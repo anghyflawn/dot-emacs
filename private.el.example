@@ -1,0 +1,9 @@
+;; This file defines all the variables needed in the setup it is
+;; bundled with. You can of course add your own
+
+(setq private/tex-template "~/...tex"
+      private/org-file "~/...org"
+      private/org-directory "~/../org/"
+      private/bibliography-file "~/Library/texmf/bibtex/bib/...bib"
+      private/maildir "~/Mail/..."
+      private/calendar-destination "host:/remote/directory")
