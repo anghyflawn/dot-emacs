@@ -390,30 +390,15 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
       (use-package ess
         :commands R
         :mode (("\\.R\\'" . R-mode)
-               ("\\.Rnw\\'" . ess-noweb-mode))
-        :config
+               ("\\.Rnw\\'" . Rnw-mode))
+        :init
         (add-hook 'ess-mode-hook
                   (defun my-ess-mode-hook ()
                     (autopair-mode)))
         (use-package ess-smart-underscore)
         (use-package ess-R-data-view)
-        (use-package ess-rutils)
-        (use-package polymode           ; ESS with polymode
-          :config
-          (require 'poly-R)               ; Load necessary modes
-          (require 'poly-markdown)
-          (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
-          (setq 
-           pm-weaver "knitR-ESS"
-           pm-exporter "pandoc"))
-        (setq ess-swv-processor 'knitr)
-      
-        (defun ess-swv-remove-TeX-commands (x)
-          "Helper function: check if car of X is one of the Knitr strings"
-          (let ((swv-cmds '("Knit" "LaTeXKnit")))
-            (unless (member (car x) swv-cmds) x)))
-      
-        (add-hook 'Rnw-mode-hook
+        (use-package ess-rutils)        
+        (add-hook 'LaTeX-mode-hook
                   (defun my-Rnw-mode-hook ()
                     "Add commands to AUCTeX's \\[TeX-command-list]."
                     (unless (and (featurep 'tex-site) (featurep 'tex))
@@ -426,9 +411,18 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
                                  '("LaTeXKnit" "%l %(mode) %s"
                                    TeX-run-TeX nil (latex-mode) :help
                                    "Run LaTeX after Knit") t)
-                    (setq-local TeX-command-default "Knit")
                     (dolist (suffix '("nw" "Snw" "Rnw"))
-                      (add-to-list 'TeX-file-extensions suffix)))))
+                      (add-to-list 'TeX-file-extensions suffix))))
+        (setq ess-swv-processor 'knitr)
+        :config
+        (use-package polymode           ; ESS with polymode
+          :config
+          (require 'poly-R)               ; Load necessary modes
+          (require 'poly-markdown)
+          (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
+          (setq 
+           pm-weaver "knitR-ESS"
+           pm-exporter "pandoc")))
     #+END_SRC
 
 *** Stan
@@ -493,7 +487,7 @@ Hippie-expand is a nice autocompletion engine
                                  "\\mbox{\\ensuremath{%s}%s}"
                                "\\mbox{[\\ensuremath{%s}%s]}")
                              value feature)))
-
+     
                   (add-hook 'LaTeX-mode-hook
                             (defun my-LaTeX-mode-hook ()
                               (flyspell-mode 1)
@@ -524,7 +518,6 @@ Hippie-expand is a nice autocompletion engine
      
      
      (use-package f
-     
        :init
        (defun find-tex-file (filename)
          "Create a new .tex file from the template, or open an existing one"
@@ -538,7 +531,7 @@ Hippie-expand is a nice autocompletion engine
                   (LaTeX-mode))))
        :commands find-tex-file
        :bind ("C-c T" . find-tex-file))   
-
+     
 #+END_SRC
 
 ** Org-mode
@@ -772,7 +765,8 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                (("M-x" . helm-M-x)
                 ("M-y" . helm-show-kill-ring)
                 ("C-x b" . helm-mini)
-                ("C-x C-f" . helm-find-files))         
+                ("C-x C-f" . helm-find-files)
+                ("C-c u" . helm-org-headlines))
                :commands (helm-buffers-list
                           helm-colors
                           helm-find-files
@@ -790,10 +784,10 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
                (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
                (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
-
+  
                (when (executable-find "curl")
                  (setq helm-google-suggest-use-curl-p t))
-
+  
                (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
                      helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
                      helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
@@ -801,7 +795,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                      helm-buffers-fuzzy-matching t
                      helm-recentf-fuzzy-match t))
               
-
+  
 #+END_SRC
 
 Helm-backup is a handy tool which puts all your saved files under Git
