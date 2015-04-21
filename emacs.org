@@ -319,7 +319,8 @@ Magit provides featureful Git integration.
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package magit
     :commands (magit-status magit-diff magit-log magit-blame-mode)
-    :bind ("C-x g" . magit-status))
+    :bind ("C-x g" . magit-status)
+    :init (setq magit-last-seen-setup-instructions "1.4.0"))
 #+END_SRC
 
 ** Programming modes
@@ -376,11 +377,13 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
 
      #+NAME: editing
      #+BEGIN_SRC emacs-lisp :tangle no
-     (use-package slime
-                  :mode "\\.lisp\\'"
-                  :interpreter "sbcl"
-                  :config
-                  (setq slime-net-coding-system 'utf-8-unix))
+       (use-package slime
+                    :mode ("\\.lisp\\'" . lisp-mode)
+                    :init
+                    (setq slime-net-coding-system 'utf-8-unix
+                          inferior-lisp-program "sbcl")
+                    (add-to-list 'slime-contribs 'slime-fancy)
+                    (add-to-list 'slime-contribs 'slime-repl))
       #+END_SRC
 
 *** R
@@ -500,6 +503,7 @@ Hippie-expand is a nice autocompletion engine
                               (turn-on-reftex)
                               (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
                               (local-set-key (kbd "C-c f") 'insert-feature)
+                              (autopair-mode)
                               (setq font-latex-match-function-keywords
                                     '(("ipa" "{")
                                       ("twe" "{")
@@ -731,13 +735,14 @@ Cask seems to be problematic.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package w3m
-               :commands (w3m-browse-url w3m-session-crash-recovery-remove)
-               :init
-               (eval-when-compile
-                 (autoload 'w3m-search-escape-query-string "w3m-search"))
-               :config
-               (setq w3m-use-cookies t))
+    (use-package w3m
+                 :commands (w3m-browse-url w3m-session-crash-recovery-remove)
+                 :init
+                 (setq browse-url-browser-function 'w3m-browse-url)
+                 (eval-when-compile
+                   (autoload 'w3m-search-escape-query-string "w3m-search"))
+                 :config
+                 (setq w3m-use-cookies t))
 #+END_SRC
 
 ** Ack
@@ -780,6 +785,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                           helm-M-x
                           helm-occur)
                :config
+               (helm-mode)
                (use-package helm-config)
                (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
                (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
@@ -889,15 +895,15 @@ calendar app.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (require 'midnight)
-  (midnight-delay-set 'midnight-delay 0)
-  (setq midnight-period 1800)
-  (add-hook 'midnight-hook 
-            (defun my-midnight-hook ()
-               (progn 
-                 (org-export-icalendar-combine-agenda-files)
-                 (async-shell-command (format "scp -F ~/.ssh/config %s %s" 
-                                              org-combined-agenda-icalendar-file private/calendar-destination)))))
+  (use-package midnight
+    :init
+    (midnight-delay-set 'midnight-delay 0)
+    (setq midnight-period 1800)
+    (add-hook 'midnight-hook 
+              (defun my-midnight-hook ()
+                  (org-export-icalendar-combine-agenda-files)
+                  (shell-command (format "scp -F ~/.ssh/config %s %s" 
+                                         org-combined-agenda-icalendar-file private/calendar-destination)))))
 #+END_SRC
 
 ** Email
@@ -927,7 +933,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
     :load-path "/usr/local/Cellar/mu/0.9.11/share/emacs/site-lisp/mu4e/"
-    :commands (mu4e)
+    :commands (mu4e compose-mail)
     :config
     (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
           mu4e-maildir private/maildir
