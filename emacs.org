@@ -249,7 +249,7 @@ Automatically insert closing parentheses, braces etc.
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
     (use-package autopair
-      :commands (autopair-mode))
+      :commands autopair-mode)
 #+END_SRC
 
 
@@ -369,8 +369,9 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
       :config (elpy-enable))
     :config 
     (use-package py-autopep8
-      :commands (py-autopep8-before-save))
-    (add-hook 'before-save-hook 'py-autopep8-before-save))
+      :commands py-autopep8-before-save
+      :config
+      (add-hook 'before-save-hook 'py-autopep8-before-save)))
 #+END_SRC
 
 *** Common Lisp
@@ -400,7 +401,27 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
                     (autopair-mode)))
         (use-package ess-smart-underscore)
         (use-package ess-R-data-view)
-        (use-package ess-rutils)        
+        (use-package ess-rutils)  
+      
+        (defun tex-Rnw-check (name)
+          "When opening a .tex file, check to make sure there isn't a
+      corresponding .Rnw available, to make sure we don't try to edit
+      the wrong file."
+          (when (and (bufferp name)
+                     (buffer-file-name name))
+            (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
+              (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+                         (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
+                (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
+                    name
+                  (find-buffer-visiting rnw-file))))))
+      
+        (defadvice switch-to-buffer (around noweb-check activate)
+          (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
+                                    (ad-get-arg 0))))
+            ad-do-it))
+        (ad-update 'switch-to-buffer)
+      
         (add-hook 'LaTeX-mode-hook
                   (defun my-Rnw-mode-hook ()
                     "Add commands to AUCTeX's \\[TeX-command-list]."
@@ -703,7 +724,7 @@ This sets up RefTeX and BibTeX-mode.
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package reftex
-    :commands (turn-on-reftex)
+    :commands turn-on-reftex
     :config
     (setq reftex-use-external-file-finders t
           reftex-external-file-finders
@@ -1006,7 +1027,7 @@ Use =M-x twit= to start this.
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package twittering-mode
-    :commands (twit)
+    :commands twit
     :config
     (setq twittering-use-master-password t
           twittering-icon-mode t                ; Show icons
