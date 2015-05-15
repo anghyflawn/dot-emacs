@@ -12,6 +12,14 @@
     
 #+END_SRC
 
+** Pallet
+
+We also need to actually make sure Pallet is in use.
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+(pallet-mode)
+#+END_SRC
 
 * Initialization
 
@@ -511,6 +519,7 @@ Hippie-expand is a nice autocompletion engine
                                  "\\mbox{\\ensuremath{%s}%s}"
                                "\\mbox{[\\ensuremath{%s}%s]}")
                              value feature)))
+    
      
                   (add-hook 'LaTeX-mode-hook
                             (defun my-LaTeX-mode-hook ()
@@ -746,6 +755,17 @@ This sets up RefTeX and BibTeX-mode.
 
 * Other useful utilities
 
+
+** Firestarter
+
+This is a mode to get things done on saving a file. I use it for calendar syncing among other things.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package firestarter
+    :config (firestarter-mode))
+#+END_SRC
+
 ** w3m
 
 Sometimes you want to look things up on the internet without firing up
@@ -916,15 +936,13 @@ calendar app.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package midnight
-    :init
-    (midnight-delay-set 'midnight-delay 0)
-    (setq midnight-period 1800)
-    (add-hook 'midnight-hook 
-              (defun my-midnight-hook ()
-                  (org-export-icalendar-combine-agenda-files)
-                  (shell-command (format "scp -F ~/.ssh/config %s %s" 
-                                         org-combined-agenda-icalendar-file private/calendar-destination)))))
+  
+  (defun sync-calendar ()
+    (interactive)
+    (org-export-icalendar-combine-agenda-files)
+    (shell-command (format "rsync -avz %s %s" 
+                           org-combined-agenda-icalendar-file private/calendar-destination)))
+  
 #+END_SRC
 
 ** Email
