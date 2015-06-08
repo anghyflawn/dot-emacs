@@ -132,14 +132,10 @@ This sets the colours of the background and fonts. I find myself coming back to
 
 ** Fonts
 
-I use DejaVu Sans Mono, not because I'm a huge fan of it but because it's a 
-decent monospace font with good support for IPA. If you don't need much IPA
-then feel free to use whatever you want.
-
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (when (find-font (font-spec :name "Monaco"))
-    (set-frame-font "Monaco-15" t t))
+  (when (find-font (font-spec :name "Menlo"))
+    (set-frame-font "Menlo-15" t t))
 #+END_SRC
 
 ** Misc
