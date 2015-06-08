@@ -138,8 +138,8 @@ then feel free to use whatever you want.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (when (find-font (font-spec :name "DejaVu Sans Mono"))
-    (set-frame-font "DejaVu Sans Mono-15" t t))
+  (when (find-font (font-spec :name "Monaco"))
+    (set-frame-font "Monaco-15" t t))
 #+END_SRC
 
 ** Misc
@@ -313,10 +313,9 @@ Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package flycheck
-    :commands global-flycheck-mode
+    :commands (global-flycheck-mode flycheck-mode)
     :config 
-    (global-flycheck-mode 1)
-    (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc)))
+    (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck)))
 #+END_SRC
 
 ** Version control
@@ -399,62 +398,58 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
 
     #+NAME: editing
     #+BEGIN_SRC emacs-lisp :tangle no
-      (use-package ess
-        :commands R
-        :mode (("\\.R\\'" . R-mode)
-               ("\\.Rnw\\'" . Rnw-mode))
-        :init
-        (add-hook 'ess-mode-hook
-                  (defun my-ess-mode-hook ()
-                    (autopair-mode)))
-        (use-package ess-smart-underscore)
-        (use-package ess-R-data-view)
-        (use-package ess-rutils)  
+      (require 'ess-site)
+      (add-hook 'ess-mode-hook
+                (defun my-ess-mode-hook ()
+                  (autopair-mode)))
+      (use-package ess-smart-underscore)
+      (use-package ess-R-data-view)
+      (use-package ess-rutils)  
       
-        (defun tex-Rnw-check (name)
-          "When opening a .tex file, check to make sure there isn't a
+      (defun tex-Rnw-check (name)
+        "When opening a .tex file, check to make sure there isn't a
       corresponding .Rnw available, to make sure we don't try to edit
       the wrong file."
-          (when (and (bufferp name)
-                     (buffer-file-name name))
-            (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
-              (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
-                         (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
-                (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
-                    name
-                  (find-buffer-visiting rnw-file))))))
+        (when (and (bufferp name)
+                   (buffer-file-name name))
+          (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
+            (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+                       (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
+              (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
+                  name
+                (find-buffer-visiting rnw-file))))))
       
-        (defadvice switch-to-buffer (around noweb-check activate)
-          (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
-                                    (ad-get-arg 0))))
-            ad-do-it))
-        (ad-update 'switch-to-buffer)
+      (defadvice switch-to-buffer (around noweb-check activate)
+        (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
+                                  (ad-get-arg 0))))
+          ad-do-it))
+      (ad-update 'switch-to-buffer)
       
-        (add-hook 'LaTeX-mode-hook
-                  (defun my-Rnw-mode-hook ()
-                    "Add commands to AUCTeX's \\[TeX-command-list]."
-                    (unless (and (featurep 'tex-site) (featurep 'tex))
-                      (error "AUCTeX does not seem to be loaded"))
-                    (add-to-list 'TeX-command-list
-                                 '("Knit" "Rscript -e \"library(knitr); knit('%t')\""
-                                   TeX-run-command nil (latex-mode) :help
-                                   "Run Knitr") t)
-                    (add-to-list 'TeX-command-list
-                                 '("LaTeXKnit" "%l %(mode) %s"
-                                   TeX-run-TeX nil (latex-mode) :help
-                                   "Run LaTeX after Knit") t)
-                    (dolist (suffix '("nw" "Snw" "Rnw"))
-                      (add-to-list 'TeX-file-extensions suffix))))
-        (setq ess-swv-processor 'knitr)
+      (add-hook 'LaTeX-mode-hook
+                (defun my-Rnw-mode-hook ()
+                  "Add commands to AUCTeX's \\[TeX-command-list]."
+                  (unless (and (featurep 'tex-site) (featurep 'tex))
+                    (error "AUCTeX does not seem to be loaded"))
+                  (add-to-list 'TeX-command-list
+                               '("Knit" "Rscript -e \"library(knitr); knit('%t')\""
+                                 TeX-run-command nil (latex-mode) :help
+                                 "Run Knitr") t)
+                  (add-to-list 'TeX-command-list
+                               '("LaTeXKnit" "%l %(mode) %s"
+                                 TeX-run-TeX nil (latex-mode) :help
+                                 "Run LaTeX after Knit") t)
+                  (dolist (suffix '("nw" "Snw" "Rnw"))
+                    (add-to-list 'TeX-file-extensions suffix))))
+      (setq ess-swv-processor 'knitr)
+      
+      (use-package polymode           ; ESS with polymode
         :config
-        (use-package polymode           ; ESS with polymode
-          :config
-          (require 'poly-R)               ; Load necessary modes
-          (require 'poly-markdown)
-          (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
-          (setq 
-           pm-weaver "knitR-ESS"
-           pm-exporter "pandoc")))
+        (require 'poly-R)               ; Load necessary modes
+        (require 'poly-markdown)
+        (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
+        (setq 
+         pm-weaver "knitR-ESS"
+         pm-exporter "pandoc"))
     #+END_SRC
 
 *** Stan
@@ -494,7 +489,7 @@ Hippie-expand is a nice autocompletion engine
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package auctex
                   :mode (("\\.tex\\'" . LaTeX-mode)
-                         ("\\.Rnw\\'" . ess-noweb-mode))
+                         ("\\.Rnw\\'" . Rnw-mode))
                   :commands (LaTeX-mode latex-mode plain-tex-mode)
                   :init
                   (defun switch-to-biblatex ()
@@ -626,7 +621,7 @@ Hippie-expand is a nice autocompletion engine
    #+NAME: editing
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package markdown-mode
-       :mode "\\.\\(m\\(ark\\)?down\\|md\\)$"
+       :mode ("\\.\\(m\\(ark\\)?down\\|md\\)$" . markdown-mode)
        :config
        (add-hook 'markdown-mode-hook
                (defun my-markdown-mode-hook ()
@@ -639,8 +634,7 @@ Hippie-expand is a nice autocompletion engine
                  (orgtbl-mode 1)
                  (yas-minor-mode)
                  (pandoc-mode)))
-       ;; (setq pandoc-binary "/usr/local/bin/pandoc")
-       (setq pandoc-binary "/Users/pplsuser/Library/Haskell/bin/pandoc")
+       (setq pandoc-binary "~/Library/Haskell/bin/pandoc")
           
        :bind
        ("C-c f" . pandoc--insert-feature)
@@ -672,26 +666,26 @@ Hippie-expand is a nice autocompletion engine
          (if (not (string-equal output-format "latex"))
              "## References ##"
            ""))
-
+     
        (defun pandoc--hline-for-new-slide (output-format)
          (if (string-equal output-format "revealjs")
              "---"
            ""))
-
+     
        (defun pandoc--pause (output-format)
          (if (string-equal output-format "revealjs")
              ". . ."
            ""))
-
+     
        (defun pandoc--smallcaps (output-format txt)
          (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
-
+     
        (setq my-pandoc-directives
              '(("references" . pandoc--add-references-header)
                ("slide" . pandoc--hline-for-new-slide)
                ("pause" . pandoc--pause)
                ("sc" . pandoc--smallcaps)))
-
+     
        (defun pandoc--insert-feature (arg feature value)
          (interactive "P\nMFeature: \nMValue: ")
          (insert (format
@@ -704,7 +698,7 @@ Hippie-expand is a nice autocompletion engine
                  (defun my-pandoc-mode-hook ()
                    (dolist (x my-pandoc-directives)
                      (add-to-list 'pandoc-directives x)))))
-
+     
    #+END_SRC
 
 ** BibTeX
@@ -806,43 +800,44 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package helm
-               :bind
-               (("M-x" . helm-M-x)
-                ("M-y" . helm-show-kill-ring)
-                ("C-x b" . helm-mini)
-                ("C-x C-f" . helm-find-files)
-                ("C-c u" . helm-org-headlines))
-               :commands (helm-buffers-list
-                          helm-colors
-                          helm-find-files
-                          helm-for-files
-                          helm-google-suggest
-                          helm-mini
-                          helm-help
-                          helm-show-kill-ring
-                          helm-org-keywords
-                          helm-org-headlines
-                          helm-M-x
-                          helm-occur)
-               :config
-               (helm-mode)
-               (use-package helm-config)
-               (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
-               (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
-               (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
-  
-               (when (executable-find "curl")
-                 (setq helm-google-suggest-use-curl-p t))
-  
-               (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-                     helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-                     helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-                     helm-ff-file-name-history-use-recentf t
-                     helm-buffers-fuzzy-matching t
-                     helm-recentf-fuzzy-match t))
-              
-  
+      (use-package helm
+                   :bind
+                   (("M-x" . helm-M-x)
+                    ("M-y" . helm-show-kill-ring)
+                    ("C-x b" . helm-mini)
+                    ("C-x C-f" . helm-find-files)
+                    ("C-c u" . helm-org-headlines)
+                    ("C-x 7" . helm-unicode))
+                   :commands (helm-buffers-list
+                              helm-colors
+                              helm-find-files
+                              helm-for-files
+                              helm-google-suggest
+                              helm-mini
+                              helm-help
+                              helm-show-kill-ring
+                              helm-org-keywords
+                              helm-org-headlines
+                              helm-M-x
+                              helm-occur)
+                   :config
+                   (helm-mode)
+                   (use-package helm-config)
+                   (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
+                   (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
+                   (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+      
+                   (when (executable-find "curl")
+                     (setq helm-google-suggest-use-curl-p t))
+      
+                   (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
+                         helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+                         helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+                         helm-ff-file-name-history-use-recentf t
+                         helm-buffers-fuzzy-matching t
+                         helm-recentf-fuzzy-match t))
+                  
+      
 #+END_SRC
 
 Helm-backup is a handy tool which puts all your saved files under Git
@@ -897,16 +892,16 @@ These are some convenience functions for my own use
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-
+  
   (defmacro clean-buffer (form)
     `(save-excursion
        (goto-char (point-min))
        ,form))
-
+  
   (defun unsmart-quotes ()
     (interactive)
     (clean-buffer (replace-regexp "[‘’“”]" "'")))
-
+  
   (defun clean-pandoc-output ()
     (interactive)
     (unsmart-quotes)
@@ -916,7 +911,9 @@ These are some convenience functions for my own use
     (clean-buffer (replace-string "…" "..."))
     (clean-buffer (replace-regexp "\\\\iem?" "i.e."))
     (clean-buffer (replace-regexp "\\\\egm?" "e.g."))
-    (clean-buffer (replace-regexp "\\\\cfm?" "cf.")))
+    (clean-buffer (replace-regexp "\\\\cfm?" "cf."))
+    (clean-buffer (replace-regexp "\\\\ipa{\\([\}]+\\)}" "\\1"))
+    (clean-buffer (replace-regexp "\\\\phonint{\\(.+\\)}" "⟦\\1⟧")))
 #+END_SRC
 
 Golden-ratio mode makes sure your window splits are of a sensible size
@@ -945,6 +942,14 @@ calendar app.
   
 #+END_SRC
 
+Using =calfw= to show a calendar view
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package calfw-org
+    :bind ("C-x c o" . cfw:open-org-calendar))
+#+END_SRC
+
 ** Email
 
 This is just a convenience function to choose a signature at random from four versions
@@ -971,7 +976,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
-    :load-path "/usr/local/Cellar/mu/0.9.11/share/emacs/site-lisp/mu4e/"
+    :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu4e/"
     :commands (mu4e compose-mail)
     :config
     (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
