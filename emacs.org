@@ -596,15 +596,6 @@ Hippie-expand is a nice autocompletion engine
                         org-icalendar-timezone "Europe/London"))
    #+END_SRC
 
-   We might as well tell Emacs where we are at this stage
-
-   #+NAME: utils
-   #+BEGIN_SRC emacs-lisp :tangle no
-     ;; Edinburgh
-     (setq calendar-latitude 55.95)
-     (setq calendar-longitude -3.20)
-   #+END_SRC
-
 ** Markdown and pandoc
    
    Markdown is a lightweight alternative to HTML. For me, the two main
@@ -628,27 +619,7 @@ Hippie-expand is a nice autocompletion engine
                      (setq-local reftex-cite-format '((?\C-m . "@%l")
                                                       (?p . "[@%l]")))))
                  (orgtbl-mode 1)
-                 (yas-minor-mode)
-                 (pandoc-mode)))
-       (setq pandoc-binary "~/Library/Haskell/bin/pandoc")
-          
-       :bind
-       ("C-c f" . pandoc--insert-feature)
-       ("C-c C-s g" . markdown-insert-smallcaps))
-          
-          
-     (defun markdown-insert-smallcaps ()
-       (interactive
-        (if (markdown-use-region-p)
-            ;; Active region
-            (let ((bounds (markdown-unwrap-things-in-region
-                           (region-beginning) (region-end)
-                           markdown-regex-code 2 4)))
-              (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" nil (car bounds) (cdr bounds)))
-          ;; Code markup removal, code markup for word, or empty markup insertion
-          (if (markdown-code-at-point-p)
-              (markdown-unwrap-thing-at-point nil 0 1)
-            (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
+                 (yas-minor-mode))))
    #+END_SRC
 
    Now we set up pandoc-mode and add some utility functions
@@ -657,31 +628,41 @@ Hippie-expand is a nice autocompletion engine
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package pandoc-mode
        :defer t
+       :bind
+       ("C-c f" . pandoc--insert-feature)
+       ("C-c C-s g" . markdown-insert-smallcaps))
        :init
        (defun pandoc--add-references-header (output-format)
          (if (not (string-equal output-format "latex"))
              "## References ##"
            ""))
-     
        (defun pandoc--hline-for-new-slide (output-format)
          (if (string-equal output-format "revealjs")
              "---"
            ""))
-     
        (defun pandoc--pause (output-format)
          (if (string-equal output-format "revealjs")
              ". . ."
            ""))
-     
        (defun pandoc--smallcaps (output-format txt)
          (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
-     
+       (defun markdown-insert-smallcaps ()
+         (interactive
+          (if (markdown-use-region-p)
+              ;; Active region
+              (let ((bounds (markdown-unwrap-things-in-region
+                             (region-beginning) (region-end)
+                             markdown-regex-code 2 4)))
+                (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" nil (car bounds) (cdr bounds)))
+            ;; Code markup removal, code markup for word, or empty markup insertion
+            (if (markdown-code-at-point-p)
+                (markdown-unwrap-thing-at-point nil 0 1)
+              (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
        (setq my-pandoc-directives
              '(("references" . pandoc--add-references-header)
                ("slide" . pandoc--hline-for-new-slide)
                ("pause" . pandoc--pause)
                ("sc" . pandoc--smallcaps)))
-     
        (defun pandoc--insert-feature (arg feature value)
          (interactive "P\nMFeature: \nMValue: ")
          (insert (format
@@ -692,9 +673,11 @@ Hippie-expand is a nice autocompletion engine
        :config
        (add-hook 'pandoc-mode-hook
                  (defun my-pandoc-mode-hook ()
+                   (setq pandoc-use-async nil
+                         pandoc-binary "~/Library/Haskell/bin/pandoc")
                    (dolist (x my-pandoc-directives)
-                     (add-to-list 'pandoc-directives x)))))
-     
+                     (add-to-list 'pandoc-directives x))))
+
    #+END_SRC
 
 ** BibTeX
@@ -754,26 +737,6 @@ This is a mode to get things done on saving a file. I use it for calendar syncin
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package firestarter
     :config (firestarter-mode))
-#+END_SRC
-
-** w3m
-
-Sometimes you want to look things up on the internet without firing up
-a browser. Here, we use w3m (which needs to be installed separately:
-=brew install w3m= on OS X. You will also need to install =w3m=
-separately (=M-x install-package RET w3m RET=), as installing it from
-Cask seems to be problematic.
-
-#+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-    (use-package w3m
-                 :commands (w3m-browse-url w3m-session-crash-recovery-remove)
-                 :init
-                 (setq browse-url-browser-function 'w3m-browse-url)
-                 (eval-when-compile
-                   (autoload 'w3m-search-escape-query-string "w3m-search"))
-                 :config
-                 (setq w3m-use-cookies t))
 #+END_SRC
 
 ** Ack
@@ -932,9 +895,9 @@ calendar app.
   
   (defun sync-calendar ()
     (interactive)
-    (org-export-icalendar-combine-agenda-files)
+    (org-icalendar-combine-agenda-files)
     (shell-command (format "rsync -avz %s %s" 
-                           org-combined-agenda-icalendar-file private/calendar-destination)))
+                           org-icalendar-combined-agenda-file private/calendar-destination)))
   
 #+END_SRC
 
@@ -1052,6 +1015,24 @@ Use =M-x twit= to start this.
           twittering-icon-mode t                ; Show icons
           twittering-timer-interval 150         ; Update your timeline each 300 seconds (5 minutes)
           twittering-url-show-status nil))       ; Keeps the echo area from showing all the http processes
+#+END_SRC
+
+** Avy
+
+A better search-based navigation.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package avy
+    :bind
+    ("C-:" . avy-goto-char)
+    ("C-'" . avy-goto-char-2)
+    ("M-g f" . avy-goto-line)
+    ("M-g w" . avy-goto-word-1)
+    ("M-g e" . avy-goto-word-0)
+    :config
+    (avy-setup-default))
+    
 #+END_SRC
 
 

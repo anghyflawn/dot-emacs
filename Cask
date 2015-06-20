@@ -44,6 +44,7 @@
 (depends-on "paradox")
 (depends-on "pkg-info")
 (depends-on "polymode")
+(depends-on "popup")
 (depends-on "powerline")
 (depends-on "py-autopep8")
 (depends-on "pyvenv")
