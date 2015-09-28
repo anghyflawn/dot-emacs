@@ -2,14 +2,14 @@
 #+AUTHOR: Pavel Iosad
 
 * Configuration
-** Use-package
+** use-package
 
-   We use [[http://github.com/jwiegley/use-package][use-package]] to simplify the loading of packages. Thus we start off by installing it.
+We use [[http://github.com/edvorg/rekages. Thus we start off by installing it.
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle no
   (require 'use-package)
-    
+ 
 #+END_SRC
 
 ** Pallet
@@ -122,12 +122,11 @@ We don't need scroll bars or tool bars
 
 ** Theme
 
-This sets the colours of the background and fonts. I find myself coming back to
-[[http://github.com/bbatsov/zenburn][Zenburn]].
+This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (load-theme 'zenburn t)
+  (load-theme 'niflheim t)
 #+END_SRC
 
 ** Fonts
@@ -369,12 +368,8 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
     :mode ("\\.py\\'" . python-mode)
     :init
     (use-package elpy
-      :config (elpy-enable))
-    :config 
-    (use-package py-autopep8
-      :commands py-autopep8-before-save
-      :config
-      (add-hook 'before-save-hook 'py-autopep8-before-save)))
+      :config (elpy-enable)))
+    
 #+END_SRC
 
 *** Common Lisp
@@ -390,7 +385,7 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
                     (add-to-list 'slime-contribs 'slime-repl))
       #+END_SRC
 
-*** R
+*** COMMENT R
 
     #+NAME: editing
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -401,7 +396,7 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
       (use-package ess-smart-underscore)
       (use-package ess-R-data-view)
       (use-package ess-rutils)  
-      
+
       (defun tex-Rnw-check (name)
         "When opening a .tex file, check to make sure there isn't a
       corresponding .Rnw available, to make sure we don't try to edit
@@ -414,13 +409,13 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
               (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
                   name
                 (find-buffer-visiting rnw-file))))))
-      
+
       (defadvice switch-to-buffer (around noweb-check activate)
         (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
                                   (ad-get-arg 0))))
           ad-do-it))
       (ad-update 'switch-to-buffer)
-      
+
       (add-hook 'LaTeX-mode-hook
                 (defun my-Rnw-mode-hook ()
                   "Add commands to AUCTeX's \\[TeX-command-list]."
@@ -437,7 +432,7 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
                   (dolist (suffix '("nw" "Snw" "Rnw"))
                     (add-to-list 'TeX-file-extensions suffix))))
       (setq ess-swv-processor 'knitr)
-      
+
       (use-package polymode           ; ESS with polymode
         :config
         (require 'poly-R)               ; Load necessary modes
@@ -595,6 +590,38 @@ Hippie-expand is a nice autocompletion engine
                         org-src-fontify-natively t
                         org-icalendar-timezone "Europe/London"))
    #+END_SRC
+  
+   #+NAME: utils
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (use-package appt
+       :config
+       (setq diary-file private/diary-file)
+       (setq appt-time-msg-list nil)    ;; clear existing appt list
+       (setq appt-display-interval '15) ;; warn every 15 minutes from t - appt-message-warning-time
+       (setq
+        appt-message-warning-time '15  ;; send first warning 15 minutes before appointment
+        appt-display-mode-line nil     ;; don't show in the modeline
+        appt-display-format 'window)   ;; pass warnings to the designated window function
+       (appt-activate 1)                ;; activate appointment notification
+       (display-time)                   ;; activate time display
+
+       (org-agenda-to-appt)             ;; generate the appt list from org agenda files on emacs launch
+       (run-at-time "24:01" 3600 'org-agenda-to-appt)           ;; update appt list hourly
+       (add-hook 'org-finalize-agenda-hook 'org-agenda-to-appt) ;; update appt list on agenda view
+
+     ;; set up the call to terminal-notifier
+       (defvar my-notifier-path 
+         "/usr/bin/terminal-notifier")  
+       (defun my-appt-send-notification (title msg)
+         (shell-command (concat my-notifier-path " -message " msg " -title " title " -sender \"org.gnu.emacs\" -group \"emacs\"")))
+
+       ;; designate the window function for my-appt-send-notification
+       (defun my-appt-display (min-to-app new-time msg)
+         (my-appt-send-notification 
+          (format "'Appointment in %s minutes'" min-to-app)    ;; passed to -title in terminal-notifier call
+          (format "'%s'" msg)))                                ;; passed to -message in terminal-notifier call
+       (setq appt-disp-window-function (function my-appt-display)))
+   #+END_SRC
 
 ** Markdown and pandoc
    
@@ -619,6 +646,7 @@ Hippie-expand is a nice autocompletion engine
                      (setq-local reftex-cite-format '((?\C-m . "@%l")
                                                       (?p . "[@%l]")))))
                  (orgtbl-mode 1)
+                 (outline-minor-mode)
                  (yas-minor-mode))))
    #+END_SRC
 
@@ -637,11 +665,11 @@ Hippie-expand is a nice autocompletion engine
              "## References ##"
            ""))
        (defun pandoc--hline-for-new-slide (output-format)
-         (if (string-equal output-format "revealjs")
+         (if (member output-format '("revealjs" "beamer"))
              "---"
            ""))
        (defun pandoc--pause (output-format)
-         (if (string-equal output-format "revealjs")
+         (if (member output-format '("revealjs" "beamer"))
              ". . ."
            ""))
        (defun pandoc--smallcaps (output-format txt)
@@ -716,8 +744,9 @@ This sets up RefTeX and BibTeX-mode.
           reftex-default-bibliography `(,private/bibliography-file)
           reftex-cite-prompt-optional-args nil
           reftex-cite-cleanup-optional-args t)
+    (global-unset-key "\C-c /")
     (add-to-list 'reftex-bibliography-commands "addbibresource"))
-  
+
   (use-package bibtex
     :mode ("\\.bib" . bibtex-mode)
     :init
@@ -725,6 +754,45 @@ This sets up RefTeX and BibTeX-mode.
     (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
 #+END_SRC
 
+** Evil
+
+
+Evil is a mode that makes vi(m) like keybindings
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no 
+  (use-package evil
+    :init
+    (setq evil-want-C-i-jump nil)
+    :config
+    (evil-mode 1)
+    (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+    (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+    (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+    (define-key evil-insert-state-map "\C-e" 'end-of-line)
+
+    (setq-default 
+    ; Make horizontal movement cross lines                                    
+    evil-cross-lines t
+    sentence-end-double-space nil
+    evil-default-state 'normal)
+
+    (loop for (mode . state) in
+          '((inferior-emacs-lisp-mode . emacs)
+            (shell-mode . insert)
+            (git-commit-mode . insert)
+            (term-mode . emacs)
+            (dired-mode . emacs)
+            (wdired-mode . normal)
+            (help-mode . emacs)
+            (comint-mode . emacs)
+            (paradox-menu-mode . emacs))
+          do (evil-set-initial-state mode state)))
+
+  (use-package evil-surround
+    :config (global-evil-surround-mode 1))
+#+END_SRC
 
 * Other useful utilities
 
@@ -805,10 +873,11 @@ don't want or don't have that much space.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package helm-backup
-               :bind ("C-c b" . helm-backup)
-               :config
-               (add-hook 'after-save-hook 'helm-backup-versioning))
+    (use-package helm-backup
+      :defer nil
+      :bind ("C-c b" . helm-backup)
+      :config
+      (add-hook 'after-save-hook 'helm-backup-versioning))
 
 #+END_SRC
 
@@ -851,16 +920,16 @@ These are some convenience functions for my own use
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  
+
   (defmacro clean-buffer (form)
     `(save-excursion
        (goto-char (point-min))
        ,form))
-  
+
   (defun unsmart-quotes ()
     (interactive)
     (clean-buffer (replace-regexp "[‘’“”]" "'")))
-  
+
   (defun clean-pandoc-output ()
     (interactive)
     (unsmart-quotes)
@@ -871,8 +940,16 @@ These are some convenience functions for my own use
     (clean-buffer (replace-regexp "\\\\iem?" "i.e."))
     (clean-buffer (replace-regexp "\\\\egm?" "e.g."))
     (clean-buffer (replace-regexp "\\\\cfm?" "cf."))
-    (clean-buffer (replace-regexp "\\\\ipa{\\([\}]+\\)}" "\\1"))
-    (clean-buffer (replace-regexp "\\\\phonint{\\(.+\\)}" "⟦\\1⟧")))
+    (clean-buffer (replace-regexp "\\\\ipa{\\([^\}]+\\)}" "\\1"))
+    (clean-buffer (replace-regexp "\\\\phonint{\\(.+\\)}" "⟦\\1⟧"))
+    (clean-buffer (replace-regexp "\\\\featurestring{\\([^\}]+\\)}" "〈\\1〉"))
+    (clean-buffer (replace-regexp "\\\\fea{\\([^\}]+\\)}{\\([^\}]+\\)}" "\\1[\\2]"))
+    (clean-buffer (replace-regexp "\\\\mbox{\\([^\}]+\\)}" "\\1"))
+    (clean-buffer (replace-regexp "\$?\\\\pm\$?" "±"))
+    (clean-buffer (replace-regexp "\\\\[zba]\\." ""))
+    (clean-buffer (replace-regexp "\\\\tw[pe]{\\([^\}]+\\)}{\\([^\}]+\\)}{\\([^\}]+\\)}" "\\1  \*\\2\*  '\\3'\n"))
+    (clean-buffer (replace-regexp "\\\\mb[ip]\{\\([^\}]+\\)}" "\\1\n"))
+    (clean-buffer (replace-regexp "\\\\rt" "×")))
 #+END_SRC
 
 Golden-ratio mode makes sure your window splits are of a sensible size
@@ -1017,6 +1094,14 @@ Use =M-x twit= to start this.
           twittering-url-show-status nil))       ; Keeps the echo area from showing all the http processes
 #+END_SRC
 
+** EWW
+
+=eww= is the emacs browser, which we want to use to open URLS
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+(setq browse-url-function 'eww-browse-url)
+#+END_SRC
 ** Avy
 
 A better search-based navigation.
@@ -1068,6 +1153,7 @@ the ~NAME~ directives above the ~SRC~ blocks throughout this document.
 
 ;; Configuration group: init-after
 <<init-after>>
+
 
 ;; emacs.el ends here
 #+END_SRC
