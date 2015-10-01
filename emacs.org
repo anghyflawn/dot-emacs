@@ -385,7 +385,7 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
                     (add-to-list 'slime-contribs 'slime-repl))
       #+END_SRC
 
-*** COMMENT R
+*** R
 
     #+NAME: editing
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -571,7 +571,7 @@ Hippie-expand is a nice autocompletion engine
      (global-set-key (kbd "C-x C-a C-w") 
                      (lambda () 
                        (interactive) 
-                       (find-file (expand-file-name private/org-file))))
+                       (find-file (expand-file-name (car private/org-files)))))
    #+END_SRC
 
    The following sets up Org-mode itself
@@ -584,7 +584,7 @@ Hippie-expand is a nice autocompletion engine
                   (define-key global-map "\C-ca" 'org-agenda)
                   (setq org-log-done t
                         org-use-property-inheritance t
-                        org-agenda-files (list private/org-file)
+                        org-agenda-files private/org-files
                         org-directory private/org-directory
                         org-startup-indented t
                         org-src-fontify-natively t
@@ -787,6 +787,7 @@ Evil is a mode that makes vi(m) like keybindings
             (wdired-mode . normal)
             (help-mode . emacs)
             (comint-mode . emacs)
+            (eww-mode . emacs)
             (paradox-menu-mode . emacs))
           do (evil-set-initial-state mode state)))
 
@@ -914,6 +915,7 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
     :config
     (setq sane-term-shell-command "/bin/zsh")) ;; or your shell of choice
 
+  (setq enable-recursive-minibuffers t)
 #+END_SRC
 
 These are some convenience functions for my own use
@@ -969,22 +971,23 @@ calendar app.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  
+  (use-package org-caldav
+    :config
+    (setq org-caldav-url private/org-caldav-url
+          org-caldav-calendar-id private/org-caldav-calendar-id
+          org-caldav-inbox private/org-caldav-inbox
+          org-caldav-files private/org-caldav-files
+          org-icalendar-timezone "Europe/London"))
+
+
   (defun sync-calendar ()
     (interactive)
     (org-icalendar-combine-agenda-files)
     (shell-command (format "rsync -avz %s %s" 
                            org-icalendar-combined-agenda-file private/calendar-destination)))
-  
+
 #+END_SRC
 
-Using =calfw= to show a calendar view
-
-#+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package calfw-org
-    :bind ("C-x c o" . cfw:open-org-calendar))
-#+END_SRC
 
 ** Email
 
@@ -1015,6 +1018,25 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu4e/"
     :commands (mu4e compose-mail)
     :config
+    
+(defun mu4e-shr2text ()
+"Html to text using the shr engine; this can be used in
+`mu4e-html2text-command' in a new enough emacs. Based on code by
+Titus von der Malsburg."
+  (interactive)
+  (let ((dom (libxml-parse-html-region (point-min) (point-max)))
+	 ;; When HTML emails contain references to remote images,
+	 ;; retrieving these images leaks information. For example,
+	 ;; the sender can see when I openend the email and from which
+	 ;; computer (IP address). For this reason, it is preferrable
+	 ;; to not retrieve images.
+	 ;; See this discussion on mu-discuss:
+	 ;; https://groups.google.com/forum/#!topic/mu-discuss/gr1cwNNZnXo
+	(shr-inhibit-images t))
+    (erase-buffer)
+    (shr-insert-document dom)
+    (goto-char (point-min))))
+
     (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
           mu4e-maildir private/maildir
           mu4e-drafts-folder "/Drafts"
@@ -1037,10 +1059,12 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-compose-complete-only-after "2012-09-15"
           mu4e-headers-date-format "%d-%m-%Y"
           message-kill-buffer-on-exit t
-          mu4e-html2text-command "w3m -dump -T text/html"
+          mu4e-html2text-command 'mu4e-shr2text
           mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
           mu4e-compose-dont-reply-to-self t
           mu4e-compose-keep-self-cc nil)
+
+    
   
     (require 'gnus-dired)
     ;; make the `gnus-dired-mail-buffers' function also work on
@@ -1064,7 +1088,10 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
   
     (add-hook 'mu4e-view-mode-hook
               (defun my-view-mode-hook ()
-                (visual-line-mode)))
+              ;; try to emulate some of the eww key-bindings
+              (local-set-key (kbd "<tab>") 'shr-next-link)
+              (local-set-key (kbd "<backtab>") 'shr-previous-link)
+              (visual-line-mode)))
   
   
     (add-hook 'mu4e-compose-mode-hook
@@ -1096,11 +1123,11 @@ Use =M-x twit= to start this.
 
 ** EWW
 
-=eww= is the emacs browser, which we want to use to open URLS
+=eww= is the emacs browser, which we want to use to open URLs
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-(setq browse-url-function 'eww-browse-url)
+(setq browse-url-browser-function 'eww-browse-url)
 #+END_SRC
 ** Avy
 
