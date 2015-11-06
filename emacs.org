@@ -4,7 +4,7 @@
 * Configuration
 ** use-package
 
-We use [[http://github.com/edvorg/rekages. Thus we start off by installing it.
+We use [[http://github.com/edvorg/use-package][use-package]] to manage packages. Thus we start off by installing it.
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -105,6 +105,28 @@ to make sure Emacs doesn't dump them in your =init.el=.
   (load custom-file 'noerror)
 #+END_SRC
 
+** Save desktop
+
+#+NAME:init-after
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package desktop
+:config
+
+(desktop-save-mode)
+
+(setq desktop-dirname "~/.emacs.d"
+      desktop-base-file-name "desktop"
+      desktop-base-lock-name "desktop.lock"
+      desktop-restore-frames t
+      desktop-restore-reuses-frames t
+      desktop-restore-in-current-display t
+      desktop-restore-forces-onscreen t)
+
+(defun desktop-save ()
+  (interactive)
+  (if (eq (desktop-owner) (emacs-pid))
+      (desktop-save desktop-dirname))))
+#+END_SRC
 
 * Appearance
 
@@ -474,69 +496,130 @@ Hippie-expand is a nice autocompletion engine
 #+BEGIN_SRC emacs-lisp :tangle no
   (global-set-key (kbd "M-/") 'hippie-expand)
 #+END_SRC
+** Smartparens
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package smartparens-config
+    :ensure smartparens
+    :config
+    (progn
+      (show-smartparens-global-mode t)
+      (add-hook 'prog-mode-hook #'turn-on-smartparens-strict-mode)
+      (add-hook 'markdown-mode-hook #'turn-on-smartparens-strict-mode)
+      (add-hook 'LaTeX-mode-hook #'turn-on-smartparens-strict-mode)
+      (use-package evil-smartparens
+        :config
+        (progn
+          (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
+          (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
+
+      (bind-keys
+       :map smartparens-mode-map
+       ("C-M-a" . sp-beginning-of-sexp)
+       ("C-M-e" . sp-end-of-sexp)
+
+       ("C-<down>" . sp-down-sexp)
+       ("C-<up>"   . sp-up-sexp)
+       ("M-<down>" . sp-backward-down-sexp)
+       ("M-<up>"   . sp-backward-up-sexp)
+
+       ("C-M-f" . sp-forward-sexp)
+       ("C-M-b" . sp-backward-sexp)
+
+       ("C-M-n" . sp-next-sexp)
+       ("C-M-p" . sp-previous-sexp)
+
+       ("C-S-f" . sp-forward-symbol)
+       ("C-S-b" . sp-backward-symbol)
+
+       ("C-<right>" . sp-forward-slurp-sexp)
+       ("M-<right>" . sp-forward-barf-sexp)
+       ("C-<left>"  . sp-backward-slurp-sexp)
+       ("M-<left>"  . sp-backward-barf-sexp)
+
+       ("C-M-t" . sp-transpose-sexp)
+       ("C-M-k" . sp-kill-sexp)
+       ("C-k"   . sp-kill-hybrid-sexp)
+       ("M-k"   . sp-backward-kill-sexp)
+       ("C-M-w" . sp-copy-sexp)
+
+       ("C-M-d" . delete-sexp)
+
+       ("M-<backspace>" . backward-kill-word)
+       ("C-<backspace>" . sp-backward-kill-word)
+       ([remap sp-backward-kill-word] . backward-kill-word)
+
+       ("M-[" . sp-backward-unwrap-sexp)
+       ("M-]" . sp-unwrap-sexp)
+
+       ("C-x C-t" . sp-transpose-hybrid-sexp))))
+#+END_SRC
 
 ** LaTeX
    #+NAME: editing
    #+BEGIN_SRC emacs-lisp :tangle no
-     (use-package auctex
-                  :mode (("\\.tex\\'" . LaTeX-mode)
-                         ("\\.Rnw\\'" . Rnw-mode))
-                  :commands (LaTeX-mode latex-mode plain-tex-mode)
-                  :init
-                  (defun switch-to-biblatex ()
-                    "Something in my template seems to conflict with
+     (use-package tex-site
+       :ensure auctex
+       :mode (("\\.tex\\'" . LaTeX-mode)
+              ("\\.Rnw\\'" . Rnw-mode))
+       :commands (LaTeX-mode latex-mode plain-tex-mode)
+       :init
+       (defun switch-to-biblatex ()
+         "Something in my template seems to conflict with
                      AUCTeX's automated BibLaTeX support. So, we do
                      this manually. Feel free to comment out."
-                    (interactive)
-                    (setq-local reftex-cite-format
-                                '((?\C-m . "\\cite[]{%l}")
-                                  (?f . "\\footcite[][]{%l}")
-                                  (?t . "\\textcite[]{%l}")
-                                  (?p . "\\parencite[]{%l}")
-                                  (?o . "\\citepr[]{%l}")
-                                  (?n . "\\nocite{%l}"))))
-     
-                  (defun insert-feature (arg feature value)
-                    "This just saves some typing, feel free to comment
+         (interactive)
+         (setq-local reftex-cite-format
+                     '((?\C-m . "\\cite[]{%l}")
+                       (?f . "\\footcite[][]{%l}")
+                       (?t . "\\textcite[]{%l}")
+                       (?p . "\\parencite[]{%l}")
+                       (?o . "\\citepr[]{%l}")
+                       (?n . "\\nocite{%l}")
+                       (?a . "\\citeauthor{%l}"))))
+
+       (defun insert-feature (arg feature value)
+         "This just saves some typing, feel free to comment
                      out."
-                    (interactive "P\nMFeature: \nMValue: ")
-                    (insert (format
-                             (if arg
-                                 "\\mbox{\\ensuremath{%s}%s}"
-                               "\\mbox{[\\ensuremath{%s}%s]}")
-                             value feature)))
-    
-     
-                  (add-hook 'LaTeX-mode-hook
-                            (defun my-LaTeX-mode-hook ()
-                              (flyspell-mode 1)
-                              (TeX-fold-mode 1)
-                              ;; This activates the X-SAMPA layout, making
-                              ;; it accessible via C-\
-                              (set-input-method "ipa-x-sampa")
-                              (toggle-input-method)
-                              (outline-minor-mode 1)
-                              (turn-on-reftex)
-                              (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-                              (local-set-key (kbd "C-c f") 'insert-feature)
-                              (autopair-mode)
-                              (setq font-latex-match-function-keywords
+         (interactive "P\nMFeature: \nMValue: ")
+         (insert (format
+                  (if arg
+                      "\\mbox{\\ensuremath{%s}%s}"
+                    "\\mbox{[\\ensuremath{%s}%s]}")
+                  value feature)))
+  
+  
+       (add-hook 'LaTeX-mode-hook
+                 (defun my-LaTeX-mode-hook ()
+                   (flyspell-mode 1)
+                   (TeX-fold-mode 1)
+                   ;; This activates the X-SAMPA layout, making
+                   ;; it accessible via C-\
+                   (set-input-method "ipa-x-sampa")
+                   (toggle-input-method)
+                   (outline-minor-mode 1)
+                   (turn-on-reftex)
+                   (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                   (local-set-key (kbd "C-c f") 'insert-feature)
+                   (autopair-mode)
+                   (setq font-latex-match-function-keywords
                                     '(("ipa" "{")
                                       ("twe" "{")
                                       ("mbi" "{")
                                       "ex" "pex" "pex~" "xe" "a"))
-                              (setq font-latex-match-reference-keywords
-                                    '(("cref" "{")
-                                      ("Cref" "{"))
-                                    outline-minor-mode-prefix "\C-c\C-u"
-                                    TeX-parse-self t
-                                    TeX-auto-save t
-                                    TeX-electric-sub-and-superscript t
+                   (setq font-latex-match-reference-keywords
+                         '(("cref" "{")
+                           ("Cref" "{"))
+                         outline-minor-mode-prefix "\C-c\C-u"
+                         TeX-parse-self t
+                         TeX-auto-save t
+                         TeX-electric-sub-and-superscript t
                                     LaTeX-csquotes-close-quote "}"
                                     LaTeX-csquotes-open-quote "\\enquote{")
-                              (setq-default LaTeX-engine 'xetex))))
-     
-     
+                   (setq-default LaTeX-engine 'xetex))))
+
+
      (use-package f
        :init
        (defun find-tex-file (filename)
@@ -551,7 +634,7 @@ Hippie-expand is a nice autocompletion engine
                   (LaTeX-mode))))
        :commands find-tex-file
        :bind ("C-c T" . find-tex-file))   
-     
+
 #+END_SRC
 
 ** Org-mode
@@ -984,7 +1067,8 @@ calendar app.
     (interactive)
     (org-icalendar-combine-agenda-files)
     (shell-command (format "rsync -avz %s %s" 
-                           org-icalendar-combined-agenda-file private/calendar-destination)))
+                           org-icalendar-combined-agenda-file private/calendar-destination))
+    (org-caldav-sync))
 
 #+END_SRC
 
@@ -1014,96 +1098,88 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package mu4e
-    :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu4e/"
-    :commands (mu4e compose-mail)
+    (use-package mu4e
+      :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu4e/"
+      :commands (mu4e compose-mail)
+      :config
+
+      (require 'mu4e-contrib)
+
+      (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
+            mu4e-maildir private/maildir
+            mu4e-drafts-folder "/Drafts"
+            mu4e-sent-folder   "/Sent Items"
+            mu4e-trash-folder  "/Trash"
+            mu4e-refile-folder "/Archive"
+            mu4e-maildir-shortcuts '(("/INBOX"       . ?i)
+                                     ("/Sent Items"  . ?s)
+                                     ("/Trash"       . ?t)
+                                     ("/Archive"     . ?a))
+            smtpmail-queue-mail nil
+            smtpmail-queue-dir   "~/Mail/queue/cur"
+            mu4e-update-interval 300
+            mu4e-attachment-dir  "~/Downloads"
+            mu4e-view-show-images t
+            mail-user-agent 'mu4e-user-agent
+            user-mail-address "pavel.iosad@ed.ac.uk"
+            user-full-name  "Pavel Iosad"
+            mu4e-compose-complete-only-after "2012-09-15"
+            mu4e-headers-date-format "%d-%m-%Y"
+            message-kill-buffer-on-exit t
+            mu4e-html2text-command 'mu4e-shr2text
+            mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
+            mu4e-compose-dont-reply-to-self t
+            mu4e-compose-keep-self-cc nil)
+
+
+
+      (require 'gnus-dired)
+      ;; make the `gnus-dired-mail-buffers' function also work on
+
+      ;; message-mode derived modes, such as mu4e-compose-mode
+      (defun gnus-dired-mail-buffers ()
+        "Return a list of active message buffers."
+        (let (buffers)
+          (save-current-buffer
+            (dolist (buffer (buffer-list t))
+              (set-buffer buffer)
+              (when (and (derived-mode-p 'message-mode)
+                         (null message-sent-message-via))
+                (push (buffer-name buffer) buffers))))
+          (nreverse buffers)))
+
+      (setq gnus-dired-mail-mode 'mu4e-user-agent)
+      (add-hook 'dired-mode-hook 'turn-on-gnus-dired-mode)
+      (when (fboundp 'imagemagick-register-types)
+        (imagemagick-register-types))
+
+      (add-hook 'mu4e-view-mode-hook
+                (defun my-view-mode-hook ()
+                ;; try to emulate some of the eww key-bindings
+                (local-set-key (kbd "<tab>") 'shr-next-link)
+                (local-set-key (kbd "<backtab>") 'shr-previous-link)
+                (visual-line-mode)))
+
+
+      (add-hook 'mu4e-compose-mode-hook
+                (defun my-compose-mode-hook ()
+                  (setq mu4e-compose-signature (make-random-signature))
+                  (auto-fill-mode)
+                  (set-fill-column 72)
+                  (flyspell-mode)))
+
+      (setq message-send-mail-function 'message-send-mail-with-sendmail)
+      (setq sendmail-program "/usr/local/bin/msmtp"))
+
+  (use-package mu4e-alert
     :config
-    
-(defun mu4e-shr2text ()
-"Html to text using the shr engine; this can be used in
-`mu4e-html2text-command' in a new enough emacs. Based on code by
-Titus von der Malsburg."
-  (interactive)
-  (let ((dom (libxml-parse-html-region (point-min) (point-max)))
-	 ;; When HTML emails contain references to remote images,
-	 ;; retrieving these images leaks information. For example,
-	 ;; the sender can see when I openend the email and from which
-	 ;; computer (IP address). For this reason, it is preferrable
-	 ;; to not retrieve images.
-	 ;; See this discussion on mu-discuss:
-	 ;; https://groups.google.com/forum/#!topic/mu-discuss/gr1cwNNZnXo
-	(shr-inhibit-images t))
-    (erase-buffer)
-    (shr-insert-document dom)
-    (goto-char (point-min))))
+    (mu4e-alert-set-default-style 'notifier)
+    (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
+    (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 
-    (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
-          mu4e-maildir private/maildir
-          mu4e-drafts-folder "/Drafts"
-          mu4e-sent-folder   "/Sent Items"
-          mu4e-trash-folder  "/Trash"
-          mu4e-refile-folder "/Archive"
-          mu4e-maildir-shortcuts '(("/INBOX"       . ?i)
-                                   ("/Sent Items"  . ?s)
-                                   ("/Trash"       . ?t)
-                                   ("/Archive"     . ?a))
-          smtpmail-queue-mail nil
-          smtpmail-queue-dir   "~/Mail/queue/cur"
-          mu4e-get-mail-command "offlineimap -a ed"
-          mu4e-update-interval 300
-          mu4e-attachment-dir  "~/Downloads"
-          mu4e-view-show-images t
-          mail-user-agent 'mu4e-user-agent
-          user-mail-address "pavel.iosad@ed.ac.uk"
-          user-full-name  "Pavel Iosad"
-          mu4e-compose-complete-only-after "2012-09-15"
-          mu4e-headers-date-format "%d-%m-%Y"
-          message-kill-buffer-on-exit t
-          mu4e-html2text-command 'mu4e-shr2text
-          mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
-          mu4e-compose-dont-reply-to-self t
-          mu4e-compose-keep-self-cc nil)
-
-    
-  
-    (require 'gnus-dired)
-    ;; make the `gnus-dired-mail-buffers' function also work on
-  
-    ;; message-mode derived modes, such as mu4e-compose-mode
-    (defun gnus-dired-mail-buffers ()
-      "Return a list of active message buffers."
-      (let (buffers)
-        (save-current-buffer
-          (dolist (buffer (buffer-list t))
-            (set-buffer buffer)
-            (when (and (derived-mode-p 'message-mode)
-                       (null message-sent-message-via))
-              (push (buffer-name buffer) buffers))))
-        (nreverse buffers)))
-  
-    (setq gnus-dired-mail-mode 'mu4e-user-agent)
-    (add-hook 'dired-mode-hook 'turn-on-gnus-dired-mode)
-    (when (fboundp 'imagemagick-register-types)
-      (imagemagick-register-types))
-  
-    (add-hook 'mu4e-view-mode-hook
-              (defun my-view-mode-hook ()
-              ;; try to emulate some of the eww key-bindings
-              (local-set-key (kbd "<tab>") 'shr-next-link)
-              (local-set-key (kbd "<backtab>") 'shr-previous-link)
-              (visual-line-mode)))
-  
-  
-    (add-hook 'mu4e-compose-mode-hook
-              (defun my-compose-mode-hook ()
-                (setq mu4e-compose-signature (make-random-signature))
-                (auto-fill-mode)
-                (set-fill-column 72)
-                (flyspell-mode)))
-  
-    (setq message-send-mail-function 'message-send-mail-with-sendmail)
-    (setq sendmail-program "/usr/local/bin/msmtp"))
-  
+  (use-package offlineimap
+    :config
+    (run-at-time "24:01" 600 'offlineimap))
 #+END_SRC
 
 ** Twitter
