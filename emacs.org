@@ -4,7 +4,7 @@
 * Configuration
 ** use-package
 
-We use [[http://github.com/edvorg/use-package][use-package]] to manage packages. Thus we start off by installing it.
+We use [[http://github.com/jwiegley/use-package][use-package]] to manage packages. Thus we start off by installing it.
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -120,12 +120,8 @@ to make sure Emacs doesn't dump them in your =init.el=.
       desktop-restore-frames t
       desktop-restore-reuses-frames t
       desktop-restore-in-current-display t
-      desktop-restore-forces-onscreen t)
+      desktop-restore-forces-onscreen t))
 
-(defun desktop-save ()
-  (interactive)
-  (if (eq (desktop-owner) (emacs-pid))
-      (desktop-save desktop-dirname))))
 #+END_SRC
 
 * Appearance
@@ -559,8 +555,8 @@ Hippie-expand is a nice autocompletion engine
 ** LaTeX
    #+NAME: editing
    #+BEGIN_SRC emacs-lisp :tangle no
-     (use-package tex-site
-       :ensure auctex
+     (use-package auctex 
+       :ensure t
        :mode (("\\.tex\\'" . LaTeX-mode)
               ("\\.Rnw\\'" . Rnw-mode))
        :commands (LaTeX-mode latex-mode plain-tex-mode)
