@@ -4,7 +4,6 @@
 (source org)
 
 (depends-on "ack-and-a-half")
-(depends-on "alert")
 (depends-on "async")
 (depends-on "auctex")
 (depends-on "autopair")
@@ -49,7 +48,6 @@
 (depends-on "magit-popup")
 (depends-on "markdown-mode")
 (depends-on "niflheim-theme")
-(depends-on "offlineimap")
 (depends-on "package-build")
 (depends-on "pallet")
 (depends-on "pandoc-mode")
@@ -68,7 +66,6 @@
 (depends-on "stan-mode")
 (depends-on "stan-snippets")
 (depends-on "subatomic-theme")
-(depends-on "swiper")
 (depends-on "twittering-mode")
 (depends-on "typopunct")
 (depends-on "use-package")
