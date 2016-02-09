@@ -16,7 +16,7 @@
 ;; You may delete these explanatory comments.
 (package-initialize)
 
-(require 'cask "/usr/local/share/emacs/site-lisp/cask.el")
+(require 'cask "/usr/local/share/emacs/site-lisp/cask/cask.el")
 (cask-initialize)
 
 ;; Pallet allows us to use Cask in tandem with package.el

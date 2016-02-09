@@ -22,7 +22,6 @@ We also need to actually make sure Pallet is in use.
 #+END_SRC
 
 * Initialization
-
 ** Paths
 
 Define the directory for Emacs packages that do not come from repositories
@@ -125,7 +124,6 @@ to make sure Emacs doesn't dump them in your =init.el=.
 #+END_SRC
 
 * Appearance
-
 ** Unneeded chrome
 
 We don't need scroll bars or tool bars
@@ -265,17 +263,7 @@ Highlight matching parentheses, braces, etc.
   (show-paren-mode t)
 #+END_SRC
 
-Automatically insert closing parentheses, braces etc.
-
-#+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
-    (use-package autopair
-      :commands autopair-mode)
-#+END_SRC
-
-
 * General editing
-
 ** Encodings
 
 Use UTF-8 encoding wherever possible:
@@ -286,6 +274,10 @@ Use UTF-8 encoding wherever possible:
   (set-terminal-coding-system 'utf-8-unix)
   (set-keyboard-coding-system 'utf-8-unix)
   (prefer-coding-system 'utf-8-unix)
+  (setenv "LANG" "en_GB.UTF-8")
+  (setenv "LC_ALL" "en_GB.UTF-8")
+  (setenv "LC_CTYPE" "en_GB.UTF-8")
+  (setenv "PYTHONIOENCODING" "utf-8")
 #+END_SRC
 
 Even so, ~ansi-term~ doesn't obey:
@@ -303,11 +295,12 @@ Even so, ~ansi-term~ doesn't obey:
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package flyspell
     :config
-    (setq-default ispell-program-name "/usr/local/bin/aspell")
+    (setq-default ispell-program-name "/usr/local/bin/aspell"
+                  ispell-really-aspell t)
     (add-to-list 'ispell-dictionary-alist
                  '("nynorsk"
-                   "[a-zA-Z\346\370\345\306\330\305]"
-                   "[^a-zA-Z\346\370\345\306\330\305]"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "nynorsk") nil utf-8))
     (add-to-list 'ispell-dictionary-alist
                  '("gaidhlig"
@@ -377,8 +370,7 @@ various templating languages.
 
 *** Python
 
-Elpy is a bunch of nice Python utilities. This also sets up automatic checking
-for conformity with the PEP8 style (requires =pip install autopep8=)
+Elpy is a bunch of nice Python utilities.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -386,8 +378,10 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
     :mode ("\\.py\\'" . python-mode)
     :init
     (use-package elpy
-      :config (elpy-enable)))
-    
+      :config (elpy-enable))
+    :config
+    (setq-default python-shell-interpreter "/usr/local/bin/python3"))
+  
 #+END_SRC
 
 *** Common Lisp
@@ -408,9 +402,6 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
     #+NAME: editing
     #+BEGIN_SRC emacs-lisp :tangle no
       (require 'ess-site)
-      (add-hook 'ess-mode-hook
-                (defun my-ess-mode-hook ()
-                  (autopair-mode)))
       (use-package ess-smart-underscore)
       (use-package ess-R-data-view)
       (use-package ess-rutils)  
@@ -472,7 +463,6 @@ for conformity with the PEP8 style (requires =pip install autopep8=)
       :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
 #+END_SRC
 
-
 * Working with text
 ** General
 
@@ -504,6 +494,12 @@ Hippie-expand is a nice autocompletion engine
       (add-hook 'prog-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'markdown-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'LaTeX-mode-hook #'turn-on-smartparens-strict-mode)
+      (sp-local-pair '(tex-mode plain-tex-mode latex-mode LaTeX-mode Rnw-mode)
+                 "``" "''"
+                 :trigger "\""
+                 :unless '(sp-latex-point-after-backslash)
+                 :post-handlers '(sp-latex-skip-double-quote)
+                 :actions nil)
       (use-package evil-smartparens
         :config
         (progn
@@ -529,10 +525,10 @@ Hippie-expand is a nice autocompletion engine
        ("C-S-f" . sp-forward-symbol)
        ("C-S-b" . sp-backward-symbol)
 
-       ("C-<right>" . sp-forward-slurp-sexp)
-       ("M-<right>" . sp-forward-barf-sexp)
-       ("C-<left>"  . sp-backward-slurp-sexp)
-       ("M-<left>"  . sp-backward-barf-sexp)
+       ("M-<right>" . sp-forward-slurp-sexp)
+       ("C-<right>" . sp-forward-barf-sexp)
+       ("M-<left>"  . sp-backward-slurp-sexp)
+       ("C-<left>"  . sp-backward-barf-sexp)
 
        ("C-M-t" . sp-transpose-sexp)
        ("C-M-k" . sp-kill-sexp)
@@ -598,7 +594,6 @@ Hippie-expand is a nice autocompletion engine
                    (turn-on-reftex)
                    (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
                    (local-set-key (kbd "C-c f") 'insert-feature)
-                   (autopair-mode)
                    (setq font-latex-match-function-keywords
                                     '(("ipa" "{")
                                       ("twe" "{")
@@ -611,8 +606,8 @@ Hippie-expand is a nice autocompletion engine
                          TeX-parse-self t
                          TeX-auto-save t
                          TeX-electric-sub-and-superscript t
-                                    LaTeX-csquotes-close-quote "}"
-                                    LaTeX-csquotes-open-quote "\\enquote{")
+                         LaTeX-csquotes-close-quote "}"
+                         LaTeX-csquotes-open-quote "\\enquote{")
                    (setq-default LaTeX-engine 'xetex))))
 
 
@@ -875,8 +870,6 @@ Evil is a mode that makes vi(m) like keybindings
 #+END_SRC
 
 * Other useful utilities
-
-
 ** Firestarter
 
 This is a mode to get things done on saving a file. I use it for calendar syncing among other things.
@@ -907,44 +900,44 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-      (use-package helm
-                   :bind
-                   (("M-x" . helm-M-x)
-                    ("M-y" . helm-show-kill-ring)
-                    ("C-x b" . helm-mini)
-                    ("C-x C-f" . helm-find-files)
-                    ("C-c u" . helm-org-headlines)
-                    ("C-x 7" . helm-unicode))
-                   :commands (helm-buffers-list
-                              helm-colors
-                              helm-find-files
-                              helm-for-files
-                              helm-google-suggest
-                              helm-mini
-                              helm-help
-                              helm-show-kill-ring
-                              helm-org-keywords
-                              helm-org-headlines
-                              helm-M-x
-                              helm-occur)
-                   :config
-                   (helm-mode)
-                   (use-package helm-config)
-                   (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
-                   (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
-                   (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
-      
-                   (when (executable-find "curl")
-                     (setq helm-google-suggest-use-curl-p t))
-      
-                   (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-                         helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-                         helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-                         helm-ff-file-name-history-use-recentf t
-                         helm-buffers-fuzzy-matching t
-                         helm-recentf-fuzzy-match t))
-                  
-      
+  (use-package helm
+               :bind
+               (("M-x" . helm-M-x)
+                ("M-y" . helm-show-kill-ring)
+                ("C-x b" . helm-mini)
+                ("C-x C-f" . helm-find-files)
+                ("C-c u" . helm-org-in-buffer-headings)
+                ("C-x 7" . helm-unicode))
+               :commands (helm-buffers-list
+                          helm-colors
+                          helm-find-files
+                          helm-for-files
+                          helm-google-suggest
+                          helm-mini
+                          helm-help
+                          helm-show-kill-ring
+                          helm-org-keywords
+                          helm-org-in-buffer-headings
+                          helm-M-x
+                          helm-occur)
+               :config
+               (helm-mode)
+               (use-package helm-config)
+               (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
+               (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
+               (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+
+               (when (executable-find "curl")
+                 (setq helm-google-suggest-use-curl-p t))
+
+               (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
+                     helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+                     helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+                     helm-ff-file-name-history-use-recentf t
+                     helm-buffers-fuzzy-matching t
+                     helm-recentf-fuzzy-match t))
+            
+
 #+END_SRC
 
 Helm-backup is a handy tool which puts all your saved files under Git
@@ -954,7 +947,6 @@ don't want or don't have that much space.
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
     (use-package helm-backup
-      :defer nil
       :bind ("C-c b" . helm-backup)
       :config
       (add-hook 'after-save-hook 'helm-backup-versioning))
@@ -967,9 +959,8 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package yasnippet
-    :diminish yas-minor-mode
-    :config (yas-reload-all))
+    (use-package yasnippet
+      :config (yas-global-mode 1))
 #+END_SRC
 
 ** Various niceties
@@ -1068,7 +1059,6 @@ calendar app.
 
 #+END_SRC
 
-
 ** Email
 
 This is just a convenience function to choose a signature at random from four versions
@@ -1076,17 +1066,17 @@ This is just a convenience function to choose a signature at random from four ve
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
 
-(defun make-random-signature ()
-  (interactive)
-  (let ((sigs (list
-	       "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n"
+  (defun make-random-signature ()
+    (interactive)
+    (let ((sigs (list
+                 "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n"
 
-	       "Pavel Iosad\nRoinn a' Chànanachais agus Cànain na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
+                 "Pavel Iosad\nRoinn a' Chànanachais agus Cànain na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
 
-	       "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
+                 "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
 
-	       "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n")))
-     (nth (random (length sigs)) sigs)))
+                 "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n")))
+       (nth (random (length sigs)) sigs)))
 
 #+END_SRC
 
@@ -1106,18 +1096,21 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
             mu4e-drafts-folder "/Drafts"
             mu4e-sent-folder   "/Sent Items"
             mu4e-trash-folder  "/Trash"
-            mu4e-refile-folder "/Archive"
+            mu4e-refile-folder "/AllMail"
             mu4e-maildir-shortcuts '(("/INBOX"       . ?i)
+                                     ("/AllMail"     . ?a)
                                      ("/Sent Items"  . ?s)
-                                     ("/Trash"       . ?t)
-                                     ("/Archive"     . ?a))
+                                     ("/Trash"       . ?t))
             smtpmail-queue-mail nil
             smtpmail-queue-dir   "~/Mail/queue/cur"
             mu4e-update-interval 300
+            mu4e-change-filenames-when-moving t
             mu4e-attachment-dir  "~/Downloads"
             mu4e-view-show-images t
+            mu4e-get-mail-command "offlineimap -a ed"
             mail-user-agent 'mu4e-user-agent
             user-mail-address "pavel.iosad@ed.ac.uk"
+            mu4e-update-interval 600
             user-full-name  "Pavel Iosad"
             mu4e-compose-complete-only-after "2012-09-15"
             mu4e-headers-date-format "%d-%m-%Y"
@@ -1143,6 +1136,12 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                          (null message-sent-message-via))
                 (push (buffer-name buffer) buffers))))
           (nreverse buffers)))
+
+      (add-to-list 'mu4e-bookmarks
+                   '("date:today..now AND NOT flag:trashed" "Today's messages" ?t))
+
+      (add-to-list 'mu4e-bookmarks
+                   '("flag:flagged" "Flagged messages" ?f))
 
       (setq gnus-dired-mail-mode 'mu4e-user-agent)
       (add-hook 'dired-mode-hook 'turn-on-gnus-dired-mode)
@@ -1173,9 +1172,6 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
     (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 
-  (use-package offlineimap
-    :config
-    (run-at-time "24:01" 600 'offlineimap))
 #+END_SRC
 
 ** Twitter
@@ -1218,7 +1214,6 @@ A better search-based navigation.
     (avy-setup-default))
     
 #+END_SRC
-
 
 * Configuration layout
 
