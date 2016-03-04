@@ -47,6 +47,7 @@
 (depends-on "helm-unicode")
 (depends-on "htmlize")
 (depends-on "hydra")
+(depends-on "julia-mode")
 (depends-on "magit")
 (depends-on "magit-popup")
 (depends-on "markdown-mode")

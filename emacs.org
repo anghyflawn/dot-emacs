@@ -450,6 +450,11 @@ Elpy is a bunch of nice Python utilities.
         (setq 
          pm-weaver "knitR-ESS"
          pm-exporter "pandoc"))
+
+      (add-hook 'R-mode-hook
+                (defun my-R-mode-hook ()
+                  (company-mode)
+                  (local-set-key (kbd "TAB") 'company-complete)))
     #+END_SRC
 
 *** Stan
@@ -720,6 +725,7 @@ Hippie-expand is a nice autocompletion engine
                      (setq-local reftex-cite-format '((?\C-m . "@%l")
                                                       (?p . "[@%l]")))))
                  (orgtbl-mode 1)
+                 (pandoc-mode)
                  (outline-minor-mode)
                  (yas-minor-mode))))
    #+END_SRC
@@ -861,6 +867,7 @@ Evil is a mode that makes vi(m) like keybindings
             (wdired-mode . normal)
             (help-mode . emacs)
             (comint-mode . emacs)
+            (inferior-python-mode . emacs)
             (eww-mode . emacs)
             (paradox-menu-mode . emacs))
           do (evil-set-initial-state mode state)))
