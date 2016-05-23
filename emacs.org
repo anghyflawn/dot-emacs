@@ -307,6 +307,17 @@ Even so, ~ansi-term~ doesn't obey:
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "gd") nil utf-8))
+    (add-to-list 'ispell-dictionary-alist
+                 '("gaeilge"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "ga") nil utf-8))
+    (add-to-list 'ispell-dictionary-alist
+                 '("bokmal"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "nb") nil utf-8))
+  
     (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")
     (add-hook 'text-mode-hook 'flyspell-mode)
     (add-hook 'prog-mode-hook 'flyspell-prog-mode))                 
@@ -585,8 +596,8 @@ Hippie-expand is a nice autocompletion engine
                       "\\mbox{\\ensuremath{%s}%s}"
                     "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
-  
-  
+
+
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
                    (flyspell-mode 1)
@@ -599,6 +610,7 @@ Hippie-expand is a nice autocompletion engine
                    (turn-on-reftex)
                    (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
                    (local-set-key (kbd "C-c f") 'insert-feature)
+                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
                    (setq font-latex-match-function-keywords
                                     '(("ipa" "{")
                                       ("twe" "{")
@@ -724,6 +736,7 @@ Hippie-expand is a nice autocompletion engine
                    '(progn
                      (setq-local reftex-cite-format '((?\C-m . "@%l")
                                                       (?p . "[@%l]")))))
+                 (local-set-key (kbd "C-c ]") 'helm-bibtex)
                  (orgtbl-mode 1)
                  (pandoc-mode)
                  (outline-minor-mode)
@@ -834,6 +847,24 @@ This sets up RefTeX and BibTeX-mode.
     (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
 #+END_SRC
 
+This sets-up =helm-bibtex=
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package helm-bibtex
+    :config
+    (setq helm-bibtex-bibliography '("~/Library/texmf/bibtex/bib/biblio.bib")
+          helm-bibtex-library-path '("~/ownCloud/PDF")
+          helm-bibtex-notes-path "~/ownCloud/varia/org/biblio-notes.org"
+          helm-bibtex-pdf-open-function (lambda (fpath)
+                                          (call-process "open" nil 0 nil "-a" "/Applications/Skim.app" fpath))
+          helm-bibtex-browser-function 'browse-url-chromium
+          helm-bibtex-cite-prompt-for-optional-arguments nil
+          helm-bibtex-pdf-field "file")
+    (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
+    (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
+#+END_SRC
+
 ** Evil
 
 
@@ -874,6 +905,16 @@ Evil is a mode that makes vi(m) like keybindings
 
   (use-package evil-surround
     :config (global-evil-surround-mode 1))
+#+END_SRC
+
+** Edit-server
+
+Edit Chrome textareas with Emacs
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package edit-server
+  :config (edit-server-start))
 #+END_SRC
 
 * Other useful utilities
@@ -1145,7 +1186,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           (nreverse buffers)))
 
       (add-to-list 'mu4e-bookmarks
-                   '("date:today..now AND NOT flag:trashed" "Today's messages" ?t))
+                   '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
 
       (add-to-list 'mu4e-bookmarks
                    '("flag:flagged" "Flagged messages" ?f))
@@ -1179,6 +1220,9 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
     (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 
+  (use-package helm-mu
+    :config
+    (setq helm-mu-gnu-sed-program "/usr/local/bin/sed"))
 #+END_SRC
 
 ** Twitter
