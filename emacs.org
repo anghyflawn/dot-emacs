@@ -104,24 +104,6 @@ to make sure Emacs doesn't dump them in your =init.el=.
   (load custom-file 'noerror)
 #+END_SRC
 
-** Save desktop
-
-#+NAME:init-after
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package desktop
-:config
-
-(desktop-save-mode)
-
-(setq desktop-dirname "~/.emacs.d"
-      desktop-base-file-name "desktop"
-      desktop-base-lock-name "desktop.lock"
-      desktop-restore-frames t
-      desktop-restore-reuses-frames t
-      desktop-restore-in-current-display t
-      desktop-restore-forces-onscreen t))
-
-#+END_SRC
 
 * Appearance
 ** Unneeded chrome
@@ -142,7 +124,7 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (load-theme 'niflheim t)
+(load-theme 'material t)
 #+END_SRC
 
 ** Fonts
@@ -557,12 +539,6 @@ Hippie-expand is a nice autocompletion engine
       (add-hook 'prog-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'markdown-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'LaTeX-mode-hook #'turn-on-smartparens-strict-mode)
-      (sp-local-pair '(tex-mode plain-tex-mode latex-mode LaTeX-mode Rnw-mode)
-                 "``" "''"
-                 :trigger "\""
-                 :unless '(sp-latex-point-after-backslash)
-                 :post-handlers '(sp-latex-skip-double-quote)
-                 :actions nil)
       (use-package evil-smartparens
         :config
         (progn
@@ -620,20 +596,6 @@ Hippie-expand is a nice autocompletion engine
               ("\\.Rnw\\'" . Rnw-mode))
        :commands (LaTeX-mode latex-mode plain-tex-mode)
        :init
-       (defun switch-to-biblatex ()
-         "Something in my template seems to conflict with
-                     AUCTeX's automated BibLaTeX support. So, we do
-                     this manually. Feel free to comment out."
-         (interactive)
-         (setq-local reftex-cite-format
-                     '((?\C-m . "\\cite[]{%l}")
-                       (?f . "\\footcite[][]{%l}")
-                       (?t . "\\textcite[]{%l}")
-                       (?p . "\\parencite[]{%l}")
-                       (?o . "\\citepr[]{%l}")
-                       (?n . "\\nocite{%l}")
-                       (?a . "\\citeauthor{%l}"))))
-
        (defun insert-feature (arg feature value)
          "This just saves some typing, feel free to comment
                      out."
@@ -673,23 +635,6 @@ Hippie-expand is a nice autocompletion engine
                          LaTeX-csquotes-close-quote "}"
                          LaTeX-csquotes-open-quote "\\enquote{")
                    (setq-default LaTeX-engine 'xetex))))
-
-
-     (use-package f
-       :init
-       (defun find-tex-file (filename)
-         "Create a new .tex file from the template, or open an existing one"
-         (interactive "FNew TeX file name: ")
-         (if (f-exists? filename)
-             (find-file filename)
-           (progn (switch-to-buffer (generate-new-buffer filename))
-                  (insert-file-contents (expand-file-name private/tex-template))
-                  (f-touch filename)
-                  (write-file filename)
-                  (LaTeX-mode))))
-       :commands find-tex-file
-       :bind ("C-c T" . find-tex-file))   
-
 #+END_SRC
 
 ** Org-mode
@@ -706,10 +651,12 @@ Hippie-expand is a nice autocompletion engine
 
    #+NAME: utils
    #+BEGIN_SRC emacs-lisp :tangle no
+     (setq main-agenda-file (expand-file-name (car private/org-files)))
+
      (global-set-key (kbd "C-x C-a C-w") 
                      (lambda () 
                        (interactive) 
-                       (find-file (expand-file-name (car private/org-files)))))
+                       (find-file main-agenda-file)))
    #+END_SRC
 
    The following sets up Org-mode itself
@@ -720,13 +667,20 @@ Hippie-expand is a nice autocompletion engine
                   :config
                   (define-key global-map "\C-cl" 'org-store-link)
                   (define-key global-map "\C-ca" 'org-agenda)
+                  (define-key global-map "\C-ct" 'org-capture)
                   (setq org-log-done t
                         org-use-property-inheritance t
                         org-agenda-files private/org-files
                         org-directory private/org-directory
                         org-startup-indented t
                         org-src-fontify-natively t
-                        org-icalendar-timezone "Europe/London"))
+                        org-icalendar-timezone "Europe/London"
+                        org-refile-targets '((nil . (:maxlevel . 3)))
+                        org-icalendar-use-deadline '(todo-due)
+                        org-agenda-window-setup 'current-window
+                        org-agenda-span 'week
+                        org-agenda-skip-scheduled-if-deadline-is-shown t
+                        org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled))
    #+END_SRC
   
    #+NAME: utils
@@ -873,31 +827,31 @@ This sets up RefTeX and BibTeX-mode.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package reftex
-    :commands turn-on-reftex
-    :config
-    (setq reftex-use-external-file-finders t
-          reftex-external-file-finders
-          '(("tex" . "/usr/texbin/kpsewhich -format=.tex %f")
-            ("bib" . "/usr/texbin/kpsewhich -format=.bib %f"))
-          reftex-plug-into-AUCTeX t
-          reftex-default-bibliography `(,private/bibliography-file)
-          reftex-cite-prompt-optional-args nil
-          reftex-cite-cleanup-optional-args t)
-    (global-unset-key "\C-c /")
-    (add-to-list 'reftex-bibliography-commands "addbibresource"))
+    (use-package reftex
+      :commands turn-on-reftex
+      :config
+      (setq reftex-use-external-file-finders t
+            reftex-external-file-finders
+            '(("tex" . "/usr/texbin/kpsewhich -format=.tex %f")
+              ("bib" . "/usr/texbin/kpsewhich -format=.bib %f"))
+            reftex-plug-into-AUCTeX t
+            reftex-default-bibliography `(,private/bibliography-file)
+            reftex-cite-prompt-optional-args nil
+            reftex-cite-cleanup-optional-args t)
+      (global-unset-key "\C-c /")
+      (add-to-list 'reftex-bibliography-commands "addbibresource"))
 
-  (use-package bibtex
-    :mode ("\\.bib" . bibtex-mode)
-    :init
-    (setq bibtex-align-at-equal-sign t
-          bibtex-autokey-year-length 4
-          bibtex-autokey-titleword-length nil
-          bibtex-autokey-titlewords-stretch 0
-          bibtex-autokey-titlewords 1
-          bibtex-autokey-year-title-separator "")
-  
-    (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
+    (use-package bibtex
+      :mode ("\\.bib" . bibtex-mode)
+      :init
+      (setq bibtex-align-at-equal-sign t
+            bibtex-autokey-year-length 4
+            bibtex-autokey-titleword-length nil
+            bibtex-autokey-titlewords-stretch 0
+            bibtex-autokey-titlewords 1
+            bibtex-autokey-year-title-separator "")
+
+      (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
 #+END_SRC
 
 This sets-up =helm-bibtex=
@@ -906,13 +860,15 @@ This sets-up =helm-bibtex=
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package helm-bibtex
     :config
-    (setq helm-bibtex-bibliography '("~/Library/texmf/bibtex/bib/biblio.bib")
+    (setq bibtex-completion-bibliography '("~/Library/texmf/bibtex/bib/biblio.bib")
           helm-bibtex-library-path '("~/ownCloud/PDF")
           helm-bibtex-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           helm-bibtex-pdf-open-function (lambda (fpath)
                                           (call-process "open" nil 0 nil "-a" "/Applications/Skim.app" fpath))
-          helm-bibtex-browser-function 'browse-url-chromium
+          helm-bibtex-browser-function 'eww-browse-with-external-browser ; this doesn't work
           helm-bibtex-cite-prompt-for-optional-arguments nil
+          helm-bibtex-completion-additional-search-fields '(subtitle booksubtitle tags)
+          bibtex-completion-cite-default-command "parencite"
           helm-bibtex-pdf-field "file")
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
@@ -985,28 +941,6 @@ Edit Chrome textareas with Emacs
 #+END_SRC
 
 * Other useful utilities
-** Firestarter
-
-This is a mode to get things done on saving a file. I use it for calendar syncing among other things.
-
-#+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package firestarter
-    :config (firestarter-mode))
-#+END_SRC
-
-** Ack
-
-[[http://beyondgrep.com/][Ack]] is a nice alternative to =grep=. For those cases when you need to
-find something inside your sprawling =Documents= folder.
-
-#+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package ack-and-a-half
-               :config
-               (setq ack-and-a-half-prompt-for-directory t))
-#+END_SRC
-
 ** Helm
 
 Helm is a powerful engine for completion and narrowing down
@@ -1092,13 +1026,6 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
                (format "%s %s %s" dayname monthname day) "")))
     (setq display-time-interval 30)
     (display-time-mode 1)
-
-  (use-package sane-term
-    :commands (sane-term sane-term-create)
-    :bind (("C-x t" . sane-term)
-           ("C-x T" . sane-term-create))
-    :config
-    (setq sane-term-shell-command "/bin/zsh")) ;; or your shell of choice
 
   (setq enable-recursive-minibuffers t)
 #+END_SRC
@@ -1190,7 +1117,9 @@ This is just a convenience function to choose a signature at random from four ve
 
                  "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
 
-                 "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n")))
+                 "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
+
+                 "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
        (nth (random (length sigs)) sigs)))
 
 #+END_SRC
@@ -1227,30 +1156,15 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
             user-mail-address "pavel.iosad@ed.ac.uk"
             mu4e-update-interval 600
             user-full-name  "Pavel Iosad"
+            mu4e-compose-complete-addresses t
             mu4e-compose-complete-only-after "2012-09-15"
             mu4e-headers-date-format "%d-%m-%Y"
             message-kill-buffer-on-exit t
-            mu4e-html2text-command 'mu4e-shr2text
+            ; mu4e-html2text-command 'mu4e-shr2text
             mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
             mu4e-compose-dont-reply-to-self t
             mu4e-compose-keep-self-cc nil)
 
-
-
-      (require 'gnus-dired)
-      ;; make the `gnus-dired-mail-buffers' function also work on
-
-      ;; message-mode derived modes, such as mu4e-compose-mode
-      (defun gnus-dired-mail-buffers ()
-        "Return a list of active message buffers."
-        (let (buffers)
-          (save-current-buffer
-            (dolist (buffer (buffer-list t))
-              (set-buffer buffer)
-              (when (and (derived-mode-p 'message-mode)
-                         (null message-sent-message-via))
-                (push (buffer-name buffer) buffers))))
-          (nreverse buffers)))
 
       (add-to-list 'mu4e-bookmarks
                    '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
@@ -1258,8 +1172,6 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       (add-to-list 'mu4e-bookmarks
                    '("flag:flagged" "Flagged messages" ?f))
 
-      (setq gnus-dired-mail-mode 'mu4e-user-agent)
-      (add-hook 'dired-mode-hook 'turn-on-gnus-dired-mode)
       (when (fboundp 'imagemagick-register-types)
         (imagemagick-register-types))
 
@@ -1268,6 +1180,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                 ;; try to emulate some of the eww key-bindings
                 (local-set-key (kbd "<tab>") 'shr-next-link)
                 (local-set-key (kbd "<backtab>") 'shr-previous-link)
+                (bbdb-mua-auto-update)
                 (visual-line-mode)))
 
 
@@ -1281,30 +1194,17 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       (setq message-send-mail-function 'message-send-mail-with-sendmail)
       (setq sendmail-program "/usr/local/bin/msmtp"))
 
+  (require 'org-mu4e)
+  (setq org-mu4e-link-query-in-headers-mode nil
+        org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
+                                 "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")))
+
   (use-package mu4e-alert
     :config
     (mu4e-alert-set-default-style 'notifier)
     (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
     (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 
-  (use-package helm-mu
-    :config
-    (setq helm-mu-gnu-sed-program "/usr/local/bin/sed"))
-#+END_SRC
-
-** Twitter
-
-Use =M-x twit= to start this.
-
-#+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package twittering-mode
-    :commands twit
-    :config
-    (setq twittering-use-master-password t
-          twittering-icon-mode t                ; Show icons
-          twittering-timer-interval 150         ; Update your timeline each 300 seconds (5 minutes)
-          twittering-url-show-status nil))       ; Keeps the echo area from showing all the http processes
 #+END_SRC
 
 ** EWW
@@ -1326,7 +1226,7 @@ A better search-based navigation.
     ("C-:" . avy-goto-char)
     ("C-'" . avy-goto-char-2)
     ("M-g f" . avy-goto-line)
-    ("M-g w" . avy-goto-word-1)
+    ("M-s" . avy-goto-word-1)
     ("M-g e" . avy-goto-word-0)
     :config
     (avy-setup-default))
