@@ -21,6 +21,14 @@ We also need to actually make sure Pallet is in use.
 (pallet-mode)
 #+END_SRC
 
+** Keep =~/.emacs.d= clean
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package no-littering)
+#+END_SRC
+
+
 * Initialization
 ** Paths
 
@@ -104,7 +112,6 @@ to make sure Emacs doesn't dump them in your =init.el=.
   (load custom-file 'noerror)
 #+END_SRC
 
-
 * Appearance
 ** Unneeded chrome
 
@@ -124,15 +131,15 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-(load-theme 'material t)
+(load-theme 'niflheim t)
 #+END_SRC
 
 ** Fonts
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (when (find-font (font-spec :name "Menlo"))
-    (set-frame-font "Menlo-15" t t))
+  (when (find-font (font-spec :name "Monaco"))
+    (set-frame-font "Monaco-14" t t))
 #+END_SRC
 
 ** Misc
@@ -406,7 +413,7 @@ Elpy is a bunch of nice Python utilities.
         (when (and (bufferp name)
                    (buffer-file-name name))
           (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
-            (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+    	(when (and (equal (file-name-extension (buffer-file-name name)) "tex")
                        (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
               (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
                   name
@@ -422,63 +429,13 @@ Elpy is a bunch of nice Python utilities.
                 (defun my-Rnw-mode-hook ()
                   "Add commands to AUCTeX's \\[TeX-command-list]."
                   (unless (and (featurep 'tex-site) (featurep 'tex))
-                    (error "AUCTeX does not seem to be loaded"))
-                  (add-to-list 'TeX-command-list
-                               '("Knit" "Rscript -e \"library(knitr); knit('%t')\""
-                                 TeX-run-command nil (latex-mode) :help
-                                 "Run Knitr") t)
+    		(error "AUCTeX does not seem to be loaded"))
                   (add-to-list 'TeX-command-list
                                '("LaTeXKnit" "%l %(mode) %s"
                                  TeX-run-TeX nil (latex-mode) :help
                                  "Run LaTeX after Knit") t)
                   (dolist (suffix '("nw" "Snw" "Rnw"))
-                    (add-to-list 'TeX-file-extensions suffix))))
-      (setq ess-swv-processor 'knitr)
-
-      ;; Minor tweak to respect TeX-master if set
-      (defun ess-swv-run-in-R (cmd &optional choose-process block)
-        "Run \\[cmd] on the current .Rnw file.  Utility function not called by user."
-        (let* ((rnw-buf (current-buffer)))
-          (if choose-process ;; previous behavior
-              (ess-force-buffer-current "R process to load into: ")
-            ;; else
-            (update-ess-process-name-list)
-            (cond ((= 0 (length ess-process-name-list))
-                   (message "no ESS processes running; starting R")
-                   (sit-for 1); so the user notices before the next msgs/prompt
-                   (R)
-                   (set-buffer rnw-buf)
-                   )
-                  ((not (string= "R" (ess-make-buffer-current))); e.g. Splus, need R
-                   (ess-force-buffer-current "R process to load into: "))
-                  ))
-
-          (save-excursion
-            ;; (ess-execute (format "require(tools)")) ;; Make sure tools is loaded.
-            (basic-save-buffer); do not Sweave/Stangle old version of file !
-            (let* ((sprocess (ess-get-process ess-current-process-name))
-                   (sbuffer (process-buffer sprocess))
-                   (rnw-file (if (and TeX-master (stringp TeX-master))
-                                 TeX-master
-                               (buffer-file-name)))
-                   (Rnw-dir (file-name-directory rnw-file))
-                   (buf-coding (symbol-name buffer-file-coding-system))
-                   ;; could consider other encodings, but utf-8 is "R standard" for non-ASCII:
-                   (cmd-args (concat "\"" rnw-file "\""
-                                     (if (string-match "^utf-8" buf-coding)
-                                         ", encoding = \"utf-8\"")))
-                   (Sw-cmd
-                    (format ess-swv-processing-command cmd cmd-args)))
-              (message "%s()ing %S" cmd rnw-file)
-              ;; need to block when we are running ess-swv-weave-PDF so we
-              ;; know when to start compiling the generated .tex file
-              (if block
-                  (progn
-                    (ess-eval-linewise (concat Sw-cmd "\n") nil nil nil t)
-                    (message "Finished %s()ing %S" cmd rnw-file))
-                (ess-execute Sw-cmd 'buffer nil nil)
-                (switch-to-buffer rnw-buf)
-                (ess-show-buffer (buffer-name sbuffer) nil))))))
+    		(add-to-list 'TeX-file-extensions suffix))))
 
 
 
@@ -486,6 +443,7 @@ Elpy is a bunch of nice Python utilities.
         :config
         (require 'poly-R)               ; Load necessary modes
         (require 'poly-markdown)
+        (require 'poly-noweb)
         (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
         (setq 
          pm-weaver "knitR-ESS"
@@ -618,8 +576,10 @@ Hippie-expand is a nice autocompletion engine
                    (outline-minor-mode 1)
                    (turn-on-reftex)
                    (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                   (TeX-source-correlate-mode 1)
                    (local-set-key (kbd "C-c f") 'insert-feature)
                    (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
                    (setq font-latex-match-function-keywords
                                     '(("ipa" "{")
                                       ("twe" "{")
@@ -631,9 +591,14 @@ Hippie-expand is a nice autocompletion engine
                          outline-minor-mode-prefix "\C-c\C-u"
                          TeX-parse-self t
                          TeX-auto-save t
+                         TeX-view-program-selection
+                         '((output-dvi "open")
+                           (output-pdf "Skim")
+                           (output-html "open"))
                          TeX-electric-sub-and-superscript t
                          LaTeX-csquotes-close-quote "}"
-                         LaTeX-csquotes-open-quote "\\enquote{")
+                         LaTeX-csquotes-open-quote "\\enquote{"
+                         TeX-source-correlate-start-server t)
                    (setq-default LaTeX-engine 'xetex))))
 #+END_SRC
 
@@ -675,46 +640,18 @@ Hippie-expand is a nice autocompletion engine
                         org-startup-indented t
                         org-src-fontify-natively t
                         org-icalendar-timezone "Europe/London"
-                        org-refile-targets '((nil . (:maxlevel . 3)))
+                        org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
                         org-icalendar-use-deadline '(todo-due)
                         org-agenda-window-setup 'current-window
                         org-agenda-span 'week
                         org-agenda-skip-scheduled-if-deadline-is-shown t
-                        org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled))
+                        org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
+                        org-icalendar-alarm-time 15)
+      	    (use-package ox-taskjuggler
+      	      :config
+      	      (add-to-list 'org-export-backends 'taskjuggler t)))
    #+END_SRC
   
-   #+NAME: utils
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (use-package appt
-       :config
-       (setq diary-file private/diary-file)
-       (setq appt-time-msg-list nil)    ;; clear existing appt list
-       (setq appt-display-interval '15) ;; warn every 15 minutes from t - appt-message-warning-time
-       (setq
-        appt-message-warning-time '15  ;; send first warning 15 minutes before appointment
-        appt-display-mode-line nil     ;; don't show in the modeline
-        appt-display-format 'window)   ;; pass warnings to the designated window function
-       (appt-activate 1)                ;; activate appointment notification
-       (display-time)                   ;; activate time display
-
-       (org-agenda-to-appt)             ;; generate the appt list from org agenda files on emacs launch
-       (run-at-time "24:01" 3600 'org-agenda-to-appt)           ;; update appt list hourly
-       (add-hook 'org-finalize-agenda-hook 'org-agenda-to-appt) ;; update appt list on agenda view
-
-     ;; set up the call to terminal-notifier
-       (defvar my-notifier-path 
-         "/usr/bin/terminal-notifier")  
-       (defun my-appt-send-notification (title msg)
-         (shell-command (concat my-notifier-path " -message " msg " -title " title " -sender \"org.gnu.emacs\" -group \"emacs\"")))
-
-       ;; designate the window function for my-appt-send-notification
-       (defun my-appt-display (min-to-app new-time msg)
-         (my-appt-send-notification 
-          (format "'Appointment in %s minutes'" min-to-app)    ;; passed to -title in terminal-notifier call
-          (format "'%s'" msg)))                                ;; passed to -message in terminal-notifier call
-       (setq appt-disp-window-function (function my-appt-display)))
-   #+END_SRC
-
 ** Markdown and pandoc
    
    Markdown is a lightweight alternative to HTML. For me, the two main
@@ -757,15 +694,15 @@ Hippie-expand is a nice autocompletion engine
        (defun pandoc--add-references-header (output-format)
          (if (not (string-equal output-format "latex"))
              "## References ##"
-           ""))
+   	""))
        (defun pandoc--hline-for-new-slide (output-format)
          (if (member output-format '("revealjs" "beamer"))
              "---"
-           ""))
+   	""))
        (defun pandoc--pause (output-format)
          (if (member output-format '("revealjs" "beamer"))
              ". . ."
-           ""))
+   	""))
        (defun pandoc--smallcaps (output-format txt)
          (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
        (defun markdown-insert-smallcaps ()
@@ -776,8 +713,8 @@ Hippie-expand is a nice autocompletion engine
                              (region-beginning) (region-end)
                              markdown-regex-code 2 4)))
                 (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" nil (car bounds) (cdr bounds)))
-            ;; Code markup removal, code markup for word, or empty markup insertion
-            (if (markdown-code-at-point-p)
+   	 ;; Code markup removal, code markup for word, or empty markup insertion
+   	 (if (markdown-code-at-point-p)
                 (markdown-unwrap-thing-at-point nil 0 1)
               (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
        (setq my-pandoc-directives
@@ -790,14 +727,14 @@ Hippie-expand is a nice autocompletion engine
          (insert (format
                   (if arg
                       "$%s$%s"
-                    "[$%s$%s]")
+   		 "[$%s$%s]")
                   value feature)))
        :config
        (add-hook 'pandoc-mode-hook
                  (defun my-pandoc-mode-hook ()
-                   (setq pandoc-use-async nil
-                         pandoc-binary "~/Library/Haskell/bin/pandoc")
-                   (dolist (x my-pandoc-directives)
+   		(setq pandoc-use-async nil
+                         pandoc-binary "/Users/piosad/Library/Haskell/bin/pandoc")
+   		(dolist (x my-pandoc-directives)
                      (add-to-list 'pandoc-directives x))))
 
    #+END_SRC
@@ -827,31 +764,36 @@ This sets up RefTeX and BibTeX-mode.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
-    (use-package reftex
-      :commands turn-on-reftex
-      :config
-      (setq reftex-use-external-file-finders t
-            reftex-external-file-finders
-            '(("tex" . "/usr/texbin/kpsewhich -format=.tex %f")
-              ("bib" . "/usr/texbin/kpsewhich -format=.bib %f"))
-            reftex-plug-into-AUCTeX t
-            reftex-default-bibliography `(,private/bibliography-file)
-            reftex-cite-prompt-optional-args nil
-            reftex-cite-cleanup-optional-args t)
-      (global-unset-key "\C-c /")
-      (add-to-list 'reftex-bibliography-commands "addbibresource"))
+      (use-package reftex
+        :commands turn-on-reftex
+        :config
+        (setq reftex-use-external-file-finders t
+              reftex-plug-into-AUCTeX t
+              reftex-default-bibliography `(,private/bibliography-file)
+              reftex-cite-prompt-optional-args nil
+              reftex-cite-cleanup-optional-args t)
+        (global-unset-key "\C-c /")
+        (add-to-list 'reftex-bibliography-commands "addbibresource")
 
-    (use-package bibtex
-      :mode ("\\.bib" . bibtex-mode)
-      :init
-      (setq bibtex-align-at-equal-sign t
-            bibtex-autokey-year-length 4
-            bibtex-autokey-titleword-length nil
-            bibtex-autokey-titlewords-stretch 0
-            bibtex-autokey-titlewords 1
-            bibtex-autokey-year-title-separator "")
+        (let* ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
+          (setq reftex-external-file-finders
+                `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
+                  ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
 
-      (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
+
+
+
+      (use-package bibtex
+        :mode ("\\.bib" . bibtex-mode)
+        :init
+        (setq bibtex-align-at-equal-sign t
+              bibtex-autokey-year-length 4
+              bibtex-autokey-titleword-length nil
+              bibtex-autokey-titlewords-stretch 0
+              bibtex-autokey-titlewords 1
+              bibtex-autokey-year-title-separator "")
+
+        (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
 #+END_SRC
 
 This sets-up =helm-bibtex=
@@ -923,11 +865,15 @@ Evil is a mode that makes vi(m) like keybindings
             (comint-mode . emacs)
             (inferior-python-mode . emacs)
             (eww-mode . emacs)
+            (mu4e-view-mode . emacs)
             (paradox-menu-mode . emacs))
           do (evil-set-initial-state mode state)))
 
   (use-package evil-surround
     :config (global-evil-surround-mode 1))
+
+  (use-package evil-exchange
+    :config (evil-exchange-install))
 #+END_SRC
 
 ** Edit-server
@@ -938,6 +884,38 @@ Edit Chrome textareas with Emacs
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package edit-server
   :config (edit-server-start))
+#+END_SRC
+
+** Lilypond
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package lilypond-mode
+    :load-path "/usr/local/share/emacs/site-lisp/lilypond"
+    :config
+    (add-to-list 'auto-mode-alist
+                 '("\\.ly$" . LilyPond-mode)))
+#+END_SRC
+** Typopunct-mode
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package typopunct
+    :config
+    (typopunct-change-language 'english t)
+    (defconst typopunct-ellipsis (decode-char 'ucs #x2026))
+    (defun typopunct-insert-ellipsis (arg)
+      "Change three consecutive dots to an ellipsis mark"
+      (interactive "p")
+      (cond
+       ((and (= 1 arg)
+	     (eq this-command last-command)
+	     (looking-back "\\.\\."))
+	(replace-match "")
+	(insert typopunct-ellipsis))
+       (t
+	(self-insert-command arg))))
+    (define-key typopunct-map "." 'typopunct-insert-ellipsis))
 #+END_SRC
 
 * Other useful utilities
@@ -995,11 +973,9 @@ don't want or don't have that much space.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-    (use-package helm-backup
-      :bind ("C-c b" . helm-backup)
-      :config
-      (add-hook 'after-save-hook 'helm-backup-versioning))
-
+  (require 'helm-backup)
+  (global-set-key (kbd "C-c b") 'helm-backup)
+  (add-hook 'after-save-hook 'helm-backup-versioning)
 #+END_SRC
 
 ** Yasnippet
@@ -1016,8 +992,6 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
 
 #+NAME: init-after
 #+BEGIN_SRC emacs-lisp :tangle no
-    (setq x-select-enable-clipboard t)
-
     (setq display-time-day-and-date t)
     (setq display-time-string-forms
           '((format "%s:%s  "
@@ -1072,7 +1046,8 @@ Golden-ratio mode makes sure your window splits are of a sensible size
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package golden-ratio
     :config
-    (golden-ratio-mode 1))
+    (golden-ratio-mode 1)
+    (setq golden-ratio-auto-scale t))
 #+END_SRC
 
 ** Calendar integration
@@ -1099,6 +1074,7 @@ calendar app.
                            org-icalendar-combined-agenda-file private/calendar-destination))
     (org-caldav-sync))
 
+  (setq kill-emacs-query-functions '(sync-calendar))
 #+END_SRC
 
 ** Email
@@ -1111,17 +1087,32 @@ This is just a convenience function to choose a signature at random from four ve
   (defun make-random-signature ()
     (interactive)
     (let ((sigs (list
-                 "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n"
+                 "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n"
 
-                 "Pavel Iosad\nRoinn a' Chànanachais agus Cànain na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
+                 "Pavel Iosad\nRoinn a' Chànanachais agus Cànain na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
 
-                 "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
+                 "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
 
-                 "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
+                 "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
 
-                 "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ppls.ed.ac.uk/people/pavel-iosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
+                 "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
        (nth (random (length sigs)) sigs)))
 
+  (defun draft-auto-save-buffer-name-handler (operation &rest args)
+  "for `make-auto-save-file-name' set '.' in front of the file name; do nothing for other operations"  
+    (if
+        (and buffer-file-name (eq operation 'make-auto-save-file-name))
+        (concat (file-name-directory buffer-file-name)
+                "."
+                (file-name-nondirectory buffer-file-name))
+      (let ((inhibit-file-name-handlers
+             (cons 'draft-auto-save-buffer-name-handler
+                   (and (eq inhibit-file-name-operation operation)
+                        inhibit-file-name-handlers)))
+            (inhibit-file-name-operation operation))
+        (apply operation args))))
+
+  (add-to-list 'file-name-handler-alist '("Drafts/cur/" . draft-auto-save-buffer-name-handler))
 #+END_SRC
 
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
@@ -1129,7 +1120,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
-    :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu/mu4e/"
+    :load-path "/usr/local/Cellar/mu/HEAD-82dc1ae/share/emacs/site-lisp/mu/mu4e/"
     :commands (mu4e compose-mail)
     :config
 
@@ -1167,28 +1158,29 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 
     (add-to-list 'mu4e-bookmarks
-                 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+		 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
 
     (add-to-list 'mu4e-bookmarks
-                 '("flag:flagged" "Flagged messages" ?f))
+		 '("flag:flagged" "Flagged messages" ?f))
 
     (when (fboundp 'imagemagick-register-types)
       (imagemagick-register-types))
 
     (add-hook 'mu4e-view-mode-hook
               (defun my-view-mode-hook ()
-                ;; try to emulate some of the eww key-bindings
-                (local-set-key (kbd "<tab>") 'shr-next-link)
-                (local-set-key (kbd "<backtab>") 'shr-previous-link)
-                (visual-line-mode)))
+		;; try to emulate some of the eww key-bindings
+		(local-set-key (kbd "<tab>") 'shr-next-link)
+		(local-set-key (kbd "<backtab>") 'shr-previous-link)
+		(visual-line-mode)))
 
 
     (add-hook 'mu4e-compose-mode-hook
               (defun my-compose-mode-hook ()
-                (setq mu4e-compose-signature (make-random-signature))
-                (auto-fill-mode)
-                (set-fill-column 72)
-                (flyspell-mode)))
+		(setq mu4e-compose-signature (make-random-signature))
+		(auto-fill-mode)
+		(set-fill-column 72)
+		(typopunct-mode)
+		(flyspell-mode)))
 
     (setq message-send-mail-function 'message-send-mail-with-sendmail)
     (setq sendmail-program "/usr/local/bin/msmtp")
@@ -1232,6 +1224,18 @@ A better search-based navigation.
     :config
     (avy-setup-default))
     
+#+END_SRC
+** Elfeed
+
+An RSS reader
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package elfeed
+    :config
+    (global-set-key (kbd "C-x w") 'elfeed)
+    (setq elfeed-feeds
+          '("https://hypothes.is/stream.rss?uri.parts=anghyflawn")))
 #+END_SRC
 
 * Configuration layout
