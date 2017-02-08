@@ -158,7 +158,8 @@ middle of the window
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package centered-cursor-mode
                :config
-               (global-centered-cursor-mode 1))
+               (global-centered-cursor-mode 1)
+	       (setq ccm-recenter-at-end-of-file t))
 #+END_SRC
 
 I find it best to have the Emacs window fit the screen, for all sorts
@@ -413,7 +414,7 @@ Elpy is a bunch of nice Python utilities.
         (when (and (bufferp name)
                    (buffer-file-name name))
           (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
-    	(when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+        (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
                        (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
               (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
                   name
@@ -429,22 +430,22 @@ Elpy is a bunch of nice Python utilities.
                 (defun my-Rnw-mode-hook ()
                   "Add commands to AUCTeX's \\[TeX-command-list]."
                   (unless (and (featurep 'tex-site) (featurep 'tex))
-    		(error "AUCTeX does not seem to be loaded"))
+                (error "AUCTeX does not seem to be loaded"))
                   (add-to-list 'TeX-command-list
                                '("LaTeXKnit" "%l %(mode) %s"
                                  TeX-run-TeX nil (latex-mode) :help
                                  "Run LaTeX after Knit") t)
                   (dolist (suffix '("nw" "Snw" "Rnw"))
-    		(add-to-list 'TeX-file-extensions suffix))))
+                (add-to-list 'TeX-file-extensions suffix))))
 
 
 
       (use-package polymode           ; ESS with polymode
+        :mode (("\\.Rmd" . poly-markdown+r-mode))
         :config
         (require 'poly-R)               ; Load necessary modes
         (require 'poly-markdown)
         (require 'poly-noweb)
-        (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
         (setq 
          pm-weaver "knitR-ESS"
          pm-exporter "pandoc"))
@@ -652,7 +653,7 @@ Hippie-expand is a nice autocompletion engine
       	      (add-to-list 'org-export-backends 'taskjuggler t)))
    #+END_SRC
   
-** Markdown and pandoc
+** COMMENT Markdown and pandoc
    
    Markdown is a lightweight alternative to HTML. For me, the two main
    uses are for websites (many site generators understand Markdown so
@@ -694,15 +695,19 @@ Hippie-expand is a nice autocompletion engine
        (defun pandoc--add-references-header (output-format)
          (if (not (string-equal output-format "latex"))
              "## References ##"
-   	""))
+        ""))
        (defun pandoc--hline-for-new-slide (output-format)
          (if (member output-format '("revealjs" "beamer"))
              "---"
-   	""))
+        ""))
        (defun pandoc--pause (output-format)
          (if (member output-format '("revealjs" "beamer"))
              ". . ."
-   	""))
+        ""))
+       (defun pandoc--not-in-latex (output-format text)
+         (if (string-equal output-format "latex")
+   	  ""
+   	  text))
        (defun pandoc--smallcaps (output-format txt)
          (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
        (defun markdown-insert-smallcaps ()
@@ -713,28 +718,29 @@ Hippie-expand is a nice autocompletion engine
                              (region-beginning) (region-end)
                              markdown-regex-code 2 4)))
                 (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" nil (car bounds) (cdr bounds)))
-   	 ;; Code markup removal, code markup for word, or empty markup insertion
-   	 (if (markdown-code-at-point-p)
+         ;; Code markup removal, code markup for word, or empty markup insertion
+         (if (markdown-code-at-point-p)
                 (markdown-unwrap-thing-at-point nil 0 1)
               (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
        (setq my-pandoc-directives
              '(("references" . pandoc--add-references-header)
                ("slide" . pandoc--hline-for-new-slide)
                ("pause" . pandoc--pause)
-               ("sc" . pandoc--smallcaps)))
+               ("sc" . pandoc--smallcaps)
+   	    ("notlatex" . pandoc--not-in-latex)))
        (defun pandoc--insert-feature (arg feature value)
          (interactive "P\nMFeature: \nMValue: ")
          (insert (format
                   (if arg
                       "$%s$%s"
-   		 "[$%s$%s]")
+         	   "[$%s$%s]")
                   value feature)))
        :config
        (add-hook 'pandoc-mode-hook
                  (defun my-pandoc-mode-hook ()
-   		(setq pandoc-use-async nil
+         	  (setq pandoc-use-async nil
                          pandoc-binary "/Users/piosad/Library/Haskell/bin/pandoc")
-   		(dolist (x my-pandoc-directives)
+         	  (dolist (x my-pandoc-directives)
                      (add-to-list 'pandoc-directives x))))
 
    #+END_SRC
@@ -803,15 +809,15 @@ This sets-up =helm-bibtex=
   (use-package helm-bibtex
     :config
     (setq bibtex-completion-bibliography '("~/Library/texmf/bibtex/bib/biblio.bib")
-          helm-bibtex-library-path '("~/ownCloud/PDF")
-          helm-bibtex-notes-path "~/ownCloud/varia/org/biblio-notes.org"
-          helm-bibtex-pdf-open-function (lambda (fpath)
+          bibtex-complextion-library-path '("~/ownCloud/PDF")
+          bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
+          bibtex-completion-pdf-open-function (lambda (fpath)
                                           (call-process "open" nil 0 nil "-a" "/Applications/Skim.app" fpath))
-          helm-bibtex-browser-function 'eww-browse-with-external-browser ; this doesn't work
-          helm-bibtex-cite-prompt-for-optional-arguments nil
-          helm-bibtex-completion-additional-search-fields '(subtitle booksubtitle tags)
+          bibtex-completion-browser-function 'eww-browse-with-external-browser ; this doesn't work
+          bibtex-completion-cite-prompt-for-optional-arguments nil
+          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle tags)
           bibtex-completion-cite-default-command "parencite"
-          helm-bibtex-pdf-field "file")
+          bibtex-completion-pdf-field "file")
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
 #+END_SRC
@@ -892,9 +898,7 @@ Edit Chrome textareas with Emacs
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package lilypond-mode
     :load-path "/usr/local/share/emacs/site-lisp/lilypond"
-    :config
-    (add-to-list 'auto-mode-alist
-                 '("\\.ly$" . LilyPond-mode)))
+    :mode (("\\.ly$" . LilyPond-mode)))
 #+END_SRC
 ** Typopunct-mode
 

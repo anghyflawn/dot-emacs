@@ -4,6 +4,7 @@
 (source org)
 
 (depends-on "alert")
+(depends-on "ample-theme")
 (depends-on "async")
 (depends-on "auctex")
 (depends-on "avy")
@@ -64,6 +65,7 @@
 (depends-on "omtose-phellack-theme")
 (depends-on "org")
 (depends-on "org-caldav")
+(depends-on "org-plus-contrib")
 (depends-on "package-build")
 (depends-on "pallet")
 (depends-on "pandoc-mode")
