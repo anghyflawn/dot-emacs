@@ -809,7 +809,7 @@ This sets-up =helm-bibtex=
   (use-package helm-bibtex
     :config
     (setq bibtex-completion-bibliography '("~/Library/texmf/bibtex/bib/biblio.bib")
-          bibtex-complextion-library-path '("~/ownCloud/PDF")
+          bibtex-completion-library-path '("~/ownCloud/PDF")
           bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           bibtex-completion-pdf-open-function (lambda (fpath)
                                           (call-process "open" nil 0 nil "-a" "/Applications/Skim.app" fpath))
