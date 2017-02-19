@@ -49,6 +49,14 @@ Keep temporary files away from working directories
     (mkdir conf/temp-directory))
 #+END_SRC
 
+Keep the encrypted =.authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs.org/article/keeping-secrets-in-emacs-gnupg-auth-sources][here]])
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq auth-sources
+	'((:source "~/.emacs.d/secrets/.authinfo.gpg")))
+#+END_SRC
+
 ** OS X specifics
 
 These things are just useful for OS X.
@@ -414,7 +422,7 @@ Elpy is a bunch of nice Python utilities.
         (when (and (bufferp name)
                    (buffer-file-name name))
           (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
-        (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+    	(when (and (equal (file-name-extension (buffer-file-name name)) "tex")
                        (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
               (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
                   name
@@ -430,22 +438,22 @@ Elpy is a bunch of nice Python utilities.
                 (defun my-Rnw-mode-hook ()
                   "Add commands to AUCTeX's \\[TeX-command-list]."
                   (unless (and (featurep 'tex-site) (featurep 'tex))
-                (error "AUCTeX does not seem to be loaded"))
+    		(error "AUCTeX does not seem to be loaded"))
                   (add-to-list 'TeX-command-list
                                '("LaTeXKnit" "%l %(mode) %s"
                                  TeX-run-TeX nil (latex-mode) :help
                                  "Run LaTeX after Knit") t)
                   (dolist (suffix '("nw" "Snw" "Rnw"))
-                (add-to-list 'TeX-file-extensions suffix))))
+    		(add-to-list 'TeX-file-extensions suffix))))
 
 
 
       (use-package polymode           ; ESS with polymode
-        :mode (("\\.Rmd" . poly-markdown+r-mode))
         :config
         (require 'poly-R)               ; Load necessary modes
         (require 'poly-markdown)
         (require 'poly-noweb)
+        (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
         (setq 
          pm-weaver "knitR-ESS"
          pm-exporter "pandoc"))
@@ -562,45 +570,47 @@ Hippie-expand is a nice autocompletion engine
          (insert (format
                   (if arg
                       "\\mbox{\\ensuremath{%s}%s}"
-                    "\\mbox{[\\ensuremath{%s}%s]}")
+         	   "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
 
 
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
-                   (flyspell-mode 1)
-                   (TeX-fold-mode 1)
-                   ;; This activates the X-SAMPA layout, making
-                   ;; it accessible via C-\
-                   (set-input-method "ipa-x-sampa")
-                   (toggle-input-method)
-                   (outline-minor-mode 1)
-                   (turn-on-reftex)
-                   (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-                   (TeX-source-correlate-mode 1)
-                   (local-set-key (kbd "C-c f") 'insert-feature)
-                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
-                   (setq font-latex-match-function-keywords
-                                    '(("ipa" "{")
-                                      ("twe" "{")
-                                      ("mbi" "{")
-                                      "ex" "pex" "pex~" "xe" "a"))
-                   (setq font-latex-match-reference-keywords
-                         '(("cref" "{")
-                           ("Cref" "{"))
+         	  (flyspell-mode 1)
+         	  (TeX-fold-mode 1)
+         	  ;; This activates the X-SAMPA layout, making
+         	  ;; it accessible via C-\
+         	  (set-input-method "ipa-x-sampa")
+         	  (toggle-input-method)
+         	  (outline-minor-mode 1)
+         	  (turn-on-reftex)
+         	  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+         	  (TeX-source-correlate-mode 1)
+         	  (local-set-key (kbd "C-c f") 'insert-feature)
+         	  (local-set-key (kbd "C-c ]") 'helm-bibtex)
+         	  (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
+         	  (setq font-latex-match-function-keywords
+         			   '(("ipa" "{")
+   			     ("twe" "{")
+   			     ("mbi" "{")
+   			     ("x" "{{")
+   			     ("xo" "{{{")
+   			     "ex" "pex" "pex~" "xe" "a"))
+         	  (setq font-latex-match-reference-keywords
+   		'(("cref" "{")
+         		  ("Cref" "{"))
                          outline-minor-mode-prefix "\C-c\C-u"
                          TeX-parse-self t
                          TeX-auto-save t
                          TeX-view-program-selection
                          '((output-dvi "open")
-                           (output-pdf "Skim")
-                           (output-html "open"))
+         		  (output-pdf "Skim")
+         		  (output-html "open"))
                          TeX-electric-sub-and-superscript t
                          LaTeX-csquotes-close-quote "}"
                          LaTeX-csquotes-open-quote "\\enquote{"
                          TeX-source-correlate-start-server t)
-                   (setq-default LaTeX-engine 'xetex))))
+         	  (setq-default LaTeX-engine 'xetex))))
 #+END_SRC
 
 ** Org-mode
@@ -653,7 +663,7 @@ Hippie-expand is a nice autocompletion engine
       	      (add-to-list 'org-export-backends 'taskjuggler t)))
    #+END_SRC
   
-** COMMENT Markdown and pandoc
+** Markdown and pandoc
    
    Markdown is a lightweight alternative to HTML. For me, the two main
    uses are for websites (many site generators understand Markdown so
@@ -738,8 +748,7 @@ Hippie-expand is a nice autocompletion engine
        :config
        (add-hook 'pandoc-mode-hook
                  (defun my-pandoc-mode-hook ()
-         	  (setq pandoc-use-async nil
-                         pandoc-binary "/Users/piosad/Library/Haskell/bin/pandoc")
+         	  (setq pandoc-use-async nil)
          	  (dolist (x my-pandoc-directives)
                      (add-to-list 'pandoc-directives x))))
 
@@ -809,7 +818,7 @@ This sets-up =helm-bibtex=
   (use-package helm-bibtex
     :config
     (setq bibtex-completion-bibliography '("~/Library/texmf/bibtex/bib/biblio.bib")
-          bibtex-completion-library-path '("~/ownCloud/PDF")
+          bibtex-complextion-library-path '("~/ownCloud/PDF")
           bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           bibtex-completion-pdf-open-function (lambda (fpath)
                                           (call-process "open" nil 0 nil "-a" "/Applications/Skim.app" fpath))
@@ -898,7 +907,9 @@ Edit Chrome textareas with Emacs
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package lilypond-mode
     :load-path "/usr/local/share/emacs/site-lisp/lilypond"
-    :mode (("\\.ly$" . LilyPond-mode)))
+    :config
+    (add-to-list 'auto-mode-alist
+                 '("\\.ly$" . LilyPond-mode)))
 #+END_SRC
 ** Typopunct-mode
 
@@ -1124,11 +1135,11 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
-    :load-path "/usr/local/Cellar/mu/HEAD-82dc1ae/share/emacs/site-lisp/mu/mu4e/"
     :commands (mu4e compose-mail)
+    :load-path "/usr/local/Cellar/mu/HEAD-235dc75/share/emacs/site-lisp/mu/mu4e/"
     :config
 
-    (require 'mu4e-contrib)
+    (use-package mu4e-contrib)
 
     (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
           mu4e-maildir private/maildir
@@ -1146,11 +1157,11 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-change-filenames-when-moving t
           mu4e-attachment-dir  "~/Downloads"
           mu4e-view-show-images t
-          mu4e-get-mail-command "offlineimap -a ed"
+          mu4e-get-mail-command "mbsync work"
           mail-user-agent 'mu4e-user-agent
           user-mail-address "pavel.iosad@ed.ac.uk"
-          mu4e-update-interval 600
           user-full-name  "Pavel Iosad"
+	  mu4e-headers-include-related nil
           mu4e-compose-complete-addresses t
           mu4e-compose-complete-only-after "2012-09-15"
           mu4e-headers-date-format "%d-%m-%Y"
@@ -1190,7 +1201,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (setq sendmail-program "/usr/local/bin/msmtp")
 
     (use-package org-mu4e
-      :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu/mu4e/"
+      :load-path "/usr/local/Cellar/mu/HEAD-235dc75/share/emacs/site-lisp/mu/mu4e/"
       :config
       (setq org-mu4e-link-query-in-headers-mode nil
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
