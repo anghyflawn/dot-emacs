@@ -49,14 +49,6 @@ Keep temporary files away from working directories
     (mkdir conf/temp-directory))
 #+END_SRC
 
-Keep the encrypted =.authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs.org/article/keeping-secrets-in-emacs-gnupg-auth-sources][here]])
-
-#+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
-  (setq auth-sources
-	'((:source "~/.emacs.d/secrets/.authinfo.gpg")))
-#+END_SRC
-
 ** OS X specifics
 
 These things are just useful for OS X.
@@ -146,8 +138,9 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (when (find-font (font-spec :name "Monaco"))
-    (set-frame-font "Monaco-14" t t))
+  (if (find-font (font-spec :name "Monaco"))
+      (set-frame-font "Monaco-14" t t)
+    (set-frame-font "DejaVu Sans Mono-13" t t))
 #+END_SRC
 
 ** Misc
@@ -293,7 +286,7 @@ Even so, ~ansi-term~ doesn't obey:
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package flyspell
     :config
-    (setq-default ispell-program-name "/usr/local/bin/aspell"
+    (setq-default ispell-program-name "/usr/bin/aspell"
                   ispell-really-aspell t)
     (add-to-list 'ispell-dictionary-alist
                  '("nynorsk"
@@ -389,7 +382,7 @@ Elpy is a bunch of nice Python utilities.
     (use-package elpy
       :config (elpy-enable))
     :config
-    (setq-default python-shell-interpreter "/usr/local/bin/python3"))
+    (setq-default python-shell-interpreter "/usr/bin/python"))
   
 #+END_SRC
 
@@ -570,47 +563,45 @@ Hippie-expand is a nice autocompletion engine
          (insert (format
                   (if arg
                       "\\mbox{\\ensuremath{%s}%s}"
-         	   "\\mbox{[\\ensuremath{%s}%s]}")
+                    "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
 
 
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
-         	  (flyspell-mode 1)
-         	  (TeX-fold-mode 1)
-         	  ;; This activates the X-SAMPA layout, making
-         	  ;; it accessible via C-\
-         	  (set-input-method "ipa-x-sampa")
-         	  (toggle-input-method)
-         	  (outline-minor-mode 1)
-         	  (turn-on-reftex)
-         	  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-         	  (TeX-source-correlate-mode 1)
-         	  (local-set-key (kbd "C-c f") 'insert-feature)
-         	  (local-set-key (kbd "C-c ]") 'helm-bibtex)
-         	  (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
-         	  (setq font-latex-match-function-keywords
-         			   '(("ipa" "{")
-   			     ("twe" "{")
-   			     ("mbi" "{")
-   			     ("x" "{{")
-   			     ("xo" "{{{")
-   			     "ex" "pex" "pex~" "xe" "a"))
-         	  (setq font-latex-match-reference-keywords
-   		'(("cref" "{")
-         		  ("Cref" "{"))
+                   (flyspell-mode 1)
+                   (TeX-fold-mode 1)
+                   ;; This activates the X-SAMPA layout, making
+                   ;; it accessible via C-\
+                   (set-input-method "ipa-x-sampa")
+                   (toggle-input-method)
+                   (outline-minor-mode 1)
+                   (turn-on-reftex)
+                   (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                   (TeX-source-correlate-mode 1)
+                   (local-set-key (kbd "C-c f") 'insert-feature)
+                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
+                   (setq font-latex-match-function-keywords
+                                    '(("ipa" "{")
+                                      ("twe" "{")
+                                      ("mbi" "{")
+                                      "ex" "pex" "pex~" "xe" "a"))
+                   (setq font-latex-match-reference-keywords
+                         '(("cref" "{")
+                           ("Cref" "{"))
                          outline-minor-mode-prefix "\C-c\C-u"
                          TeX-parse-self t
                          TeX-auto-save t
                          TeX-view-program-selection
                          '((output-dvi "open")
-         		  (output-pdf "Skim")
-         		  (output-html "open"))
+                           (output-pdf "Skim")
+                           (output-html "open"))
                          TeX-electric-sub-and-superscript t
                          LaTeX-csquotes-close-quote "}"
                          LaTeX-csquotes-open-quote "\\enquote{"
                          TeX-source-correlate-start-server t)
-         	  (setq-default LaTeX-engine 'xetex))))
+                   (setq-default LaTeX-engine 'xetex))))
 #+END_SRC
 
 ** Org-mode
@@ -663,7 +654,7 @@ Hippie-expand is a nice autocompletion engine
       	      (add-to-list 'org-export-backends 'taskjuggler t)))
    #+END_SRC
   
-** Markdown and pandoc
+** COMMENT Markdown and pandoc
    
    Markdown is a lightweight alternative to HTML. For me, the two main
    uses are for websites (many site generators understand Markdown so
@@ -748,7 +739,8 @@ Hippie-expand is a nice autocompletion engine
        :config
        (add-hook 'pandoc-mode-hook
                  (defun my-pandoc-mode-hook ()
-         	  (setq pandoc-use-async nil)
+         	  (setq pandoc-use-async nil
+                         pandoc-binary "/Users/piosad/Library/Haskell/bin/pandoc")
          	  (dolist (x my-pandoc-directives)
                      (add-to-list 'pandoc-directives x))))
 
@@ -1084,7 +1076,8 @@ calendar app.
 
   (defun sync-calendar ()
     (interactive)
-    (org-icalendar-combine-agenda-files)
+    (let ((org-icalendar-combined-agenda-file "~/ownCloud/varia/org/org.ics"))
+      (org-icalendar-combine-agenda-files))
     (shell-command (format "rsync -avz %s %s" 
                            org-icalendar-combined-agenda-file private/calendar-destination))
     (org-caldav-sync))
@@ -1135,11 +1128,11 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
+    ; :load-path "/usr/local/Cellar/mu/HEAD-82dc1ae/share/emacs/site-lisp/mu/mu4e/"
     :commands (mu4e compose-mail)
-    :load-path "/usr/local/Cellar/mu/HEAD-235dc75/share/emacs/site-lisp/mu/mu4e/"
     :config
 
-    (use-package mu4e-contrib)
+    (require 'mu4e-contrib)
 
     (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
           mu4e-maildir private/maildir
@@ -1160,8 +1153,8 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-get-mail-command "mbsync work"
           mail-user-agent 'mu4e-user-agent
           user-mail-address "pavel.iosad@ed.ac.uk"
+          mu4e-update-interval 600
           user-full-name  "Pavel Iosad"
-	  mu4e-headers-include-related nil
           mu4e-compose-complete-addresses t
           mu4e-compose-complete-only-after "2012-09-15"
           mu4e-headers-date-format "%d-%m-%Y"
@@ -1198,10 +1191,10 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 		(flyspell-mode)))
 
     (setq message-send-mail-function 'message-send-mail-with-sendmail)
-    (setq sendmail-program "/usr/local/bin/msmtp")
+    (setq sendmail-program "/usr/bin/msmtp")
 
     (use-package org-mu4e
-      :load-path "/usr/local/Cellar/mu/HEAD-235dc75/share/emacs/site-lisp/mu/mu4e/"
+      :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu/mu4e/"
       :config
       (setq org-mu4e-link-query-in-headers-mode nil
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
@@ -1209,7 +1202,11 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
   (use-package mu4e-alert
     :config
-    (mu4e-alert-set-default-style 'notifier)
+    (mu4e-alert-set-default-style 'notifications)
+    (setq mu4e-alert-interesting-mail-query
+	  (concat
+	   "flag:unread "
+	   "maildir:/INBOX"))
     (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
     (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 
