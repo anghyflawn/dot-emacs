@@ -32,14 +32,6 @@ We also need to actually make sure Pallet is in use.
 * Initialization
 ** Paths
 
-Define the directory for Emacs packages that do not come from repositories
-
-#+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defvar conf/external-directory "~/Dev/Lisp/Elisp")
-  (add-to-list 'load-path conf/external-directory)
-#+END_SRC
-
 Keep temporary files away from working directories
 
 #+NAME: init-before
@@ -97,8 +89,8 @@ Put autosave and backup files into the directory we defined above
 
    #+NAME: init-before
    #+BEGIN_SRC emacs-lisp :tangle no
-     (defvar conf/private-file (expand-file-name "private.el" user-emacs-directory))
-     (load conf/private-file 'noerror)
+     (defvar conf/private-file (expand-file-name "private.el.gpg" user-emacs-directory))
+     (load-library conf/private-file)
   #+END_SRC
 
 ** Custom
