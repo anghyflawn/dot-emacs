@@ -1,0 +1,6 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# name: Div with custom font size
+# key: divsize
+# binding: direct-keybinding
+# --
+<div style="font-size: ${1:25px};">

@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: word-and-gloss
+# key: x
+# --
+\x{$1}{$2}

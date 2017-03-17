@@ -1,0 +1,6 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# name: Proportion sign
+# key: ~
+# binding: direct-keybinding
+# --
+$\sim$ 

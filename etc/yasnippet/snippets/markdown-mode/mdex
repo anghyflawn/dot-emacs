@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: mdex
+# key: mdex
+# --
+\begin{rawtex}
+\ex
+\begingl
+$0
+\endgl
+\xe
+\end{rawtex}

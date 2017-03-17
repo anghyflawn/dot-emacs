@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: nl
+# key: nl
+# --
+edge label={node[midway,left]{$-$}}

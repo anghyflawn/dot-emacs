@@ -1,0 +1,6 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# name: Empty set
+# key: empty
+# binding: direct-keybinding
+# --
+$\emptyset$ 

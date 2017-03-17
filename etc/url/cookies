@@ -1,0 +1,33 @@
+;; Emacs-W3 HTTP cookies file
+;; Automatically generated file!!! DO NOT EDIT!!!
+
+(setq url-cookie-storage
+ '((".onlinelibrary.wiley.com"
+  [url-cookie "Max-Age" "31536000" "06-Jan-2018 20:14:49.00 GMT" "/" ".onlinelibrary.wiley.com" nil]
+  [url-cookie "visited" "true" "06-Jan-2018 20:14:49.00 GMT" "/" ".onlinelibrary.wiley.com" nil]
+  [url-cookie "HttpOnly" nil "06-Jan-2018 20:14:49.00 GMT" "/" ".onlinelibrary.wiley.com" nil]
+  [url-cookie "Version" "1" "06-Jan-2018 20:14:49.00 GMT" "/" ".onlinelibrary.wiley.com" nil])
+ ("onlinelibrary.wiley.com"
+  [url-cookie "Max-Age" "31536000" "06-Jan-2018 20:14:49.00 GMT" "/" "onlinelibrary.wiley.com" nil]
+  [url-cookie "visited" "true" "06-Jan-2018 20:14:49.00 GMT" "/" "onlinelibrary.wiley.com" nil]
+  [url-cookie "Version" "1" "06-Jan-2018 20:14:49.00 GMT" "/" "onlinelibrary.wiley.com" nil]
+  [url-cookie "HttpOnly" nil "06-Jan-2018 20:14:49.00 GMT" "/" "onlinelibrary.wiley.com" nil])
+ (".wiley.com"
+  [url-cookie "Max-Age" "31536000" "06-Jan-2018 20:14:49.00 GMT" "/" ".wiley.com" nil]
+  [url-cookie "Version" "1" "06-Jan-2018 20:14:49.00 GMT" "/" ".wiley.com" nil]
+  [url-cookie "visited" "true" "06-Jan-2018 20:14:49.00 GMT" "/" ".wiley.com" nil])
+ (".asu.edu"
+  [url-cookie "__cfduid" "d50688c42f0741837070db06380e35af41481745118" "14 Dec 17 19:51:58 [GMT]" "/" ".asu.edu" nil]
+  [url-cookie "HttpOnly" nil "14 Dec 17 19:51:58 [GMT]" "/" ".asu.edu" nil])
+ (".eventbrite.co.uk"
+  [url-cookie "G" "v%3D2%26i%3D4e4e7fa9-4d12-46fe-96d5-20c7b2aa19fb%26a%3D803%26s%3Dfda1c2b87775d79d2a8fd8518109c61e3b598ed9" "11-Dec-2017 20:33:47.00 GMT" "/" ".eventbrite.co.uk" nil]
+  [url-cookie "httponly" nil "11-Dec-2017 20:33:47.00 GMT" "/" ".eventbrite.co.uk" nil]
+  [url-cookie "mgref" "enivtefor001" "11-Dec-2017 20:33:47.00 GMT" "/" ".eventbrite.co.uk" nil]))
+)
+(setq url-cookie-secure-storage
+ 'nil)
+
+;; Local Variables:
+;; version-control: never
+;; no-byte-compile: t
+;; End:
