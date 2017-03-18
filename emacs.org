@@ -93,6 +93,15 @@ Put autosave and backup files into the directory we defined above
      (load-library conf/private-file)
   #+END_SRC
 
+** Start the emacs server
+
+Emacs is launched by a =systemd= service, so we need to launch the server for the daemon to make sense
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-list :tangle no
+(server-start)
+#+END_SRC
+
 ** Custom
 
 Set alternative location for =custom-set-variables= and =custom-set-faces=, 
@@ -123,15 +132,22 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-(load-theme 'niflheim t)
+  (setq my-theme 'niflheim)
+
+  (defun load-my-theme (frame)
+    (select-frame frame)
+    (load-theme my-theme t))
+
+  (if (daemonp)
+      (add-hook 'after-make-frame-functions #'load-my-theme)
+    (load-theme my-theme t))
 #+END_SRC
 
 ** Fonts
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (if (find-font (font-spec :name "Monaco"))
-      (set-frame-font "Monaco-14" t t)
+  (when (find-font (font-spec :name "DejaVu Sans Mono"))
     (set-frame-font "DejaVu Sans Mono-13" t t))
 #+END_SRC
 
@@ -153,16 +169,6 @@ middle of the window
                :config
                (global-centered-cursor-mode 1)
 	       (setq ccm-recenter-at-end-of-file t))
-#+END_SRC
-
-I find it best to have the Emacs window fit the screen, for all sorts
-of reasons. This an automated way of doing it that will only work on
-some Emacsen, but maybe it'll make its way to the main release soon.
-
-#+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
-  (when (fboundp 'toggle-frame-maximized)
-    (add-hook 'emacs-startup-hook 'toggle-frame-maximized))
 #+END_SRC
 
 This is to prevent emacs from getting in your way when run from 
@@ -555,45 +561,42 @@ Hippie-expand is a nice autocompletion engine
          (insert (format
                   (if arg
                       "\\mbox{\\ensuremath{%s}%s}"
-                    "\\mbox{[\\ensuremath{%s}%s]}")
+         	   "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
 
 
+  
+
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
-                   (flyspell-mode 1)
-                   (TeX-fold-mode 1)
-                   ;; This activates the X-SAMPA layout, making
-                   ;; it accessible via C-\
-                   (set-input-method "ipa-x-sampa")
-                   (toggle-input-method)
-                   (outline-minor-mode 1)
-                   (turn-on-reftex)
-                   (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-                   (TeX-source-correlate-mode 1)
-                   (local-set-key (kbd "C-c f") 'insert-feature)
-                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
-                   (setq font-latex-match-function-keywords
-                                    '(("ipa" "{")
+         	  (flyspell-mode 1)
+         	  (TeX-fold-mode 1)
+         	  ;; This activates the X-SAMPA layout, making
+         	  ;; it accessible via C-\
+         	  (set-input-method "ipa-x-sampa")
+         	  (toggle-input-method)
+         	  (outline-minor-mode 1)
+         	  (turn-on-reftex)
+         	  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+         	  (TeX-source-correlate-mode 1)
+         	  (local-set-key (kbd "C-c f") 'insert-feature)
+         	  (local-set-key (kbd "C-c ]") 'helm-bibtex)
+         	  (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
+   	  (add-to-list 'TeX-view-program-selection
+   		       '(output-pdf "Zathura"))
+         	  (setq font-latex-match-function-keywords
+         			   '(("ipa" "{")
                                       ("twe" "{")
                                       ("mbi" "{")
                                       "ex" "pex" "pex~" "xe" "a"))
-                   (setq font-latex-match-reference-keywords
-                         '(("cref" "{")
-                           ("Cref" "{"))
                          outline-minor-mode-prefix "\C-c\C-u"
                          TeX-parse-self t
                          TeX-auto-save t
-                         TeX-view-program-selection
-                         '((output-dvi "open")
-                           (output-pdf "Skim")
-                           (output-html "open"))
                          TeX-electric-sub-and-superscript t
                          LaTeX-csquotes-close-quote "}"
                          LaTeX-csquotes-open-quote "\\enquote{"
                          TeX-source-correlate-start-server t)
-                   (setq-default LaTeX-engine 'xetex))))
+         	  (setq-default LaTeX-engine 'xetex)))
 #+END_SRC
 
 ** Org-mode
@@ -646,7 +649,7 @@ Hippie-expand is a nice autocompletion engine
       	      (add-to-list 'org-export-backends 'taskjuggler t)))
    #+END_SRC
   
-** COMMENT Markdown and pandoc
+** Markdown and pandoc
    
    Markdown is a lightweight alternative to HTML. For me, the two main
    uses are for websites (many site generators understand Markdown so
@@ -860,6 +863,7 @@ Evil is a mode that makes vi(m) like keybindings
             (term-mode . emacs)
             (dired-mode . emacs)
             (wdired-mode . normal)
+	    (inferior-ess-mode . emacs)
             (help-mode . emacs)
             (comint-mode . emacs)
             (inferior-python-mode . emacs)
@@ -1075,6 +1079,12 @@ calendar app.
     (org-caldav-sync))
 
   (setq kill-emacs-query-functions '(sync-calendar))
+
+  (defun definitely-kill-emacs ()
+    "Kill Emacs without running the kill-hook"
+    (interactive)
+    (let (emacs-kill-hook)
+      (kill-emacs)))
 #+END_SRC
 
 ** Email
@@ -1120,7 +1130,6 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
-    ; :load-path "/usr/local/Cellar/mu/HEAD-82dc1ae/share/emacs/site-lisp/mu/mu4e/"
     :commands (mu4e compose-mail)
     :config
 
@@ -1149,6 +1158,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           user-full-name  "Pavel Iosad"
           mu4e-compose-complete-addresses t
           mu4e-compose-complete-only-after "2012-09-15"
+          mu4e-headers-include-related nil
           mu4e-headers-date-format "%d-%m-%Y"
           message-kill-buffer-on-exit t
                                           ; mu4e-html2text-command 'mu4e-shr2text
@@ -1186,7 +1196,6 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (setq sendmail-program "/usr/bin/msmtp")
 
     (use-package org-mu4e
-      :load-path "/usr/local/Cellar/mu/HEAD/share/emacs/site-lisp/mu/mu4e/"
       :config
       (setq org-mu4e-link-query-in-headers-mode nil
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
