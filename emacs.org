@@ -41,29 +41,35 @@ Keep temporary files away from working directories
     (mkdir conf/temp-directory))
 #+END_SRC
 
-** OS X specifics
-
-These things are just useful for OS X.
+Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs.org/article/keeping-secrets-in-emacs-gnupg-auth-sources][here]])
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle no
-  (when (eq system-type 'darwin)
-    (setq delete-by-moving-to-trash t
-          trash-directory "~/.Trash/")
-    ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
-    (when (executable-find "gls")
-      (setq insert-directory-program "gls"))
-    ;; Derive PATH by running a shell so that GUI Emacs sessions have access to it
-    (exec-path-from-shell-initialize))
-  
-  ;; This is a thing for British keyboards, where # is supposed
-  ;; to be Alt-3, which Emacs intercepts and interprets as M-3
-  
-  (global-set-key (kbd "M-3") 
-                  (lambda () 
-                    (interactive) 
-                    (insert "#")))
-  
+  (setq auth-sources
+	'((:source "~/.emacs.d/secrets/authinfo.gpg")))
+#+END_SRC
+
+** System  specifics
+
+I have recently moved (back) from OS X to Linux, so just keeping this in case
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq delete-by-moving-to-trash t)
+  (exec-path-from-shell-initialize)
+
+  (pcase system-type
+    ('darwin
+     (setq trash-directory "~/.Trash/")
+     ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
+     (when (executable-find "gls")
+       (setq insert-directory-program "gls"))
+     (global-set-key (kbd "M-3")  ;; My Mac had # on Alt-3
+		     (lambda () 
+		       (interactive) 
+		       (insert "#"))) )
+    ('gnu/linux
+     (setq trash-directory "~/.local/share/Trash")))
 #+END_SRC
 
 ** Temporary files
