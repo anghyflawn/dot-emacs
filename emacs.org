@@ -340,6 +340,11 @@ Magit provides featureful Git integration.
     :commands (magit-status magit-diff magit-log magit-blame-mode)
     :bind ("C-x g" . magit-status)
     :init (setq magit-last-seen-setup-instructions "1.4.0"))
+
+
+  (use-package magithub
+    :after magit
+    :config (magithub-feature-autoinject t))
 #+END_SRC
 
 ** Programming modes
@@ -708,8 +713,8 @@ Hippie-expand is a nice autocompletion engine
         ""))
        (defun pandoc--not-in-latex (output-format text)
          (if (string-equal output-format "latex")
-   	  ""
-   	  text))
+          ""
+          text))
        (defun pandoc--smallcaps (output-format txt)
          (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
        (defun markdown-insert-smallcaps ()
@@ -729,20 +734,20 @@ Hippie-expand is a nice autocompletion engine
                ("slide" . pandoc--hline-for-new-slide)
                ("pause" . pandoc--pause)
                ("sc" . pandoc--smallcaps)
-   	    ("notlatex" . pandoc--not-in-latex)))
+   	 ("notlatex" . pandoc--not-in-latex)))
        (defun pandoc--insert-feature (arg feature value)
          (interactive "P\nMFeature: \nMValue: ")
          (insert (format
                   (if arg
                       "$%s$%s"
-         	   "[$%s$%s]")
+   		"[$%s$%s]")
                   value feature)))
        :config
        (add-hook 'pandoc-mode-hook
                  (defun my-pandoc-mode-hook ()
-         	  (setq pandoc-use-async nil
-                         pandoc-binary "/Users/piosad/Library/Haskell/bin/pandoc")
-         	  (dolist (x my-pandoc-directives)
+                  (setq pandoc-use-async nil
+   		     pandoc-binary "/usr/bin/pandoc")
+                  (dolist (x my-pandoc-directives)
                      (add-to-list 'pandoc-directives x))))
 
    #+END_SRC
@@ -1084,13 +1089,9 @@ calendar app.
                            org-icalendar-combined-agenda-file private/calendar-destination))
     (org-caldav-sync))
 
-  (setq kill-emacs-query-functions '(sync-calendar))
-
-  (defun definitely-kill-emacs ()
-    "Kill Emacs without running the kill-hook"
-    (interactive)
-    (let (emacs-kill-hook)
-      (kill-emacs)))
+  (setq kill-emacs-query-functions '(lambda ()
+				      (interactive)
+				      (ignore-errors (sync-calendar))))
 #+END_SRC
 
 ** Email
@@ -1255,6 +1256,15 @@ An RSS reader
     (global-set-key (kbd "C-x w") 'elfeed)
     (setq elfeed-feeds
           '("https://hypothes.is/stream.rss?uri.parts=anghyflawn")))
+#+END_SRC
+** PDF tools
+
+Much better than DocView
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package pdf-tools
+    :config (pdf-tools-install))
 #+END_SRC
 
 * Configuration layout
