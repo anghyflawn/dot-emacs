@@ -836,7 +836,7 @@ Bog is an extension for research notes
   (use-package bog
     :config
     (add-hook 'org-mode-hook 'bog-mode)
-    (setq bog-bib-file (expand-file-name "~/Library/texmf/bibtex/bib/biblio.bib")
+    (setq bog-bib-file (expand-file-name "~/texmf/bibtex/bib/biblio.bib")
           bog-notes-directory (expand-file-name "~/ownCloud/notes")
           bog-stage-directory (expand-file-name "~/Downloads")
           bog-file-directory (expand-file-name "~/ownCloud/PDF")
@@ -1166,9 +1166,10 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-compose-complete-addresses t
           mu4e-compose-complete-only-after "2012-09-15"
           mu4e-headers-include-related nil
+          mu4e-index-cleanup nil
+          mu4e-index-lazy-check t
           mu4e-headers-date-format "%d-%m-%Y"
           message-kill-buffer-on-exit t
-                                          ; mu4e-html2text-command 'mu4e-shr2text
           mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
           mu4e-compose-dont-reply-to-self t
           mu4e-compose-keep-self-cc nil)
