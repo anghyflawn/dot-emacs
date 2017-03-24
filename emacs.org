@@ -153,8 +153,9 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (when (find-font (font-spec :name "DejaVu Sans Mono"))
-    (set-frame-font "DejaVu Sans Mono-13" t t))
+  (when (find-font (font-spec :name "Consolas"))
+    (set-frame-font "Consolas-14" t t))
+  (setq-default line-spacing 0.1)
 #+END_SRC
 
 ** Misc
@@ -815,7 +816,7 @@ This sets-up =helm-bibtex=
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package helm-bibtex
     :config
-    (setq bibtex-completion-bibliography '("~/Library/texmf/bibtex/bib/biblio.bib")
+    (setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
           bibtex-complextion-library-path '("~/ownCloud/PDF")
           bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           bibtex-completion-pdf-open-function (lambda (fpath)
