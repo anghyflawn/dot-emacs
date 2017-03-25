@@ -138,7 +138,7 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (setq my-theme 'niflheim)
+  (setq my-theme 'nimbus)
 
   (defun load-my-theme (frame)
     (select-frame frame)
@@ -153,8 +153,8 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (when (find-font (font-spec :name "Consolas"))
-    (set-frame-font "Consolas-14" t t))
+  (add-to-list 'default-frame-alist
+	       '(font . "Consolas-12"))
   (setq-default line-spacing 0.1)
 #+END_SRC
 
@@ -164,7 +164,7 @@ Highlight the current line: not everyone's cup of tea, of course
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (global-hl-line-mode)
+  (global-hl-line-mode 0)
 #+END_SRC
 
 When possible, automatically scroll so that the cursor is in the 
@@ -573,42 +573,42 @@ Hippie-expand is a nice autocompletion engine
          (insert (format
                   (if arg
                       "\\mbox{\\ensuremath{%s}%s}"
-         	   "\\mbox{[\\ensuremath{%s}%s]}")
+   		"\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
 
 
-  
+
 
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
-         	  (flyspell-mode 1)
-         	  (TeX-fold-mode 1)
-         	  ;; This activates the X-SAMPA layout, making
-         	  ;; it accessible via C-\
-         	  (set-input-method "ipa-x-sampa")
-         	  (toggle-input-method)
-         	  (outline-minor-mode 1)
-         	  (turn-on-reftex)
-         	  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-         	  (TeX-source-correlate-mode 1)
-         	  (local-set-key (kbd "C-c f") 'insert-feature)
-         	  (local-set-key (kbd "C-c ]") 'helm-bibtex)
-         	  (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
-   	  (add-to-list 'TeX-view-program-selection
-   		       '(output-pdf "Zathura"))
-         	  (setq font-latex-match-function-keywords
-         			   '(("ipa" "{")
-                                      ("twe" "{")
-                                      ("mbi" "{")
-                                      "ex" "pex" "pex~" "xe" "a"))
-                         outline-minor-mode-prefix "\C-c\C-u"
-                         TeX-parse-self t
-                         TeX-auto-save t
-                         TeX-electric-sub-and-superscript t
-                         LaTeX-csquotes-close-quote "}"
-                         LaTeX-csquotes-open-quote "\\enquote{"
-                         TeX-source-correlate-start-server t)
-         	  (setq-default LaTeX-engine 'xetex)))
+                  (flyspell-mode 1)
+                  (TeX-fold-mode 1)
+                  ;; This activates the X-SAMPA layout, making
+                  ;; it accessible via C-\
+                  (set-input-method "ipa-x-sampa")
+                  (toggle-input-method)
+                  (outline-minor-mode 1)
+                  (turn-on-reftex)
+                  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                  (TeX-source-correlate-mode 1)
+                  (local-set-key (kbd "C-c f") 'insert-feature)
+                  (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                  (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
+          (add-to-list 'TeX-view-program-selection
+      		    '(output-pdf "Zathura"))
+          (setq font-latex-match-function-keywords
+   	     '(("ipa" "{")
+   	       ("twe" "{")
+   	       ("mbi" "{")
+   	       "ex" "pex" "pex~" "xe" "a")
+   	     outline-minor-mode-prefix "\C-c\C-u"
+   	     TeX-parse-self t
+   	     TeX-auto-save t
+   	     TeX-electric-sub-and-superscript t
+   	     LaTeX-csquotes-close-quote "}"
+   	     LaTeX-csquotes-open-quote "\\enquote{"
+   	     TeX-source-correlate-start-server t)
+          (setq-default LaTeX-engine 'xetex))))
 #+END_SRC
 
 ** Org-mode
@@ -817,10 +817,10 @@ This sets-up =helm-bibtex=
   (use-package helm-bibtex
     :config
     (setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
-          bibtex-complextion-library-path '("~/ownCloud/PDF")
+          bibtex-completion-library-path '("~/ownCloud/PDF")
           bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           bibtex-completion-pdf-open-function (lambda (fpath)
-                                          (call-process "open" nil 0 nil "-a" "/Applications/Skim.app" fpath))
+                                          (call-process "open" nil 0 nil "-a" "/usr/bin/zathura" fpath))
           bibtex-completion-browser-function 'eww-browse-with-external-browser ; this doesn't work
           bibtex-completion-cite-prompt-for-optional-arguments nil
           bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle tags)
@@ -906,7 +906,6 @@ Edit Chrome textareas with Emacs
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package lilypond-mode
-    :load-path "/usr/local/share/emacs/site-lisp/lilypond"
     :config
     (add-to-list 'auto-mode-alist
                  '("\\.ly$" . LilyPond-mode)))
