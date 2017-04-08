@@ -23,6 +23,7 @@
 (depends-on "csv-mode")
 (depends-on "dash")
 (depends-on "diminish")
+(depends-on "dired-narrow")
 (depends-on "dired-toggle-sudo")
 (depends-on "edit-server")
 (depends-on "elfeed")

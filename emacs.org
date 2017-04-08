@@ -509,9 +509,11 @@ Hippie-expand is a nice autocompletion engine
       (add-hook 'prog-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'markdown-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'LaTeX-mode-hook #'turn-on-smartparens-strict-mode)
+      (sp-pair "'" 'nil :actions :rem)
+      (sp-local-pair 'markdown-mode "'" "'")
       (use-package evil-smartparens
-        :config
-        (progn
+	:config
+	(progn
           (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
           (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
 
@@ -1064,7 +1066,7 @@ Golden-ratio mode makes sure your window splits are of a sensible size
     (setq golden-ratio-auto-scale t))
 #+END_SRC
 
-** Calendar integration
+** COMMENT Calendar integration
 
 This bit exports the agenda from my org-mode calendar to an iCalendar
 and copies it to a remote server, where it gets picked up by the phone
@@ -1084,9 +1086,9 @@ calendar app.
   (defun sync-calendar ()
     (interactive)
     (let ((org-icalendar-combined-agenda-file "~/ownCloud/varia/org/org.ics"))
-      (org-icalendar-combine-agenda-files))
-    (shell-command (format "rsync -avz %s %s" 
-                           org-icalendar-combined-agenda-file private/calendar-destination))
+      (org-icalendar-combine-agenda-files)
+      (shell-command (format "rsync -avz %s %s" 
+			     org-icalendar-combined-agenda-file private/calendar-destination)))
     (org-caldav-sync))
 
   (setq kill-emacs-query-functions '(lambda ()
@@ -1166,8 +1168,8 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-compose-complete-addresses t
           mu4e-compose-complete-only-after "2012-09-15"
           mu4e-headers-include-related nil
-          mu4e-index-cleanup nil
-          mu4e-index-lazy-check t
+          mu4e-index-cleanup t
+          mu4e-index-lazy-check nil
           mu4e-headers-date-format "%d-%m-%Y"
           message-kill-buffer-on-exit t
           mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
@@ -1175,11 +1177,15 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-compose-keep-self-cc nil)
 
 
+    (setq unread-query "flag:unread maildir:/INBOX or flag:unread maildir:/AllMail")
+
     (add-to-list 'mu4e-bookmarks
 		 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
 
     (add-to-list 'mu4e-bookmarks
 		 '("flag:flagged" "Flagged messages" ?f))
+
+    (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
 
     (when (fboundp 'imagemagick-register-types)
       (imagemagick-register-types))
@@ -1212,10 +1218,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
   (use-package mu4e-alert
     :config
     (mu4e-alert-set-default-style 'notifications)
-    (setq mu4e-alert-interesting-mail-query
-	  (concat
-	   "flag:unread "
-	   "maildir:/INBOX"))
+    (setq mu4e-alert-interesting-mail-query unread-query)
     (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
     (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 
