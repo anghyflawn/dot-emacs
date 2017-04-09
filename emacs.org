@@ -154,8 +154,7 @@ This sets the colours of the background and fonts.
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
   (add-to-list 'default-frame-alist
-	       '(font . "Consolas-12"))
-  (setq-default line-spacing 0.1)
+	       '(font . "Cousine-12"))
 #+END_SRC
 
 ** Misc
@@ -700,7 +699,8 @@ Hippie-expand is a nice autocompletion engine
        :defer t
        :bind
        ("C-c f" . pandoc--insert-feature)
-       ("C-c C-s g" . markdown-insert-smallcaps))
+       ("C-c C-s g" . markdown-insert-smallcaps)
+       ("C-c C-s v" . markdown-catalan))
        :init
        (defun pandoc--add-references-header (output-format)
          (if (not (string-equal output-format "latex"))
@@ -720,6 +720,7 @@ Hippie-expand is a nice autocompletion engine
           text))
        (defun pandoc--smallcaps (output-format txt)
          (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
+
        (defun markdown-insert-smallcaps ()
          (interactive
           (if (markdown-use-region-p)
@@ -732,24 +733,41 @@ Hippie-expand is a nice autocompletion engine
          (if (markdown-code-at-point-p)
                 (markdown-unwrap-thing-at-point nil 0 1)
               (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
-       (setq my-pandoc-directives
+
+     (defun markdown-catalan ()
+       "I'm using Catalan as a workaround to have a different font for
+     IPA when creating LaTeX documents through markdown. Ugh"
+         (interactive
+          (if (markdown-use-region-p)
+              ;; Active region
+              (let ((bounds (markdown-unwrap-things-in-region
+                             (region-beginning) (region-end)
+                             markdown-regex-code 2 4)))
+                (markdown-wrap-or-insert "<span lang=\"ca\">" "</span>" nil (car bounds) (cdr bounds)))
+         ;; Code markup removal, code markup for word, or empty markup insertion
+         (if (markdown-code-at-point-p)
+                (markdown-unwrap-thing-at-point nil 0 1)
+              (markdown-wrap-or-insert "<span lang=\"ca\">" "</span>" 'word nil nil)))))
+
+     (setq my-pandoc-directives
              '(("references" . pandoc--add-references-header)
                ("slide" . pandoc--hline-for-new-slide)
                ("pause" . pandoc--pause)
                ("sc" . pandoc--smallcaps)
-   	 ("notlatex" . pandoc--not-in-latex)))
+   	    ("notlatex" . pandoc--not-in-latex)))
+
        (defun pandoc--insert-feature (arg feature value)
          (interactive "P\nMFeature: \nMValue: ")
          (insert (format
                   (if arg
                       "$%s$%s"
-   		"[$%s$%s]")
+      	     "[$%s$%s]")
                   value feature)))
        :config
        (add-hook 'pandoc-mode-hook
                  (defun my-pandoc-mode-hook ()
                   (setq pandoc-use-async nil
-   		     pandoc-binary "/usr/bin/pandoc")
+      		  pandoc-binary "/usr/bin/pandoc")
                   (dolist (x my-pandoc-directives)
                      (add-to-list 'pandoc-directives x))))
 
@@ -780,36 +798,40 @@ This sets up RefTeX and BibTeX-mode.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
-      (use-package reftex
-        :commands turn-on-reftex
-        :config
-        (setq reftex-use-external-file-finders t
-              reftex-plug-into-AUCTeX t
-              reftex-default-bibliography `(,private/bibliography-file)
-              reftex-cite-prompt-optional-args nil
-              reftex-cite-cleanup-optional-args t)
-        (global-unset-key "\C-c /")
-        (add-to-list 'reftex-bibliography-commands "addbibresource")
+  (use-package reftex
+    :commands turn-on-reftex
+    :config
+    (setq reftex-use-external-file-finders t
+          reftex-plug-into-AUCTeX t
+          reftex-default-bibliography `(,private/bibliography-file)
+          reftex-cite-prompt-optional-args nil
+          reftex-cite-cleanup-optional-args t)
+    (global-unset-key "\C-c /")
+    (add-to-list 'reftex-bibliography-commands "addbibresource")
 
-        (let* ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
-          (setq reftex-external-file-finders
-                `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
-                  ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
-
-
+    (let* ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
+      (setq reftex-external-file-finders
+            `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
+              ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
 
 
-      (use-package bibtex
-        :mode ("\\.bib" . bibtex-mode)
-        :init
-        (setq bibtex-align-at-equal-sign t
-              bibtex-autokey-year-length 4
-              bibtex-autokey-titleword-length nil
-              bibtex-autokey-titlewords-stretch 0
-              bibtex-autokey-titlewords 1
-              bibtex-autokey-year-title-separator "")
 
-        (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
+
+  (use-package bibtex
+    :mode ("\\.bib" . bibtex-mode)
+    :init
+    (setq bibtex-align-at-equal-sign t
+          bibtex-autokey-year-length 4
+          bibtex-autokey-titleword-length nil
+          bibtex-autokey-titlewords-stretch 0
+          bibtex-autokey-titlewords 1
+          bibtex-autokey-year-title-separator "")
+
+    (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
+
+  (use-package bibtex-utils
+    :config
+    (setq bu-bibtex-fields-ignore-list '(url abstract)))
 #+END_SRC
 
 This sets-up =helm-bibtex=
@@ -818,16 +840,14 @@ This sets-up =helm-bibtex=
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package helm-bibtex
     :config
-    (setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+    (setq bibtex-completion-bibliography '("~/Dropbox/biblio.bib")
           bibtex-completion-library-path '("~/ownCloud/PDF")
           bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           bibtex-completion-pdf-open-function (lambda (fpath)
                                           (call-process "open" nil 0 nil "-a" "/usr/bin/zathura" fpath))
-          bibtex-completion-browser-function 'eww-browse-with-external-browser ; this doesn't work
           bibtex-completion-cite-prompt-for-optional-arguments nil
-          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle tags)
-          bibtex-completion-cite-default-command "parencite"
-          bibtex-completion-pdf-field "file")
+          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle)
+          bibtex-completion-cite-default-command "parencite")
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
 #+END_SRC
@@ -1066,7 +1086,7 @@ Golden-ratio mode makes sure your window splits are of a sensible size
     (setq golden-ratio-auto-scale t))
 #+END_SRC
 
-** COMMENT Calendar integration
+** Calendar integration
 
 This bit exports the agenda from my org-mode calendar to an iCalendar
 and copies it to a remote server, where it gets picked up by the phone
