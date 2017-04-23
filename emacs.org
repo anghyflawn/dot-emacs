@@ -28,7 +28,6 @@ We also need to actually make sure Pallet is in use.
   (use-package no-littering)
 #+END_SRC
 
-
 * Initialization
 ** Paths
 
@@ -172,9 +171,10 @@ middle of the window
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package centered-cursor-mode
-               :config
-               (global-centered-cursor-mode 1)
-	       (setq ccm-recenter-at-end-of-file t))
+    :diminish centered-cursor-mode
+    :config
+    (global-centered-cursor-mode 1)
+    (setq ccm-recenter-at-end-of-file t))
 #+END_SRC
 
 This is to prevent emacs from getting in your way when run from 
@@ -289,30 +289,31 @@ Even so, ~ansi-term~ doesn't obey:
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package flyspell
+    :diminish flyspell-mode
     :config
     (setq-default ispell-program-name "/usr/bin/aspell"
                   ispell-really-aspell t)
     (add-to-list 'ispell-dictionary-alist
-                 '("nynorsk"
+		 '("nynorsk"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "nynorsk") nil utf-8))
     (add-to-list 'ispell-dictionary-alist
-                 '("gaidhlig"
+		 '("gaidhlig"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "gd") nil utf-8))
     (add-to-list 'ispell-dictionary-alist
-                 '("gaeilge"
+		 '("gaeilge"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "ga") nil utf-8))
     (add-to-list 'ispell-dictionary-alist
-                 '("bokmal"
+		 '("bokmal"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "nb") nil utf-8))
-  
+
     (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")
     (add-hook 'text-mode-hook 'flyspell-mode)
     (add-hook 'prog-mode-hook 'flyspell-prog-mode))                 
@@ -484,6 +485,7 @@ We probably want our lines wrapped when we're writing
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
+  (diminish 'visual-line-mode)
   (add-hook 'text-mode-hook 
             (lambda ()
               (visual-line-mode 1)))
@@ -508,9 +510,10 @@ Hippie-expand is a nice autocompletion engine
       (add-hook 'prog-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'markdown-mode-hook #'turn-on-smartparens-strict-mode)
       (add-hook 'LaTeX-mode-hook #'turn-on-smartparens-strict-mode)
-      (sp-pair "'" 'nil :actions :rem)
+      (sp-pair "'" "'" :actions :rem)
       (sp-local-pair 'markdown-mode "'" "'")
       (use-package evil-smartparens
+	:diminish evil-smartparens-mode
 	:config
 	(progn
           (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
@@ -574,7 +577,7 @@ Hippie-expand is a nice autocompletion engine
          (insert (format
                   (if arg
                       "\\mbox{\\ensuremath{%s}%s}"
-   		"\\mbox{[\\ensuremath{%s}%s]}")
+                  "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
 
 
@@ -596,19 +599,20 @@ Hippie-expand is a nice autocompletion engine
                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
           (add-to-list 'TeX-view-program-selection
-      		    '(output-pdf "Zathura"))
-          (setq font-latex-match-function-keywords
-   	     '(("ipa" "{")
-   	       ("twe" "{")
-   	       ("mbi" "{")
-   	       "ex" "pex" "pex~" "xe" "a")
-   	     outline-minor-mode-prefix "\C-c\C-u"
-   	     TeX-parse-self t
-   	     TeX-auto-save t
-   	     TeX-electric-sub-and-superscript t
-   	     LaTeX-csquotes-close-quote "}"
-   	     LaTeX-csquotes-open-quote "\\enquote{"
-   	     TeX-source-correlate-start-server t)
+   		'(output-pdf "Zathura"))
+          (setq font-latex-match-function-keywords '(("ipa" "{")
+      					       ("twe" "{")
+      					       ("mbi" "{")
+   					       ("x" "{")
+   					       ("ox" "{")
+      					       "ex" "pex" "pex~" "xe" "a")
+      	  outline-minor-mode-prefix "\C-c\C-u"
+      	  TeX-parse-self t
+      	  TeX-auto-save t
+      	  TeX-electric-sub-and-superscript t
+      	  LaTeX-csquotes-close-quote "}"
+      	  LaTeX-csquotes-open-quote "\\enquote{"
+      	  TeX-source-correlate-(setq )tart-server t)
           (setq-default LaTeX-engine 'xetex))))
 #+END_SRC
 
@@ -639,27 +643,28 @@ Hippie-expand is a nice autocompletion engine
    #+NAME: utils
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package org
-                  :config
-                  (define-key global-map "\C-cl" 'org-store-link)
-                  (define-key global-map "\C-ca" 'org-agenda)
-                  (define-key global-map "\C-ct" 'org-capture)
-                  (setq org-log-done t
-                        org-use-property-inheritance t
-                        org-agenda-files private/org-files
-                        org-directory private/org-directory
-                        org-startup-indented t
-                        org-src-fontify-natively t
-                        org-icalendar-timezone "Europe/London"
-                        org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
-                        org-icalendar-use-deadline '(todo-due)
-                        org-agenda-window-setup 'current-window
-                        org-agenda-span 'week
-                        org-agenda-skip-scheduled-if-deadline-is-shown t
-                        org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
-                        org-icalendar-alarm-time 15)
-      	    (use-package ox-taskjuggler
-      	      :config
-      	      (add-to-list 'org-export-backends 'taskjuggler t)))
+       :diminish org-indent-mode
+       :config
+       (define-key global-map "\C-cl" 'org-store-link)
+       (define-key global-map "\C-ca" 'org-agenda)
+       (define-key global-map "\C-ct" 'org-capture)
+       (setq org-log-done t
+   	  org-use-property-inheritance t
+   	  org-agenda-files private/org-files
+   	  org-directory private/org-directory
+   	  org-startup-indented t
+   	  org-src-fontify-natively t
+   	  org-icalendar-timezone "Europe/London"
+   	  org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
+   	  org-icalendar-use-deadline '(todo-due)
+   	  org-agenda-window-setup 'current-window
+   	  org-agenda-span 'week
+   	  org-agenda-skip-scheduled-if-deadline-is-shown t
+   	  org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
+   	  org-icalendar-alarm-time 15)
+       (use-package ox-taskjuggler
+         :config
+         (add-to-list 'org-export-backends 'taskjuggler t)))
    #+END_SRC
   
 ** Markdown and pandoc
@@ -827,7 +832,20 @@ This sets up RefTeX and BibTeX-mode.
           bibtex-autokey-titlewords 1
           bibtex-autokey-year-title-separator "")
 
-    (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120))))
+    (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120)))
+
+    (defun bibtex-autokey-get-year ()
+      "Return year field contents as a string obeying
+  `bibtex-autokey-year-length'. Patched to also understand `date'
+  field"
+      (let* ((try-year (bibtex-autokey-get-field "year"))
+	     (yearfield (if (string= try-year "")
+			    (car (split-string (bibtex-autokey-get-field "date") "-"))
+			  try-year)))
+	(substring yearfield (max 0 (- (length yearfield)
+				       bibtex-autokey-year-length))))))
+
+
 
   (use-package bibtex-utils
     :config
@@ -857,6 +875,7 @@ Bog is an extension for research notes
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package bog
+    :diminish bog-mode
     :config
     (add-hook 'org-mode-hook 'bog-mode)
     (setq bog-bib-file (expand-file-name "~/texmf/bibtex/bib/biblio.bib")
@@ -874,6 +893,7 @@ Evil is a mode that makes vi(m) like keybindings
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no 
   (use-package evil
+    :diminish undo-tree-mode
     :init
     (setq evil-want-C-i-jump nil)
     :config
@@ -969,8 +989,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                 ("M-y" . helm-show-kill-ring)
                 ("C-x b" . helm-mini)
                 ("C-x C-f" . helm-find-files)
-                ("C-c u" . helm-org-in-buffer-headings)
-                ("C-x 7" . helm-unicode))
+                ("C-c u" . helm-org-in-buffer-headings))
                :commands (helm-buffers-list
                           helm-colors
                           helm-find-files
@@ -1012,6 +1031,16 @@ don't want or don't have that much space.
   (require 'helm-backup)
   (global-set-key (kbd "C-c b") 'helm-backup)
   (add-hook 'after-save-hook 'helm-backup-versioning)
+#+END_SRC
+** Autocompletion
+
+Set up =company-mode= for autocompletion.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package company
+      :config (global-company-mode 1)
+      (setq company-global-modes '(not message-mode latex-mode markdown-mode)))
 #+END_SRC
 
 ** Yasnippet
@@ -1081,6 +1110,7 @@ Golden-ratio mode makes sure your window splits are of a sensible size
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package golden-ratio
+    :diminish golden-ratio-mode
     :config
     (golden-ratio-mode 1)
     (setq golden-ratio-auto-scale t))
@@ -1252,9 +1282,9 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+BEGIN_SRC emacs-lisp :tangle no
 (setq browse-url-browser-function 'eww-browse-url)
 #+END_SRC
-** Avy
+** Search
 
-A better search-based navigation.
+=avy= is a better search-based navigation.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -1269,6 +1299,18 @@ A better search-based navigation.
     (avy-setup-default))
     
 #+END_SRC
+
+And =swiper= is nice for searching longer files
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package swiper
+    :commands (swiper swiper-query-replace)
+    :bind
+    ("C-s" . swiper-helm)
+    ("C-%" . swiper-query-replace))
+#+END_SRC
+
 ** Elfeed
 
 An RSS reader
