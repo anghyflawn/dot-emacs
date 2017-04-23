@@ -131,6 +131,14 @@ We don't need scroll bars or tool bars
     (scroll-bar-mode -1))
 #+END_SRC
 
+Diminish some modes that are always on and which serve no purpose in the mode-line
+
+#+NAME init-after
+#+BEGIN_SRC emacs-lisp :tangle no
+(diminish 'auto-revert-mode)
+(diminish 'undo-tree-mode)
+#+END_SRC
+
 ** Theme
 
 This sets the colours of the background and fonts.
@@ -948,9 +956,7 @@ Edit Chrome textareas with Emacs
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package lilypond-mode
-    :config
-    (add-to-list 'auto-mode-alist
-                 '("\\.ly$" . LilyPond-mode)))
+    :mode ("\\.ly$" . LilyPond-mode))
 #+END_SRC
 ** Typopunct-mode
 
