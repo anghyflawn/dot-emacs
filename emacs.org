@@ -1269,7 +1269,9 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       :config
       (setq org-mu4e-link-query-in-headers-mode nil
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
-                                     "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")))))
+                                     "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")
+				    ("e" "event" entry (file+headline main-agenda-file "Events from email")
+				     "* %?\n%a\n")))))
 
   (use-package mu4e-alert
     :config
