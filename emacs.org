@@ -133,7 +133,7 @@ We don't need scroll bars or tool bars
 
 Diminish some modes that are always on and which serve no purpose in the mode-line
 
-#+NAME init-after
+#+NAME: init-after
 #+BEGIN_SRC emacs-lisp :tangle no
 (diminish 'auto-revert-mode)
 (diminish 'undo-tree-mode)
