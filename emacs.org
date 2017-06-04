@@ -23,7 +23,7 @@ We also need to actually make sure Pallet is in use.
 
 ** Keep =~/.emacs.d= clean
 
-#+NAME: utils
+#+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package no-littering)
 #+END_SRC
@@ -118,6 +118,25 @@ to make sure Emacs doesn't dump them in your =init.el=.
   (load custom-file 'noerror)
 #+END_SRC
 
+** Save place
+
+Return to where we were
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package saveplace
+    :init (save-place-mode 1))
+#+END_SRC
+
+** Auto revert
+
+Update buffers if files have been changed on disk.
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (global-auto-revert-mode 1)
+  (add-hook 'dired-mode-hook 'auto-revert-mode)
+#+END_SRC
 * Appearance
 ** Unneeded chrome
 
@@ -145,7 +164,7 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (setq my-theme 'nimbus)
+  (setq my-theme 'doom-one)
 
   (defun load-my-theme (frame)
     (select-frame frame)
@@ -160,8 +179,7 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (add-to-list 'default-frame-alist
-	       '(font . "Cousine-12"))
+  (add-to-list 'default-frame-alist '(font . "Cousine-12"))
 #+END_SRC
 
 ** Misc
@@ -515,10 +533,10 @@ Hippie-expand is a nice autocompletion engine
     :config
     (progn
       (show-smartparens-global-mode t)
-      (add-hook 'prog-mode-hook #'turn-on-smartparens-strict-mode)
-      (add-hook 'markdown-mode-hook #'turn-on-smartparens-strict-mode)
-      (add-hook 'LaTeX-mode-hook #'turn-on-smartparens-strict-mode)
-      (sp-pair "'" "'" :actions :rem)
+      (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+      (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
+      (add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
+      (sp-pair "'" nil :actions '(:rem insert))
       (sp-local-pair 'markdown-mode "'" "'")
       (use-package evil-smartparens
 	:diminish evil-smartparens-mode
@@ -872,8 +890,11 @@ This sets-up =helm-bibtex=
           bibtex-completion-pdf-open-function (lambda (fpath)
                                           (call-process "open" nil 0 nil "-a" "/usr/bin/zathura" fpath))
           bibtex-completion-cite-prompt-for-optional-arguments nil
-          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle)
-          bibtex-completion-cite-default-command "parencite")
+          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date)
+          bibtex-completion-cite-default-command "parencite"
+	  bibtex-completion-display-formats
+	  '((t . "${author:36} ${title:*} ${date:4} ${=has-pdf=:1}${=has-note=:1} ${=type=:7}")))
+
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
 #+END_SRC
@@ -939,6 +960,10 @@ Evil is a mode that makes vi(m) like keybindings
 
   (use-package evil-exchange
     :config (evil-exchange-install))
+
+  (use-package evil-goggles
+    :diminish evil-goggles-mode
+    :config (evil-goggles-mode))
 #+END_SRC
 
 ** Edit-server
@@ -978,6 +1003,18 @@ Edit Chrome textareas with Emacs
        (t
 	(self-insert-command arg))))
     (define-key typopunct-map "." 'typopunct-insert-ellipsis))
+#+END_SRC
+** Haskell setup
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package intero
+    :commands intero-mode)
+
+  (use-package haskell-mode
+    :commands haskell-mode
+    :config
+    (add-hook 'haskell-mode 'intero-mode))
 #+END_SRC
 
 * Other useful utilities
@@ -1136,7 +1173,14 @@ calendar app.
           org-caldav-calendar-id private/org-caldav-calendar-id
           org-caldav-inbox private/org-caldav-inbox
           org-caldav-files private/org-caldav-files
-          org-icalendar-timezone "Europe/London"))
+          org-caldav-oauth2-client-id private/org-caldav-oauth2-client-id
+          org-caldav-oauth2-client-secret private/org-caldav-oauth2-client-secret
+          org-icalendar-timezone "Europe/London"
+          org-caldav-calendars `((:calendar-id ,private/org-caldav-calendar-id
+                                  	     :url ,org-caldav-url)
+                                 (:calendar-id ,private/google-calendar-id
+                                               :url google))))
+
 
 
   (defun sync-calendar ()
@@ -1144,12 +1188,14 @@ calendar app.
     (let ((org-icalendar-combined-agenda-file "~/ownCloud/varia/org/org.ics"))
       (org-icalendar-combine-agenda-files)
       (shell-command (format "rsync -avz %s %s" 
-			     org-icalendar-combined-agenda-file private/calendar-destination)))
-    (org-caldav-sync))
+                             org-icalendar-combined-agenda-file private/calendar-destination)))
+    (org-caldav-sync)
+    (with-current-buffer (get-file-buffer org-caldav-inbox)
+      (save-buffer)))
 
   (setq kill-emacs-query-functions '(lambda ()
-				      (interactive)
-				      (ignore-errors (sync-calendar))))
+                                      (interactive)
+                                      (ignore-errors (sync-calendar))))
 #+END_SRC
 
 ** Email
@@ -1162,17 +1208,22 @@ This is just a convenience function to choose a signature at random from four ve
   (defun make-random-signature ()
     (interactive)
     (let ((sigs (list
-                 "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n"
+                 "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad"
 
-                 "Pavel Iosad\nRoinn a' Chànanachais agus Cànain na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
+                 "Pavel Iosad\nRoinn a' Chànanachais agus Cànain na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
 
-                 "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
+                 "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
 
-                 "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
+                 "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
 
-                 "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
+                 "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
        (nth (random (length sigs)) sigs)))
+#+END_SRC
 
+Keep the Drafts folder clean
+
+#+NAME:utils
+#+BEGIN_SRC emacs-lisp :tangle no
   (defun draft-auto-save-buffer-name-handler (operation &rest args)
   "for `make-auto-save-file-name' set '.' in front of the file name; do nothing for other operations"  
     (if
@@ -1236,10 +1287,10 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (setq unread-query "flag:unread maildir:/INBOX or flag:unread maildir:/AllMail")
 
     (add-to-list 'mu4e-bookmarks
-		 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+                 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
 
     (add-to-list 'mu4e-bookmarks
-		 '("flag:flagged" "Flagged messages" ?f))
+                 '("flag:flagged" "Flagged messages" ?f))
 
     (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
 
@@ -1248,19 +1299,73 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
     (add-hook 'mu4e-view-mode-hook
               (defun my-view-mode-hook ()
-		;; try to emulate some of the eww key-bindings
-		(local-set-key (kbd "<tab>") 'shr-next-link)
-		(local-set-key (kbd "<backtab>") 'shr-previous-link)
-		(visual-line-mode)))
+                ;; try to emulate some of the eww key-bindings
+                (local-set-key (kbd "<tab>") 'shr-next-link)
+                (local-set-key (kbd "<backtab>") 'shr-previous-link)
+                (visual-line-mode)))
 
 
+
+    (setq languages
+          ;; language . locale
+          '(("english" . "en_GB.utf8")
+            ("gaeilge" . "ga_IE.utf8")
+            ("cymraeg" . "cy_GB.utf8")
+            ("gaidhlig" . "gd_GB.utf8")))
+
+
+    (setq en_GB.utf8-message-citation-line-format "On %A, %b %d %Y, %N wrote:\n")
+    (setq cy_GB.utf8-message-citation-line-format "%A, %b %d %Y, ysgrifennodd %N:\n")
+    (setq gd_GB.utf8-message-citation-line-format "Aig %A, %b %d %Y, sgrìobh %N:\n")
+    (setq ga_IE.utf8-message-citation-line-format "Ag %A, %b %d %Y, scríobh %N:\n")
+
+    (defun fa/change-message-citation-line (locale)
+      (interactive)
+      ;; Switch to the buffer *mu4e-headers* and copy the date and the
+      ;; sender into variables, since we need it for the citation line.
+      (let ((original-date (with-current-buffer "*mu4e-headers*"
+                             (mu4e-message-field-at-point :date)))
+            (original-from (with-current-buffer "*mu4e-headers*"
+                             (concat
+                              (caar (mu4e-message-field-at-point :from))
+                              " <" (cdar (mu4e-message-field-at-point :from)) ">"))))
+        ;; Create the citation line in a temp buffer and save this line to
+        ;; a string. This is necessary to find the excat citation line in
+        ;; the email.
+        (let ((old-citation-line nil))
+          (with-temp-buffer
+            (message-insert-formatted-citation-line original-from original-date)
+            (goto-char (point-min))
+            (while (re-search-forward "\n" nil t)
+              (replace-match ""))
+            (buffer-string)
+            (setq old-citation-line (buffer-string))
+            (kill-buffer))
+          ;; switch back to the reply-buffer, search the citation line and
+          ;; replace it with the new one.
+          (save-excursion
+            (goto-char (point-min))
+            (search-forward old-citation-line)
+            (beginning-of-line)
+            (kill-line)
+            (setq system-time-locale locale)
+            (setq message-citation-line-format
+                  (symbol-value
+                   (intern (concat locale
+                                   "-message-citation-line-format"))))
+            (message-insert-formatted-citation-line original-from original-date)
+            (previous-line)
+            (delete-blank-lines)))))
+
+
+  
     (add-hook 'mu4e-compose-mode-hook
-              (defun my-compose-mode-hook ()
-		(setq mu4e-compose-signature (make-random-signature))
-		(auto-fill-mode)
-		(set-fill-column 72)
-		(typopunct-mode)
-		(flyspell-mode)))
+    (defun my-compose-mode-hook ()
+                (setq mu4e-compose-signature (make-random-signature))
+                (auto-fill-mode)
+                (set-fill-column 72)
+                (typopunct-mode)
+                (flyspell-mode)))
 
     (setq message-send-mail-function 'message-send-mail-with-sendmail)
     (setq sendmail-program "/usr/bin/msmtp")
@@ -1270,8 +1375,8 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       (setq org-mu4e-link-query-in-headers-mode nil
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
                                      "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")
-				    ("e" "event" entry (file+headline main-agenda-file "Events from email")
-				     "* %?\n%a\n")))))
+                                    ("e" "event" entry (file+headline main-agenda-file "Events from email")
+                                     "* %?\n%a\n")))))
 
   (use-package mu4e-alert
     :config
@@ -1288,7 +1393,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-(setq browse-url-browser-function 'eww-browse-url)
+  (setq browse-url-browser-function 'eww-browse-url)
 #+END_SRC
 ** Search
 
@@ -1340,7 +1445,14 @@ Much better than DocView
   (use-package pdf-tools
     :config (pdf-tools-install))
 #+END_SRC
+** Packer
 
+Manage Arch Linux packages
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package arch-packer)
+#+END_SRC
 * Configuration layout
 
 Here we define the =emacs.el= file that gets generated by the source

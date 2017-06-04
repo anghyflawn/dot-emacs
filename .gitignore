@@ -13,3 +13,5 @@
 /var
 /url/cookies
 /.emacs.desktop
+/oauth2.plstore
+/*.el#
