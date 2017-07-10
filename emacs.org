@@ -367,11 +367,6 @@ Magit provides featureful Git integration.
     :commands (magit-status magit-diff magit-log magit-blame-mode)
     :bind ("C-x g" . magit-status)
     :init (setq magit-last-seen-setup-instructions "1.4.0"))
-
-
-  (use-package magithub
-    :after magit
-    :config (magithub-feature-autoinject t))
 #+END_SRC
 
 ** Programming modes
@@ -531,60 +526,59 @@ Hippie-expand is a nice autocompletion engine
   (use-package smartparens-config
     :ensure smartparens
     :config
-    (progn
-      (show-smartparens-global-mode t)
-      (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
-      (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
-      (add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
-      (sp-pair "'" nil :actions '(:rem insert))
-      (sp-local-pair 'markdown-mode "'" "'")
-      (use-package evil-smartparens
-	:diminish evil-smartparens-mode
-	:config
-	(progn
-          (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
-          (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
+    (show-smartparens-global-mode t)
+    (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+    (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
+    (add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
+    (sp-local-pair 'LaTeX-mode "'" "'" :actions nil)
+    (sp-local-pair 'markdown-mode "'" "'")
+    (use-package evil-smartparens
+      :diminish evil-smartparens-mode
+      :config
+      (progn
+        (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
+        (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
 
-      (bind-keys
-       :map smartparens-mode-map
-       ("C-M-a" . sp-beginning-of-sexp)
-       ("C-M-e" . sp-end-of-sexp)
+        (bind-keys
+         :map smartparens-mode-map
+         ("C-M-a" . sp-beginning-of-sexp)
+         ("C-M-e" . sp-end-of-sexp)
 
-       ("C-<down>" . sp-down-sexp)
-       ("C-<up>"   . sp-up-sexp)
-       ("M-<down>" . sp-backward-down-sexp)
-       ("M-<up>"   . sp-backward-up-sexp)
+         ("C-<down>" . sp-down-sexp)
+         ("C-<up>"   . sp-up-sexp)
+         ("M-<down>" . sp-backward-down-sexp)
+         ("M-<up>"   . sp-backward-up-sexp)
 
-       ("C-M-f" . sp-forward-sexp)
-       ("C-M-b" . sp-backward-sexp)
+         ("C-M-f" . sp-forward-sexp)
+         ("C-M-b" . sp-backward-sexp)
 
-       ("C-M-n" . sp-next-sexp)
-       ("C-M-p" . sp-previous-sexp)
+         ("C-M-n" . sp-next-sexp)
+         ("C-M-p" . sp-previous-sexp)
 
-       ("C-S-f" . sp-forward-symbol)
-       ("C-S-b" . sp-backward-symbol)
+         ("C-S-f" . sp-forward-symbol)
+         ("C-S-b" . sp-backward-symbol)
 
-       ("M-<right>" . sp-forward-slurp-sexp)
-       ("C-<right>" . sp-forward-barf-sexp)
-       ("M-<left>"  . sp-backward-slurp-sexp)
-       ("C-<left>"  . sp-backward-barf-sexp)
+         ("M-<right>" . sp-forward-slurp-sexp)
+         ("C-<right>" . sp-forward-barf-sexp)
+         ("M-<left>"  . sp-backward-slurp-sexp)
+         ("C-<left>"  . sp-backward-barf-sexp)
 
-       ("C-M-t" . sp-transpose-sexp)
-       ("C-M-k" . sp-kill-sexp)
-       ("C-k"   . sp-kill-hybrid-sexp)
-       ("M-k"   . sp-backward-kill-sexp)
-       ("C-M-w" . sp-copy-sexp)
+         ("C-M-t" . sp-transpose-sexp)
+         ("C-M-k" . sp-kill-sexp)
+         ("C-k"   . sp-kill-hybrid-sexp)
+         ("M-k"   . sp-backward-kill-sexp)
+         ("C-M-w" . sp-copy-sexp)
 
-       ("C-M-d" . delete-sexp)
+         ("C-M-d" . delete-sexp)
 
-       ("M-<backspace>" . backward-kill-word)
-       ("C-<backspace>" . sp-backward-kill-word)
-       ([remap sp-backward-kill-word] . backward-kill-word)
+         ("M-<backspace>" . backward-kill-word)
+         ("C-<backspace>" . sp-backward-kill-word)
+         ([remap sp-backward-kill-word] . backward-kill-word)
 
-       ("M-[" . sp-backward-unwrap-sexp)
-       ("M-]" . sp-unwrap-sexp)
+         ("M-[" . sp-backward-unwrap-sexp)
+         ("M-]" . sp-unwrap-sexp)
 
-       ("C-x C-t" . sp-transpose-hybrid-sexp))))
+         ("C-x C-t" . sp-transpose-hybrid-sexp)))
 #+END_SRC
 
 ** LaTeX
@@ -675,22 +669,25 @@ Hippie-expand is a nice autocompletion engine
        (define-key global-map "\C-ca" 'org-agenda)
        (define-key global-map "\C-ct" 'org-capture)
        (setq org-log-done t
-   	  org-use-property-inheritance t
-   	  org-agenda-files private/org-files
-   	  org-directory private/org-directory
-   	  org-startup-indented t
-   	  org-src-fontify-natively t
-   	  org-icalendar-timezone "Europe/London"
-   	  org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
-   	  org-icalendar-use-deadline '(todo-due)
-   	  org-agenda-window-setup 'current-window
-   	  org-agenda-span 'week
-   	  org-agenda-skip-scheduled-if-deadline-is-shown t
-   	  org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
-   	  org-icalendar-alarm-time 15)
+          org-use-property-inheritance t
+          org-agenda-files private/org-files
+          org-directory private/org-directory
+          org-startup-indented t
+          org-src-fontify-natively t
+          org-icalendar-timezone "Europe/London"
+          org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
+          org-icalendar-use-deadline '(todo-due)
+          org-agenda-window-setup 'current-window
+          org-agenda-span 'week
+          org-agenda-skip-scheduled-if-deadline-is-shown t
+          org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
+          org-icalendar-alarm-time 15)
        (use-package ox-taskjuggler
          :config
-         (add-to-list 'org-export-backends 'taskjuggler t)))
+         (add-to-list 'org-export-backends 'taskjuggler t))
+       (use-package org-contacts
+         :config
+         (setq org-contacts-files private/org-contacts-files)))
    #+END_SRC
   
 ** Markdown and pandoc
@@ -761,7 +758,7 @@ Hippie-expand is a nice autocompletion engine
                              markdown-regex-code 2 4)))
                 (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" nil (car bounds) (cdr bounds)))
          ;; Code markup removal, code markup for word, or empty markup insertion
-         (if (markdown-code-at-point-p)
+         (if (thing-at-point-looking-at markdown-regex-code)
                 (markdown-unwrap-thing-at-point nil 0 1)
               (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
 
@@ -888,12 +885,11 @@ This sets-up =helm-bibtex=
           bibtex-completion-library-path '("~/ownCloud/PDF")
           bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           bibtex-completion-pdf-open-function (lambda (fpath)
-                                          (call-process "open" nil 0 nil "-a" "/usr/bin/zathura" fpath))
+                                          (call-process "xdg-open" nil 0 nil fpath))
           bibtex-completion-cite-prompt-for-optional-arguments nil
           bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date)
           bibtex-completion-cite-default-command "parencite"
-	  bibtex-completion-display-formats
-	  '((t . "${author:36} ${title:*} ${date:4} ${=has-pdf=:1}${=has-note=:1} ${=type=:7}")))
+          bibtex-completion-display-formats '((t . "${author:36} ${title:*} ${date:4} ${=has-pdf=:1}${=has-note=:1} ${=type=:7}")))
 
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
@@ -946,11 +942,12 @@ Evil is a mode that makes vi(m) like keybindings
             (term-mode . emacs)
             (dired-mode . emacs)
             (wdired-mode . normal)
-	    (inferior-ess-mode . emacs)
+            (inferior-ess-mode . emacs)
             (help-mode . emacs)
             (comint-mode . emacs)
             (inferior-python-mode . emacs)
             (eww-mode . emacs)
+            (undo-tree-visualizer . emacs)
             (mu4e-view-mode . emacs)
             (paradox-menu-mode . emacs))
           do (evil-set-initial-state mode state)))
@@ -1032,6 +1029,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                 ("M-y" . helm-show-kill-ring)
                 ("C-x b" . helm-mini)
                 ("C-x C-f" . helm-find-files)
+                ("C-x C-h" . helm-for-files)
                 ("C-c u" . helm-org-in-buffer-headings))
                :commands (helm-buffers-list
                           helm-colors
@@ -1061,7 +1059,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                      helm-ff-file-name-history-use-recentf t
                      helm-buffers-fuzzy-matching t
                      helm-recentf-fuzzy-match t))
-            
+
 
 #+END_SRC
 
@@ -1281,8 +1279,16 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           message-kill-buffer-on-exit t
           mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
           mu4e-compose-dont-reply-to-self t
-          mu4e-compose-keep-self-cc nil)
+          mu4e-compose-keep-self-cc nil
+          mu4e-org-contacts-file (car org-contacts-files))
 
+    (use-package helm-mu
+      :bind ("C-c C-x m" . helm-mu-contacts)
+      :config
+      (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
+      (define-key mu4e-main-mode-map "s" 'helm-mu)
+      (define-key mu4e-headers-mode-map "s" 'helm-mu)
+      (define-key mu4e-view-mode-map "s" 'helm-mu))
 
     (setq unread-query "flag:unread maildir:/INBOX or flag:unread maildir:/AllMail")
 
@@ -1293,6 +1299,10 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                  '("flag:flagged" "Flagged messages" ?f))
 
     (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
+    (add-to-list 'mu4e-headers-actions
+                 '("org-contact-add" . mu4e-action-add-org-contact) t)
+    (add-to-list 'mu4e-view-actions
+                 '("org-contact-add" . mu4e-action-add-org-contact) t)
 
     (when (fboundp 'imagemagick-register-types)
       (imagemagick-register-types))
@@ -1358,7 +1368,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
             (delete-blank-lines)))))
 
 
-  
+
     (add-hook 'mu4e-compose-mode-hook
     (defun my-compose-mode-hook ()
                 (setq mu4e-compose-signature (make-random-signature))
@@ -1383,7 +1393,9 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (mu4e-alert-set-default-style 'notifications)
     (setq mu4e-alert-interesting-mail-query unread-query)
     (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
-    (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
+    (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
+    :bind
+    ("<f7>" . mu4e-alert-view-unread-mails))
 
 #+END_SRC
 
@@ -1452,6 +1464,33 @@ Manage Arch Linux packages
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package arch-packer)
+#+END_SRC
+
+** Treemacs
+
+A file management utility
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package treemacs
+    :config
+    (require 'treemacs-evil)
+    (setq treemacs-header-function            #'treemacs--create-header-projectile
+          treemacs-follow-after-init          t
+          treemacs-width                      35
+          treemacs-indentation                2
+          treemacs-git-integration            t
+          treemacs-change-root-without-asking nil
+          treemacs-sorting                    'alphabetic-desc
+          treemacs-show-hidden-files          t
+          treemacs-never-persist              nil)
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    :bind
+    ([f8] . treemacs-toggle)
+    ("<C-M-tab>" . treemacs-toggle))
+
+
 #+END_SRC
 * Configuration layout
 
