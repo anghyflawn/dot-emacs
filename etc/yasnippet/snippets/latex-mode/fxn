@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: fxn
+# key: fxn
+# --
+\fxnote*{${1:note}}{${2:text}}$0

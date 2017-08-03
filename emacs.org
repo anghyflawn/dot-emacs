@@ -8,8 +8,10 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle no
-  (require 'use-package)
- 
+  (eval-when-compile
+    (require 'use-package))
+  (require 'diminish)
+  (require 'bind-key)
 #+END_SRC
 
 ** Pallet
@@ -431,48 +433,65 @@ Elpy is a bunch of nice Python utilities.
       #+END_SRC
 
 *** R
+**** Basic ESS setup
 
     #+NAME: editing
     #+BEGIN_SRC emacs-lisp :tangle no
-      (require 'ess-site)
-      (use-package ess-smart-underscore)
-      (use-package ess-R-data-view)
-      (use-package ess-rutils)  
+      (use-package ess-site
+        :commands R
+        :mode ("\\.R" . ess-r-mode)
+        :config
+        (use-package ess-smart-underscore)
+        (use-package ess-R-data-view)
+        (use-package ess-rutils)  
 
-      (defun tex-Rnw-check (name)
-        "When opening a .tex file, check to make sure there isn't a
+        (defun tex-Rnw-check (name)
+          "When opening a .tex file, check to make sure there isn't a
       corresponding .Rnw available, to make sure we don't try to edit
       the wrong file."
-        (when (and (bufferp name)
-                   (buffer-file-name name))
-          (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
-    	(when (and (equal (file-name-extension (buffer-file-name name)) "tex")
-                       (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
-              (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
-                  name
-                (find-buffer-visiting rnw-file))))))
+          (when (and (bufferp name)
+                     (buffer-file-name name))
+            (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
+              (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+                         (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
+                (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
+                    name
+                  (find-buffer-visiting rnw-file))))))
 
-      (defadvice switch-to-buffer (around noweb-check activate)
-        (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
-                                  (ad-get-arg 0))))
-          ad-do-it))
-      (ad-update 'switch-to-buffer)
+        (defadvice switch-to-buffer (around noweb-check activate)
+          (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
+                                    (ad-get-arg 0))))
+            ad-do-it))
+        (ad-update 'switch-to-buffer)
 
-      (add-hook 'LaTeX-mode-hook
-                (defun my-Rnw-mode-hook ()
-                  "Add commands to AUCTeX's \\[TeX-command-list]."
-                  (unless (and (featurep 'tex-site) (featurep 'tex))
-    		(error "AUCTeX does not seem to be loaded"))
-                  (add-to-list 'TeX-command-list
-                               '("LaTeXKnit" "%l %(mode) %s"
-                                 TeX-run-TeX nil (latex-mode) :help
-                                 "Run LaTeX after Knit") t)
-                  (dolist (suffix '("nw" "Snw" "Rnw"))
-    		(add-to-list 'TeX-file-extensions suffix))))
+        (add-hook 'LaTeX-mode-hook
+                  (defun my-Rnw-mode-hook ()
+                    "Add commands to AUCTeX's \\[TeX-command-list]."
+                    (unless (and (featurep 'tex-site) (featurep 'tex))
+                      (error "AUCTeX does not seem to be loaded"))
+                    (add-to-list 'TeX-command-list
+                                 '("LaTeXKnit" "%l %(mode) %s"
+                                   TeX-run-TeX nil (latex-mode) :help
+                                   "Run LaTeX after Knit") t)
+                    (dolist (suffix '("nw" "Snw" "Rnw"))
+                      (add-to-list 'TeX-file-extensions suffix))))
+
+        (add-hook 'R-mode-hook
+                  (defun my-R-mode-hook ()
+                    (company-mode)
+                    (local-set-key (kbd "TAB") 'company-complete))))
 
 
+#+END_SRC
 
+**** Polymode
+
+This is the recommended solution for Rmarkdown files.
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
       (use-package polymode           ; ESS with polymode
+        :mode ("\\.[Rr]md" . poly-markdown+r-mode)
         :config
         (require 'poly-R)               ; Load necessary modes
         (require 'poly-markdown)
@@ -480,12 +499,7 @@ Elpy is a bunch of nice Python utilities.
         (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
         (setq 
          pm-weaver "knitR-ESS"
-         pm-exporter "pandoc"))
-
-      (add-hook 'R-mode-hook
-                (defun my-R-mode-hook ()
-                  (company-mode)
-                  (local-set-key (kbd "TAB") 'company-complete)))
+         pm-exporter "pandoc")) 
     #+END_SRC
 
 *** Stan
@@ -619,20 +633,20 @@ Hippie-expand is a nice autocompletion engine
                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
           (add-to-list 'TeX-view-program-selection
-   		'(output-pdf "Zathura"))
+                '(output-pdf "Zathura"))
           (setq font-latex-match-function-keywords '(("ipa" "{")
-      					       ("twe" "{")
-      					       ("mbi" "{")
-   					       ("x" "{")
-   					       ("ox" "{")
-      					       "ex" "pex" "pex~" "xe" "a")
-      	  outline-minor-mode-prefix "\C-c\C-u"
-      	  TeX-parse-self t
-      	  TeX-auto-save t
-      	  TeX-electric-sub-and-superscript t
-      	  LaTeX-csquotes-close-quote "}"
-      	  LaTeX-csquotes-open-quote "\\enquote{"
-      	  TeX-source-correlate-(setq )tart-server t)
+                                               ("twe" "{")
+                                               ("mbi" "{")
+                                               ("x" "{")
+                                               ("ox" "{")
+                                               "ex" "pex" "pex~" "xe" "a")
+          TeX-parse-self t
+          TeX-auto-save t
+          TeX-electric-sub-and-superscript t
+          LaTeX-csquotes-close-quote "}"
+          LaTeX-csquotes-open-quote "\\enquote{"
+          TeX-outline-extra '(("\\\\printbibliography" 2))
+          TeX-source-correlate t)
           (setq-default LaTeX-engine 'xetex))))
 #+END_SRC
 
@@ -669,29 +683,37 @@ Hippie-expand is a nice autocompletion engine
        (define-key global-map "\C-ca" 'org-agenda)
        (define-key global-map "\C-ct" 'org-capture)
        (setq org-log-done t
-          org-use-property-inheritance t
-          org-agenda-files private/org-files
-          org-directory private/org-directory
-          org-startup-indented t
-          org-src-fontify-natively t
-          org-icalendar-timezone "Europe/London"
-          org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
-          org-icalendar-use-deadline '(todo-due)
-          org-agenda-window-setup 'current-window
-          org-agenda-span 'week
-          org-agenda-skip-scheduled-if-deadline-is-shown t
-          org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
-          org-icalendar-alarm-time 15)
+             org-use-property-inheritance t
+             org-agenda-files private/org-files
+             org-directory private/org-directory
+             org-startup-indented t
+             org-src-fontify-natively t
+             org-icalendar-timezone "Europe/London"
+             org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
+             org-icalendar-use-deadline '(todo-due)
+             org-agenda-window-setup 'current-window
+             org-agenda-span 'week
+             org-agenda-skip-scheduled-if-deadline-is-shown t
+             org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
+             org-icalendar-alarm-time 15)
+
        (use-package ox-taskjuggler
          :config
          (add-to-list 'org-export-backends 'taskjuggler t))
+
        (use-package org-contacts
          :config
-         (setq org-contacts-files private/org-contacts-files)))
+         (setq org-contacts-files private/org-contacts-files))
+
+       (use-package org-crypt
+         :config
+         (org-crypt-use-before-save-magic)
+         (setq org-tags-exclude-from-inheritance '("crypt")
+               org-crypt-key nil)))
    #+END_SRC
   
 ** Markdown and pandoc
-   
+
    Markdown is a lightweight alternative to HTML. For me, the two main
    uses are for websites (many site generators understand Markdown so
    you don't have to write HTML) and conversions from Markdown to
@@ -782,22 +804,23 @@ Hippie-expand is a nice autocompletion engine
                ("slide" . pandoc--hline-for-new-slide)
                ("pause" . pandoc--pause)
                ("sc" . pandoc--smallcaps)
-   	    ("notlatex" . pandoc--not-in-latex)))
+            ("notlatex" . pandoc--not-in-latex)))
 
-       (defun pandoc--insert-feature (arg feature value)
-         (interactive "P\nMFeature: \nMValue: ")
-         (insert (format
-                  (if arg
-                      "$%s$%s"
-      	     "[$%s$%s]")
-                  value feature)))
-       :config
-       (add-hook 'pandoc-mode-hook
-                 (defun my-pandoc-mode-hook ()
-                  (setq pandoc-use-async nil
-      		  pandoc-binary "/usr/bin/pandoc")
-                  (dolist (x my-pandoc-directives)
-                     (add-to-list 'pandoc-directives x))))
+     (defun pandoc--insert-feature (arg feature value)
+       (interactive "P\nMFeature: \nMValue: ")
+       (insert (format
+                (if arg
+                    "$%s$%s"
+                  "[$%s$%s]")
+                value feature)))
+     :config
+     (add-hook 'pandoc-mode-hook
+               (defun my-pandoc-mode-hook ()
+                 (setq pandoc-use-async nil
+                       pandoc-binary "/usr/bin/pandoc")
+                 (pandoc-load-default-settings)
+                 (dolist (x my-pandoc-directives)
+                   (add-to-list 'pandoc-directives x))))
 
    #+END_SRC
 
@@ -1157,7 +1180,7 @@ Golden-ratio mode makes sure your window splits are of a sensible size
     (setq golden-ratio-auto-scale t))
 #+END_SRC
 
-** Calendar integration
+** COMMENT Calendar integration
 
 This bit exports the agenda from my org-mode calendar to an iCalendar
 and copies it to a remote server, where it gets picked up by the phone
@@ -1173,12 +1196,12 @@ calendar app.
           org-caldav-files private/org-caldav-files
           org-caldav-oauth2-client-id private/org-caldav-oauth2-client-id
           org-caldav-oauth2-client-secret private/org-caldav-oauth2-client-secret
+          plstore-cache-passphrase-for-symmetric-encryption t
           org-icalendar-timezone "Europe/London"
-          org-caldav-calendars `((:calendar-id ,private/org-caldav-calendar-id
-                                  	     :url ,org-caldav-url)
-                                 (:calendar-id ,private/google-calendar-id
-                                               :url google))))
-
+          org-caldav-calendars  `((:calendar-id ,private/org-caldav-calendar-id
+                                              :url ,org-caldav-url)
+                                  (:calendar-id ,private/google-calendar-id
+                                                :url google)))) 
 
 
   (defun sync-calendar ()
@@ -1198,6 +1221,8 @@ calendar app.
 
 ** Email
 
+*** Signatures
+
 This is just a convenience function to choose a signature at random from four versions
 
 #+NAME: utils
@@ -1215,8 +1240,12 @@ This is just a convenience function to choose a signature at random from four ve
                  "Pavel Iosad\nRoinn na Teangeolaíochta agus na Teanga Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
 
                  "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
-       (nth (random (length sigs)) sigs)))
+      (nth (random (length sigs)) sigs)))
+
+  (setq senior-tutor-signature "Pavel Iosad\nSenior Tutor\nSchool of Philosophy, Psychology and Language Sciences")
 #+END_SRC
+
+*** Drafts folder
 
 Keep the Drafts folder clean
 
@@ -1239,37 +1268,26 @@ Keep the Drafts folder clean
   (add-to-list 'file-name-handler-alist '("Drafts/cur/" . draft-auto-save-buffer-name-handler))
 #+END_SRC
 
+*** Main mu4e configuration
+
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
     :commands (mu4e compose-mail)
+    :bind ("<f5>" . mu4e)
     :config
 
-    (require 'mu4e-contrib)
+    (use-package mu4e-contrib)
 
-    (setq mu4e-user-mail-address-list '("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk")
-          mu4e-maildir private/maildir
-          mu4e-drafts-folder "/Drafts"
-          mu4e-sent-folder   "/Sent Items"
-          mu4e-trash-folder  "/Trash"
-          mu4e-refile-folder "/AllMail"
-          mu4e-maildir-shortcuts '(("/INBOX"       . ?i)
-                                   ("/AllMail"     . ?a)
-                                   ("/Sent Items"  . ?s)
-                                   ("/Trash"       . ?t))
-          smtpmail-queue-mail nil
-          smtpmail-queue-dir   "~/Mail/queue/cur"
+    (setq mu4e-maildir "~/mail"
           mu4e-update-interval 300
           mu4e-change-filenames-when-moving t
           mu4e-attachment-dir  "~/Downloads"
           mu4e-view-show-images t
-          mu4e-get-mail-command "mbsync work"
+          mu4e-get-mail-command "mbsync -a"
           mail-user-agent 'mu4e-user-agent
-          user-mail-address "pavel.iosad@ed.ac.uk"
-          mu4e-update-interval 600
-          user-full-name  "Pavel Iosad"
           mu4e-compose-complete-addresses t
           mu4e-compose-complete-only-after "2012-09-15"
           mu4e-headers-include-related nil
@@ -1277,20 +1295,22 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-index-lazy-check nil
           mu4e-headers-date-format "%d-%m-%Y"
           message-kill-buffer-on-exit t
-          mu4e-compose-signature (make-random-signature) ;; comment this out, or put in your signature as a string
           mu4e-compose-dont-reply-to-self t
           mu4e-compose-keep-self-cc nil
           mu4e-org-contacts-file (car org-contacts-files))
 
+
+
     (use-package helm-mu
       :bind ("C-c C-x m" . helm-mu-contacts)
+      ("<f6>" . helm-mu)
       :config
       (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
       (define-key mu4e-main-mode-map "s" 'helm-mu)
       (define-key mu4e-headers-mode-map "s" 'helm-mu)
       (define-key mu4e-view-mode-map "s" 'helm-mu))
 
-    (setq unread-query "flag:unread maildir:/INBOX or flag:unread maildir:/AllMail")
+    (setq unread-query "flag:unread maildir:/work/INBOX or flag:unread maildir:/work/AllMail or flag:unread maildir:/st/INBOX or flag:unread maildir:/st/Archives")
 
     (add-to-list 'mu4e-bookmarks
                  '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
@@ -1304,81 +1324,20 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (add-to-list 'mu4e-view-actions
                  '("org-contact-add" . mu4e-action-add-org-contact) t)
 
-    (when (fboundp 'imagemagick-register-types)
-      (imagemagick-register-types))
-
-    (add-hook 'mu4e-view-mode-hook
-              (defun my-view-mode-hook ()
-                ;; try to emulate some of the eww key-bindings
-                (local-set-key (kbd "<tab>") 'shr-next-link)
-                (local-set-key (kbd "<backtab>") 'shr-previous-link)
-                (visual-line-mode)))
-
-
-
-    (setq languages
-          ;; language . locale
-          '(("english" . "en_GB.utf8")
-            ("gaeilge" . "ga_IE.utf8")
-            ("cymraeg" . "cy_GB.utf8")
-            ("gaidhlig" . "gd_GB.utf8")))
-
-
-    (setq en_GB.utf8-message-citation-line-format "On %A, %b %d %Y, %N wrote:\n")
-    (setq cy_GB.utf8-message-citation-line-format "%A, %b %d %Y, ysgrifennodd %N:\n")
-    (setq gd_GB.utf8-message-citation-line-format "Aig %A, %b %d %Y, sgrìobh %N:\n")
-    (setq ga_IE.utf8-message-citation-line-format "Ag %A, %b %d %Y, scríobh %N:\n")
-
-    (defun fa/change-message-citation-line (locale)
-      (interactive)
-      ;; Switch to the buffer *mu4e-headers* and copy the date and the
-      ;; sender into variables, since we need it for the citation line.
-      (let ((original-date (with-current-buffer "*mu4e-headers*"
-                             (mu4e-message-field-at-point :date)))
-            (original-from (with-current-buffer "*mu4e-headers*"
-                             (concat
-                              (caar (mu4e-message-field-at-point :from))
-                              " <" (cdar (mu4e-message-field-at-point :from)) ">"))))
-        ;; Create the citation line in a temp buffer and save this line to
-        ;; a string. This is necessary to find the excat citation line in
-        ;; the email.
-        (let ((old-citation-line nil))
-          (with-temp-buffer
-            (message-insert-formatted-citation-line original-from original-date)
-            (goto-char (point-min))
-            (while (re-search-forward "\n" nil t)
-              (replace-match ""))
-            (buffer-string)
-            (setq old-citation-line (buffer-string))
-            (kill-buffer))
-          ;; switch back to the reply-buffer, search the citation line and
-          ;; replace it with the new one.
-          (save-excursion
-            (goto-char (point-min))
-            (search-forward old-citation-line)
-            (beginning-of-line)
-            (kill-line)
-            (setq system-time-locale locale)
-            (setq message-citation-line-format
-                  (symbol-value
-                   (intern (concat locale
-                                   "-message-citation-line-format"))))
-            (message-insert-formatted-citation-line original-from original-date)
-            (previous-line)
-            (delete-blank-lines)))))
-
-
+  
 
     (add-hook 'mu4e-compose-mode-hook
-    (defun my-compose-mode-hook ()
-                (setq mu4e-compose-signature (make-random-signature))
+              (defun my-compose-mode-hook ()
+                (setq mu4e-compose-signature (pcase (mu4e-context-name (mu4e-context-current))
+                                               ("Work" (make-random-signature))
+                                               ("Senior Tutor" senior-tutor-signature)))
                 (auto-fill-mode)
                 (set-fill-column 72)
                 (typopunct-mode)
                 (flyspell-mode)))
 
-    (setq message-send-mail-function 'message-send-mail-with-sendmail)
-    (setq sendmail-program "/usr/bin/msmtp")
+    (setq message-send-mail-function 'message-send-mail-with-sendmail
+          sendmail-program "/usr/bin/msmtp")
 
     (use-package org-mu4e
       :config
@@ -1386,17 +1345,65 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
                                      "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")
                                     ("e" "event" entry (file+headline main-agenda-file "Events from email")
-                                     "* %?\n%a\n")))))
+                                     "* %?\n%a\n"))))
 
-  (use-package mu4e-alert
-    :config
-    (mu4e-alert-set-default-style 'notifications)
-    (setq mu4e-alert-interesting-mail-query unread-query)
-    (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
-    (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
-    :bind
-    ("<f7>" . mu4e-alert-view-unread-mails))
+    (use-package mu4e-alert
+      :config
+      (mu4e-alert-set-default-style 'libnotify)
+      (setq mu4e-alert-interesting-mail-query unread-query)
+      (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
+      (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
+      :bind
+      ("<f7>" . mu4e-alert-view-unread-mails)))
 
+#+END_SRC
+
+*** Set up email contexts
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq mu4e-contexts
+        `(,(make-mu4e-context
+            :name "Work"
+            :enter-func (lambda () (mu4e-message "Entering main work context"))
+            :leave-func (lambda () (mu4e-message "Leaving main work context"))
+            :match-func (lambda (msg)
+                          (when msg
+                            (mu4e-message-contact-field-matches msg :to "iosad")))
+            :vars '((mu4e-user-mail-address-list . ("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk"))
+                    (user-full-name . "Pavel Iosad")
+                    (user-mail-address . "pavel.iosad@ed.ac.uk")
+                    (mu4e-compose-signature . (make-random-signature))
+                    (mu4e-drafts-folder . "/work/Drafts")
+                    (mu4e-sent-folder . "/work/Sent Items")
+                    (mu4e-trash-folder . "/work/Trash")
+                    (mu4e-refile-folder . "/work/AllMail")
+                    (mu4e-maildir-shortcuts . (("/work/INBOX" . ?i)
+                                               ("/work/AllMail" . ?a)
+                                               ("/work/Sent Items" . ?s)
+                                               ("/work/Trash" . ?t)))
+                    (message-sendmail-extra-arguments . nil)))
+          ,(make-mu4e-context
+            :name "Senior Tutor"
+            :enter-func (lambda () (mu4e-message "Entering Senior Tutor context"))
+            :leave-func (lambda () (mu4e-message "Leaving Senior Tutor context"))
+            :match-func (lambda (msg)
+                          (when msg
+                            (mu4e-message-contact-field-matches msg :to "ppls")))
+            :vars '((user-mail-address . "PPLS.senior.tutor@ed.ac.uk")
+                    (user-full-name . "PPLS Senior Tutor")
+                    (mu4e-drafts-folder . "/st/Drafts")
+                    (mu4e-sent-folder . "/st/Sent Items")
+                    (mu4e-trash-folder . "/st/Trash")
+                    (mu4e-refile-folder . "/st/Archives")
+                    (mu4e-compose-signature . senior-tutor-signature)
+                    (mu4e-maildir-shortcuts . (("/st/INBOX"       . ?i)
+                                               ("/st/Archives"     . ?a)
+                                               ("/st/Sent Items"  . ?s)
+                                               ("/st/Trash"       . ?t)))
+                    (message-sendmail-extra-arguments . ("-a" "st")))))
+        mu4e-context-policy 'pick-first
+        mu4e-compose-context-policy 'ask)
 #+END_SRC
 
 ** EWW

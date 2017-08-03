@@ -22,6 +22,13 @@
 ;; Pallet allows us to use Cask in tandem with package.el
 (require 'pallet)
 
+;; Load encryption
+
+(require 'org-crypt)
+(org-crypt-use-before-save-magic)
+(setq org-tags-exclude-from-inheritance '("crypt")
+      org-crypt-key nil)
+
 ;; Now load-up org-mode
 
 (require 'ob-tangle)
@@ -32,3 +39,4 @@
  (expand-file-name "emacs.org" user-emacs-directory))
 
 ;; init.el ends
+(put 'narrow-to-region 'disabled nil)
