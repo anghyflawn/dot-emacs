@@ -168,7 +168,6 @@ This sets up Emacs for GPG pinentry
     (sauron-start))
 #+END_SRC
 
-
 * Appearance
 ** Unneeded chrome
 
@@ -1317,7 +1316,7 @@ Keep the Drafts folder clean
   (add-to-list 'file-name-handler-alist '("Drafts/cur/" . draft-auto-save-buffer-name-handler))
 #+END_SRC
 
-*** COMMENT Main mu4e configuration
+*** Main mu4e configuration
 
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
