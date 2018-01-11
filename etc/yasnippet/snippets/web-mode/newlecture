@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: newlecture
+# key: newlecture
+# --
+	    <tr class="$1">
+		<td class="lecture">$0</td>
+		<td><i class="fa fa-file-powerpoint-o" aria-hidden="true"></i> <a href="week$2.html">See</a></td>
+		<td><i class="fa fa-file-o" aria-hidden="true"></i> <a href="week$2-notes.html">Read</a></td>
+		<td><i class="fa fa-file-pdf-o" aria-hidden="true"></i> <a href="week$2.pdf">Read</a></td>
+	    </tr>

@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
-# name: memarticle 
-# key: Template for article using memoir
+# name: Memoir article template 
+# key: memarticle
 # --
 \documentclass[12pt,a4paper, article, oneside]{memoir}
 
@@ -9,18 +9,15 @@
 \usepackage{expex}
 \usepackage{booktabs}
 \usepackage{etoolbox}
-\usepackage{polyglossia}
-\setmainlanguage[variant=british]{english}
-\setotherlanguages{${1:otherlanguages}}
-\usepackage[autostyle,english=british]{csquotes}
+\usepackage[main=british${1:,otherlanguages}]{babel}
+\usepackage[autostyle]{csquotes}
 \usepackage[backend=biber,
-        bibstyle=biblatex-sp-unified,
-        citestyle=sp-authoryear-comp,
+        bibstyle=biblatex-langsci-unified,
+        citestyle=langsci-authoryear-comp,
         mincrossrefs=50,
         maxcitenames=3,
         maxbibnames=50,
         useprefix=true,
-        issueandeditor=true,
         doi=false]{biblatex}
 
 \newbibmacro{string+doi+emph}[1]{\iffieldundef{doi}{\mkbibemph{#1}}{\href{http://dx.doi.org/\thefield{doi}}{\mkbibemph{#1}}}}
@@ -31,6 +28,24 @@
 \DeclareFieldFormat*[book,collection,,thesis,unpublished]{subtitle}{\usebibmacro{string+doi+emph}{#1}}
 \DeclareFieldFormat*{booktitle}{\usebibmacro{string+doi+emph}{#1}}
 \DeclareFieldFormat*{booksubtitle}{\usebibmacro{string+doi+emph}{#1}}
+
+
+\DeclareLabeldate{%
+  \field{date}
+  \field{eventdate}
+  \field{origdate}
+  \field{urldate}
+  \field{pubstate}
+  \literal{nodate}
+}
+
+\renewbibmacro*{addendum+pubstate}{%
+  \printfield{addendum}%
+  \iffieldequalstr{labeldatesource}{pubstate}{}
+  {\newunit\newblock\printfield{pubstate}}}
+
+
+
 
 \usepackage{amssymb}
 \usepackage{phonrule}
@@ -44,8 +59,8 @@
 
 % Package settings
 \defaultfontfeatures{Ligatures=TeX, Numbers=OldStyle}
-${2:\usepackage{ebgaramond}}
-\setmonofont[Scale=MatchLowercase]{${3:Inconsolata}}
+${2:\usepackage{ebgaramond-maths}}
+\setmonofont[Scale=MatchLowercase]{${3:Hack}}
 \newfontfamily\ipafont[Ligatures=NoCommon]{${4:EB Garamond}}
 
 \usepackage[activate={true,nocompatibility}, tracking]{microtype}
@@ -60,7 +75,7 @@ ${2:\usepackage{ebgaramond}}
 \counterwithout{section}{chapter}
 
 \usepackage{hyperxmp}
-\hypersetup{colorlinks=true,unicode=true,linkcolor=blue,filecolor=blue,urlcolor=blue,citecolor=blue,breaklinks=true,pdftitle={${5}},pdfauthor={Pavel Iosad}}
+\hypersetup{colorlinks=true,unicode=true,linkcolor=blue,filecolor=blue,urlcolor=blue,citecolor=blue,breaklinks=true,pdftitle={$6},pdfauthor={Pavel Iosad}}
 \addbibresource{biblio.bib}
 \setlength\bibitemsep{0pt}
 
@@ -76,21 +91,21 @@ ${2:\usepackage{ebgaramond}}
 \newcommand{\eg}{e.\,g.\xspace}
 \DeclareRobustCommand\dash{\unskip\nobreak\thinspace\textendash\thinspace\ignorespaces}
 
-\newcommand\mb[1]{\eqparbox[t]{examples}{#1}~}
+\newcommand\mb[1]{\eqparbox[t]{examples}{#1}\hspace{1em}}
 \newcommand\mbi[1]{\mb{\ipa{#1}}}
-\newcommand{\twe}[3]{\mbi{#1}\eqparbox[t]{orths}{\textit{#2}}~`#3'} % three-way example
+\newcommand{\twe}[3]{\mbi{#1}\eqparbox[t]{orths}{\textit{#2}}\hspace{1em}\`#3'} % three-way example
 \newcommand\hyper[2]{\ensuremath{\{\frac{\mbox{\tiny #1}}{\mbox{\tiny #2}}\}}}
 \newcommand\hili[1]{\uline{#1}}
 \newcommand\igl[1]{\textsc{\lowercase{#1}}}
-\newcommand\gl[1]{`#1'}
+\newcommand\gl[1]{\`#1'}
 \newcommand\x[2]{\textit{#1} \gl{#2}}
 \newcommand\ox[3]{\ipa{#1} \x{#2}{#3}}
 
 % Metadata
 \title{$6}
-% \newcommand\subtitle{Historical implications of synchronic variation}
+% \newcommand\subtitle{$7}
 % \renewcommand\maketitlehookb{\vspace{-\baselineskip}\centering\Large\subtitle\vspace{\baselineskip}}
-\author{Pavel Iosad \\ University of Edinburgh \\ \texttt{pavel.iosad@ed.ac.uk}}
+\author{Pavel Iosad \\\\ University of Edinburgh \\\\ \texttt{pavel.iosad@ed.ac.uk}}
 \date{Draft of \today. Not for citation or circulation.}
 
 \checkandfixthelayout
@@ -113,3 +128,12 @@ ${2:\usepackage{ebgaramond}}
 
 \DeclareBibliographyCategory{notinbib}
 % \addtocategory{notinbib}{}
+
+\begin{document}
+
+\maketitle
+
+$0
+
+\printbibliography
+\end{document}

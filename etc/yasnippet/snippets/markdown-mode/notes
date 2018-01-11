@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: notes
+# key: notes
+# --
+<div class="notes">
+$0
+</div>

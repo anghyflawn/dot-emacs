@@ -16,3 +16,4 @@
 /oauth2.plstore
 /*.el#
 *.pandoc
+/diary

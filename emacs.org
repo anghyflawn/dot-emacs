@@ -139,6 +139,36 @@ Update buffers if files have been changed on disk.
   (global-auto-revert-mode 1)
   (add-hook 'dired-mode-hook 'auto-revert-mode)
 #+END_SRC
+** Pinentry
+
+This sets up Emacs for GPG pinentry
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package pinentry
+    :config
+    (setq epa-pinentry-mode 'loopback)
+    (pinentry-start))
+#+END_SRC
+** Alerts
+
+#+NAME: init-after
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package sauron
+    :disabled
+    :config
+    (bind-key "C-c s" 'sauron-toggle-hide-show)
+    (bind-key "C-c t" 'sauron-clear)
+    (setq sauron-separate-frame nil)
+    (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
+    (add-hook 'sauron-event-added-functions
+              (lambda (origin prio msg &optional props)
+                (when (>= prio 4)
+                  (sauron-fx-notify "Emacs" msg 10))))
+    (sauron-start))
+#+END_SRC
+
+
 * Appearance
 ** Unneeded chrome
 
@@ -181,7 +211,7 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (add-to-list 'default-frame-alist '(font . "Cousine-12"))
+  (add-to-list 'default-frame-alist '(font . "Liberation Mono-12"))
 #+END_SRC
 
 ** Misc
@@ -240,15 +270,26 @@ Never type out 'yes' or 'no'.
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
-** Mode-line
-
-I quite like powerline, so here we use that
+** COMMENT Mode-line
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package powerline
-               :config
-               (powerline-default-theme))
+  (use-package telephone-line
+    :disabled t
+    :init
+    (require 'telephone-line)
+    :config
+    (setq telephone-line-lhs
+          '((evil   . (telephone-line-evil-tag-segment))
+            (accent . (telephone-line-vc-segment
+                       telephone-line-process-segment))
+            (nil    . (telephone-line-minor-mode-segment
+                       telephone-line-buffer-segment))))
+    (setq telephone-line-rhs
+          '((nil    . (telephone-line-misc-info-segment))
+            (accent . (telephone-line-major-mode-segment))
+            (evil   . (telephone-line-airline-position-segment))))
+    (telephone-line-evil-config))
 #+END_SRC
 
 ** Window title
@@ -437,9 +478,10 @@ Elpy is a bunch of nice Python utilities.
 
     #+NAME: editing
     #+BEGIN_SRC emacs-lisp :tangle no
-      (use-package ess-site
+      (use-package ess
+        :init (require 'ess-site)
         :commands R
-        :mode ("\\.R" . ess-r-mode)
+        :mode ("\\.R\\'" . ess-r-mode)
         :config
         (use-package ess-smart-underscore)
         (use-package ess-R-data-view)
@@ -490,16 +532,16 @@ This is the recommended solution for Rmarkdown files.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
-      (use-package polymode           ; ESS with polymode
-        :mode ("\\.[Rr]md" . poly-markdown+r-mode)
-        :config
-        (require 'poly-R)               ; Load necessary modes
-        (require 'poly-markdown)
-        (require 'poly-noweb)
-        (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode)) ; RMarkdown files
-        (setq 
-         pm-weaver "knitR-ESS"
-         pm-exporter "pandoc")) 
+    (use-package polymode           ; ESS with polymode
+      :mode (("\\.[Rr]md" . poly-markdown+r-mode)
+             ("\\.[Rr]nw" . poly-noweb+r-mode))
+      :config
+      (require 'poly-R)               ; Load necessary modes
+      (require 'poly-markdown)
+      (require 'poly-noweb)
+      (setq-default 
+       pm-weaver "knitR-ESS"
+       polymode-weave-output-file-format "%s"))
     #+END_SRC
 
 *** Stan
@@ -600,54 +642,55 @@ Hippie-expand is a nice autocompletion engine
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package auctex 
        :ensure t
-       :mode (("\\.tex\\'" . LaTeX-mode)
-              ("\\.Rnw\\'" . Rnw-mode))
+       :mode ("\\.tex\\'" . LaTeX-mode)
        :commands (LaTeX-mode latex-mode plain-tex-mode)
        :init
        (defun insert-feature (arg feature value)
          "This just saves some typing, feel free to comment
-                     out."
+                          out."
          (interactive "P\nMFeature: \nMValue: ")
          (insert (format
                   (if arg
                       "\\mbox{\\ensuremath{%s}%s}"
-                  "\\mbox{[\\ensuremath{%s}%s]}")
+                    "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
 
 
 
 
-       (add-hook 'LaTeX-mode-hook
-                 (defun my-LaTeX-mode-hook ()
-                  (flyspell-mode 1)
-                  (TeX-fold-mode 1)
-                  ;; This activates the X-SAMPA layout, making
-                  ;; it accessible via C-\
-                  (set-input-method "ipa-x-sampa")
-                  (toggle-input-method)
-                  (outline-minor-mode 1)
-                  (turn-on-reftex)
-                  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-                  (TeX-source-correlate-mode 1)
-                  (local-set-key (kbd "C-c f") 'insert-feature)
-                  (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                  (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
-          (add-to-list 'TeX-view-program-selection
-                '(output-pdf "Zathura"))
-          (setq font-latex-match-function-keywords '(("ipa" "{")
-                                               ("twe" "{")
-                                               ("mbi" "{")
-                                               ("x" "{")
-                                               ("ox" "{")
-                                               "ex" "pex" "pex~" "xe" "a")
-          TeX-parse-self t
-          TeX-auto-save t
-          TeX-electric-sub-and-superscript t
-          LaTeX-csquotes-close-quote "}"
-          LaTeX-csquotes-open-quote "\\enquote{"
-          TeX-outline-extra '(("\\\\printbibliography" 2))
-          TeX-source-correlate t)
-          (setq-default LaTeX-engine 'xetex))))
+            (add-hook 'LaTeX-mode-hook
+                      (defun my-LaTeX-mode-hook ()
+                        (flyspell-mode 1)
+                        (TeX-fold-mode 1)
+                        ;; This activates the X-SAMPA layout, making
+                        ;; it accessible via C-\
+                        (set-input-method "ipa-x-sampa")
+                        (toggle-input-method)
+                        (outline-minor-mode 1)
+                        (turn-on-reftex)
+                        (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                        (TeX-source-correlate-mode 1)
+                        (local-set-key (kbd "C-c f") 'insert-feature)
+                        (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                        (local-set-key (kbd "C-M-]") 'ivy-bibtex)
+                        (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
+                        (add-to-list 'TeX-view-program-selection
+                                     '(output-pdf "PDF Tools"))
+                        (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+                        (setq font-latex-match-function-keywords '(("ipa" "{")
+                                                                   ("twe" "{")
+                                                                   ("mbi" "{")
+                                                                   ("x" "{")
+                                                                   ("ox" "{")
+                                                                   "ex" "pex" "pex~" "xe" "a")
+                              TeX-parse-self t
+                              TeX-auto-save t
+                              TeX-electric-sub-and-superscript t
+                              LaTeX-csquotes-close-quote "}"
+                              LaTeX-csquotes-open-quote "\\enquote{"
+                              TeX-outline-extra '(("\\\\printbibliography" 2))
+                              TeX-source-correlate t
+                              TeX-engine 'luatex))))
 #+END_SRC
 
 ** Org-mode
@@ -678,10 +721,11 @@ Hippie-expand is a nice autocompletion engine
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package org
        :diminish org-indent-mode
+       :bind
+       ("C-c l" . org-store-link)
+       ("C-c a" . org-agenda)
+       ("C-c t" . org-capture)
        :config
-       (define-key global-map "\C-cl" 'org-store-link)
-       (define-key global-map "\C-ca" 'org-agenda)
-       (define-key global-map "\C-ct" 'org-capture)
        (setq org-log-done t
              org-use-property-inheritance t
              org-agenda-files private/org-files
@@ -689,7 +733,8 @@ Hippie-expand is a nice autocompletion engine
              org-startup-indented t
              org-src-fontify-natively t
              org-icalendar-timezone "Europe/London"
-             org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
+             org-refile-targets '((org-agenda-files . (:maxlevel . 5))
+                                  ("~/ownCloud/admin/senior-tutor.org" . (:maxlevel . 5)))
              org-icalendar-use-deadline '(todo-due)
              org-agenda-window-setup 'current-window
              org-agenda-span 'week
@@ -735,6 +780,7 @@ Hippie-expand is a nice autocompletion engine
                      (setq-local reftex-cite-format '((?\C-m . "@%l")
                                                       (?p . "[@%l]")))))
                  (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                 (local-set-key (kbd "C-M-]") 'ivy-bibtex)
                  (orgtbl-mode 1)
                  (pandoc-mode)
                  (outline-minor-mode)
@@ -816,7 +862,7 @@ Hippie-expand is a nice autocompletion engine
      :config
      (add-hook 'pandoc-mode-hook
                (defun my-pandoc-mode-hook ()
-                 (setq pandoc-use-async nil
+                 (setq pandoc-use-async t
                        pandoc-binary "/usr/bin/pandoc")
                  (pandoc-load-default-settings)
                  (dolist (x my-pandoc-directives)
@@ -836,66 +882,57 @@ and inserts it at point.
    "Get a BibTeX entry from the DOI"
    (interactive "MDOI: ")
    (let ((url-mime-accept-string "text/bibliography;style=bibtex")
-         (clean-doi (replace-regexp-in-string "https?://dx.doi.org/" "" doi)))
-     (with-current-buffer (url-retrieve-synchronously (format "http://dx.doi.org/%s" clean-doi))
+         (clean-doi (replace-regexp-in-string "https?://.*doi.org/" "" doi)))
+     (with-current-buffer (url-retrieve-synchronously (format "https://doi.org/%s" clean-doi))
        (switch-to-buffer (current-buffer))
        (setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
        (kill-buffer (current-buffer))))
    (insert (decode-coding-string bibtex-entry 'utf-8))
-   (bibtex-fill-entry))
+   (bibtex-fill-entry)) 
 #+END_SRC
 
 This sets up RefTeX and BibTeX-mode.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package reftex
-    :commands turn-on-reftex
-    :config
-    (setq reftex-use-external-file-finders t
-          reftex-plug-into-AUCTeX t
-          reftex-default-bibliography `(,private/bibliography-file)
-          reftex-cite-prompt-optional-args nil
-          reftex-cite-cleanup-optional-args t)
-    (global-unset-key "\C-c /")
-    (add-to-list 'reftex-bibliography-commands "addbibresource")
+   (use-package reftex
+     :commands turn-on-reftex
+     :config
+     (setq reftex-use-external-file-finders t
+           reftex-plug-into-AUCTeX t
+           reftex-default-bibliography `(,private/bibliography-file)
+           reftex-cite-prompt-optional-args nil
+           reftex-cite-cleanup-optional-args t)
+     (global-unset-key "\C-c /")
+     (add-to-list 'reftex-bibliography-commands "addbibresource")
 
-    (let* ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
-      (setq reftex-external-file-finders
-            `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
-              ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
-
-
-
-
-  (use-package bibtex
-    :mode ("\\.bib" . bibtex-mode)
-    :init
-    (setq bibtex-align-at-equal-sign t
-          bibtex-autokey-year-length 4
-          bibtex-autokey-titleword-length nil
-          bibtex-autokey-titlewords-stretch 0
-          bibtex-autokey-titlewords 1
-          bibtex-autokey-year-title-separator "")
-
-    (add-hook 'bibtex-mode-hook (lambda () (set-fill-column 120)))
-
-    (defun bibtex-autokey-get-year ()
-      "Return year field contents as a string obeying
-  `bibtex-autokey-year-length'. Patched to also understand `date'
-  field"
-      (let* ((try-year (bibtex-autokey-get-field "year"))
-	     (yearfield (if (string= try-year "")
-			    (car (split-string (bibtex-autokey-get-field "date") "-"))
-			  try-year)))
-	(substring yearfield (max 0 (- (length yearfield)
-				       bibtex-autokey-year-length))))))
+     (let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
+       (setq reftex-external-file-finders
+             `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
+               ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
 
 
 
-  (use-package bibtex-utils
-    :config
-    (setq bu-bibtex-fields-ignore-list '(url abstract)))
+
+   (use-package bibtex
+     :mode ("\\.bib" . bibtex-mode)
+     :init
+     (setq bibtex-align-at-equal-sign t
+           bibtex-autokey-year-length 4
+           bibtex-autokey-titleword-length nil
+           bibtex-autokey-titlewords-stretch 0
+           bibtex-autokey-titlewords 1
+           bibtex-autokey-year-title-separator "")
+
+     (add-hook 'bibtex-mode-hook
+               (lambda ()
+                 (set-fill-column 120))))
+
+
+
+   (use-package bibtex-utils
+     :config
+     (setq bu-bibtex-fields-ignore-list '(url abstract)))
 #+END_SRC
 
 This sets-up =helm-bibtex=
@@ -904,15 +941,18 @@ This sets-up =helm-bibtex=
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package helm-bibtex
     :config
-    (setq bibtex-completion-bibliography '("~/Dropbox/biblio.bib")
+    (setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
           bibtex-completion-library-path '("~/ownCloud/PDF")
           bibtex-completion-notes-path "~/ownCloud/varia/org/biblio-notes.org"
           bibtex-completion-pdf-open-function (lambda (fpath)
                                           (call-process "xdg-open" nil 0 nil fpath))
           bibtex-completion-cite-prompt-for-optional-arguments nil
-          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date)
+          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date maintitle mainsubtitle)
           bibtex-completion-cite-default-command "parencite"
-          bibtex-completion-display-formats '((t . "${author:36} ${title:*} ${date:4} ${=has-pdf=:1}${=has-note=:1} ${=type=:7}")))
+          bibtex-completion-display-formats '((t . "${author:20} ${title:*} ${date:4} ${=has-pdf=:1}${=has-note=:1} ${=type=:7}")))
+
+    (advice-add 'bibtex-completion-candidates
+                :filter-return 'reverse)
 
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
@@ -972,7 +1012,8 @@ Evil is a mode that makes vi(m) like keybindings
             (eww-mode . emacs)
             (undo-tree-visualizer . emacs)
             (mu4e-view-mode . emacs)
-            (paradox-menu-mode . emacs))
+            (paradox-menu-mode . emacs)
+            (prodigy-mode . emacs))
           do (evil-set-initial-state mode state)))
 
   (use-package evil-surround
@@ -992,8 +1033,9 @@ Edit Chrome textareas with Emacs
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-(use-package edit-server
-  :config (edit-server-start))
+  (use-package edit-server
+    :if window-system
+    :config (edit-server-start))
 #+END_SRC
 
 ** Lilypond
@@ -1047,42 +1089,47 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package helm
-               :bind
-               (("M-x" . helm-M-x)
-                ("M-y" . helm-show-kill-ring)
-                ("C-x b" . helm-mini)
-                ("C-x C-f" . helm-find-files)
-                ("C-x C-h" . helm-for-files)
-                ("C-c u" . helm-org-in-buffer-headings))
-               :commands (helm-buffers-list
-                          helm-colors
-                          helm-find-files
-                          helm-for-files
-                          helm-google-suggest
-                          helm-mini
-                          helm-help
-                          helm-show-kill-ring
-                          helm-org-keywords
-                          helm-org-in-buffer-headings
-                          helm-M-x
-                          helm-occur)
-               :config
-               (helm-mode)
-               (use-package helm-config)
-               (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
-               (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
-               (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+    :bind
+    (("M-x" . helm-M-x)
+     ("M-y" . helm-show-kill-ring)
+     ("C-x b" . helm-mini)
+     ("C-x C-f" . helm-find-files)
+     ("C-x C-h" . helm-for-files)
+     ("C-s" . helm-occur) 
+     ("C-c u" . helm-org-in-buffer-headings))
+    :commands (helm-buffers-list
+               helm-colors
+               helm-find-files
+               helm-for-files
+               helm-google-suggest
+               helm-mini
+               helm-help
+               helm-show-kill-ring
+               helm-org-keywords
+               helm-org-in-buffer-headings
+               helm-M-x
+               helm-occur)
+    :config
+    (helm-mode)
+    (use-package helm-config)
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
+    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
+    (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
 
-               (when (executable-find "curl")
-                 (setq helm-google-suggest-use-curl-p t))
+    (when (executable-find "curl")
+      (setq helm-google-suggest-use-curl-p t))
 
-               (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-                     helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-                     helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-                     helm-ff-file-name-history-use-recentf t
-                     helm-buffers-fuzzy-matching t
-                     helm-recentf-fuzzy-match t))
+    (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
+          helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+          helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+          helm-ff-file-name-history-use-recentf t
+          helm-buffers-fuzzy-matching t
+          helm-recentf-fuzzy-match t)
 
+    (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
+                               helm-source-locate)
+    (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
+                               helm-source-recentf)) 
 
 #+END_SRC
 
@@ -1092,9 +1139,10 @@ don't want or don't have that much space.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (require 'helm-backup)
-  (global-set-key (kbd "C-c b") 'helm-backup)
-  (add-hook 'after-save-hook 'helm-backup-versioning)
+  (use-package helm-backup
+    :config
+    (global-set-key (kbd "C-c b") 'helm-backup)
+    (add-hook 'after-save-hook 'helm-backup-versioning))
 #+END_SRC
 ** Autocompletion
 
@@ -1174,13 +1222,14 @@ Golden-ratio mode makes sure your window splits are of a sensible size
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package golden-ratio
+    :disabled t
     :diminish golden-ratio-mode
     :config
     (golden-ratio-mode 1)
     (setq golden-ratio-auto-scale t))
 #+END_SRC
 
-** COMMENT Calendar integration
+** Calendar integration
 
 This bit exports the agenda from my org-mode calendar to an iCalendar
 and copies it to a remote server, where it gets picked up by the phone
@@ -1214,9 +1263,9 @@ calendar app.
     (with-current-buffer (get-file-buffer org-caldav-inbox)
       (save-buffer)))
 
-  (setq kill-emacs-query-functions '(lambda ()
-                                      (interactive)
-                                      (ignore-errors (sync-calendar))))
+  ;(setq kill-emacs-query-functions '(lambda ()
+  ;                                    (interactive)
+  ;                                    (ignore-errors (sync-calendar))))
 #+END_SRC
 
 ** Email
@@ -1268,7 +1317,7 @@ Keep the Drafts folder clean
   (add-to-list 'file-name-handler-alist '("Drafts/cur/" . draft-auto-save-buffer-name-handler))
 #+END_SRC
 
-*** Main mu4e configuration
+*** COMMENT Main mu4e configuration
 
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
@@ -1276,8 +1325,9 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package mu4e
     :commands (mu4e compose-mail)
+    :load-path  "/usr/share/emacs/site-lisp/mu4e/"
     :bind ("<f5>" . mu4e)
-    :config
+    :init
 
     (use-package mu4e-contrib)
 
@@ -1300,7 +1350,6 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-org-contacts-file (car org-contacts-files))
 
 
-
     (use-package helm-mu
       :bind ("C-c C-x m" . helm-mu-contacts)
       ("<f6>" . helm-mu)
@@ -1313,7 +1362,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (setq unread-query "flag:unread maildir:/work/INBOX or flag:unread maildir:/work/AllMail or flag:unread maildir:/st/INBOX or flag:unread maildir:/st/Archives")
 
     (add-to-list 'mu4e-bookmarks
-                 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+                 '("date:today..now AND NOT flag:trashed AND NOT from:iosad AND NOT from:tutor" "Today's messages" ?t))
 
     (add-to-list 'mu4e-bookmarks
                  '("flag:flagged" "Flagged messages" ?f))
@@ -1324,17 +1373,75 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (add-to-list 'mu4e-view-actions
                  '("org-contact-add" . mu4e-action-add-org-contact) t)
 
-  
+    (setq mu4e-contexts
+          `(,(make-mu4e-context
+              :name "Work"
+              :enter-func (lambda () (mu4e-message "Entering main work context"))
+              :leave-func (lambda () (mu4e-message "Leaving main work context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches msg :to "iosad")))
+              :vars '((mu4e-user-mail-address-list . ("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk"))
+                      (user-full-name . "Pavel Iosad")
+                      (user-mail-address . "pavel.iosad@ed.ac.uk")
+                      (mu4e-compose-signature . (make-random-signature))
+                      (mu4e-drafts-folder . "/work/Drafts")
+                      (mu4e-sent-folder . "/work/Sent Items")
+                      (mu4e-trash-folder . "/work/Trash")
+                      (mu4e-refile-folder . "/work/AllMail")
+                      (mu4e-maildir-shortcuts . (("/work/INBOX" . ?i)
+                                                 ("/work/AllMail" . ?a)
+                                                 ("/work/Sent Items" . ?s)
+                                                 ("/work/Trash" . ?t)))
+                      (message-sendmail-extra-arguments . nil)))
+            ,(make-mu4e-context
+              :name "Senior Tutor"
+              :enter-func (lambda () (mu4e-message "Entering Senior Tutor context"))
+              :leave-func (lambda () (mu4e-message "Leaving Senior Tutor context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches msg :to '("tutor" "pplsge08"))))
+              :vars `((user-mail-address . "PPLS.senior.tutor@ed.ac.uk")
+                      (user-full-name . "PPLS Senior Tutor")
+                      (mu4e-user-mail-address-list . ("PPLS.senior.tutor@ed.ac.uk" "pplsge08@exseed.ed.ac.uk"))
+                      (mu4e-drafts-folder . "/st/Drafts")
+                      (mu4e-sent-folder . "/st/Sent Items")
+                      (mu4e-trash-folder . "/st/Trash")
+                      (mu4e-refile-folder . "/st/Archives")
+                      (mu4e-compose-signature . ,senior-tutor-signature)
+                      (mu4e-maildir-shortcuts . (("/st/INBOX"       . ?i)
+                                                 ("/st/Archives"     . ?a)
+                                                 ("/st/Sent Items"  . ?s)
+                                                 ("/st/Trash"       . ?t)))
+                      (message-sendmail-extra-arguments . ("-a" "st")))))
+          mu4e-context-policy 'pick-first
+          mu4e-compose-context-policy 'ask)
+
+    (defun my-mu4e-context-switch ()
+      "Interactively update the context"
+      (interactive)
+      (mu4e-context-switch)
+      (save-excursion
+        (message-goto-from)
+        (kill-whole-line)
+        (insert (mu4e~draft-header "From" (or (mu4e~draft-from-construct) "")))
+        (message-goto-signature)
+        (previous-line)
+        (kill-region (point) (point-max))
+        (let ((message-signature mu4e-compose-signature))
+          (message-insert-signature))))
+
 
     (add-hook 'mu4e-compose-mode-hook
               (defun my-compose-mode-hook ()
-                (setq mu4e-compose-signature (pcase (mu4e-context-name (mu4e-context-current))
-                                               ("Work" (make-random-signature))
-                                               ("Senior Tutor" senior-tutor-signature)))
+                (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
+                                                ("Work" ,(make-random-signature))
+                                                ("Senior Tutor" ,senior-tutor-signature)))
                 (auto-fill-mode)
                 (set-fill-column 72)
                 (typopunct-mode)
-                (flyspell-mode)))
+                (flyspell-mode)
+                (local-set-key (kbd "C-c C-x C-;") 'my-mu4e-context-switch)))
 
     (setq message-send-mail-function 'message-send-mail-with-sendmail
           sendmail-program "/usr/bin/msmtp")
@@ -1343,67 +1450,41 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       :config
       (setq org-mu4e-link-query-in-headers-mode nil
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks")
-                                     "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")
+                                     "* TODO [#A] \nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")
                                     ("e" "event" entry (file+headline main-agenda-file "Events from email")
                                      "* %?\n%a\n"))))
 
-    (use-package mu4e-alert
-      :config
-      (mu4e-alert-set-default-style 'libnotify)
-      (setq mu4e-alert-interesting-mail-query unread-query)
-      (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
-      (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
-      :bind
-      ("<f7>" . mu4e-alert-view-unread-mails)))
+    (require 'mu4e-alert)
+    (mu4e-alert-enable-notifications)
+    (mu4e-alert-enable-mode-line-display)
+    (mu4e-alert-set-default-style 'libnotify)
+    (setq mu4e-alert-interesting-mail-query unread-query)
+    (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails))
 
 #+END_SRC
 
-*** Set up email contexts
+*** Mail check
+
+This monitors the remote IMAP folders.
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (setq mu4e-contexts
-        `(,(make-mu4e-context
-            :name "Work"
-            :enter-func (lambda () (mu4e-message "Entering main work context"))
-            :leave-func (lambda () (mu4e-message "Leaving main work context"))
-            :match-func (lambda (msg)
-                          (when msg
-                            (mu4e-message-contact-field-matches msg :to "iosad")))
-            :vars '((mu4e-user-mail-address-list . ("pavel.iosad@ed.ac.uk" "piosad@exseed.ed.ac.uk"))
-                    (user-full-name . "Pavel Iosad")
-                    (user-mail-address . "pavel.iosad@ed.ac.uk")
-                    (mu4e-compose-signature . (make-random-signature))
-                    (mu4e-drafts-folder . "/work/Drafts")
-                    (mu4e-sent-folder . "/work/Sent Items")
-                    (mu4e-trash-folder . "/work/Trash")
-                    (mu4e-refile-folder . "/work/AllMail")
-                    (mu4e-maildir-shortcuts . (("/work/INBOX" . ?i)
-                                               ("/work/AllMail" . ?a)
-                                               ("/work/Sent Items" . ?s)
-                                               ("/work/Trash" . ?t)))
-                    (message-sendmail-extra-arguments . nil)))
-          ,(make-mu4e-context
-            :name "Senior Tutor"
-            :enter-func (lambda () (mu4e-message "Entering Senior Tutor context"))
-            :leave-func (lambda () (mu4e-message "Leaving Senior Tutor context"))
-            :match-func (lambda (msg)
-                          (when msg
-                            (mu4e-message-contact-field-matches msg :to "ppls")))
-            :vars '((user-mail-address . "PPLS.senior.tutor@ed.ac.uk")
-                    (user-full-name . "PPLS Senior Tutor")
-                    (mu4e-drafts-folder . "/st/Drafts")
-                    (mu4e-sent-folder . "/st/Sent Items")
-                    (mu4e-trash-folder . "/st/Trash")
-                    (mu4e-refile-folder . "/st/Archives")
-                    (mu4e-compose-signature . senior-tutor-signature)
-                    (mu4e-maildir-shortcuts . (("/st/INBOX"       . ?i)
-                                               ("/st/Archives"     . ?a)
-                                               ("/st/Sent Items"  . ?s)
-                                               ("/st/Trash"       . ?t)))
-                    (message-sendmail-extra-arguments . ("-a" "st")))))
-        mu4e-context-policy 'pick-first
-        mu4e-compose-context-policy 'ask)
+  (use-package prodigy
+    :init (prodigy-define-tag
+            :name 'email
+            :ready-message "Checking Email using IMAP IDLE. Ctrl-C to shutdown.")
+    (prodigy-define-service
+      :name "imapnotify-inbox"
+      :command "pyimapnotify"
+      :args (list "-c" (expand-file-name ".config/imapnotify.work.json" (getenv "HOME")))
+      :tags '(email)
+      :kill-signal 'sigkill)
+   (prodigy-define-service
+      :name "imapnotify-st"
+      :command "pyimapnotify"
+      :args (list "-c" (expand-file-name ".config/imapnotify.st.json" (getenv "HOME")))
+      :tags '(email)
+      :kill-signal 'sigkill))
 #+END_SRC
 
 ** EWW
@@ -1437,6 +1518,7 @@ And =swiper= is nice for searching longer files
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package swiper
+    :disabled t
     :commands (swiper swiper-query-replace)
     :bind
     ("C-s" . swiper-helm)
@@ -1472,32 +1554,16 @@ Manage Arch Linux packages
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package arch-packer)
 #+END_SRC
+** Eyebrowse
 
-** Treemacs
-
-A file management utility
+Workspace management
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package treemacs
+#+BEGIN_SRC emacs-lisp tangle no
+  (use-package eyebrowse
     :config
-    (require 'treemacs-evil)
-    (setq treemacs-header-function            #'treemacs--create-header-projectile
-          treemacs-follow-after-init          t
-          treemacs-width                      35
-          treemacs-indentation                2
-          treemacs-git-integration            t
-          treemacs-change-root-without-asking nil
-          treemacs-sorting                    'alphabetic-desc
-          treemacs-show-hidden-files          t
-          treemacs-never-persist              nil)
-    (treemacs-follow-mode t)
-    (treemacs-filewatch-mode t)
-    :bind
-    ([f8] . treemacs-toggle)
-    ("<C-M-tab>" . treemacs-toggle))
-
-
+    (eyebrowse-setup-opinionated-keys)
+    (eyebrowse-mode))
 #+END_SRC
 * Configuration layout
 

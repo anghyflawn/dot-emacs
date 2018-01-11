@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: pex
+# key: pex
+# --
+\pex$1
+\a$0
+\a
+\xe
