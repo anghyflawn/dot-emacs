@@ -210,7 +210,7 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (add-to-list 'default-frame-alist '(font . "Liberation Mono-12"))
+  (add-to-list 'default-frame-alist '(font . "Cousine-12"))
 #+END_SRC
 
 ** Misc
@@ -326,6 +326,17 @@ Highlight matching parentheses, braces, etc.
   (show-paren-mode t)
 #+END_SRC
 
+** Dimmer
+
+Makes it clearer which buffer is active
+
+#+NAME: appearance
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package dimmer
+    :config
+    (dimmer-mode)
+    (setq dimmer-exclusion-regexp "helm"))
+#+END_SRC
 * General editing
 ** Encodings
 
@@ -437,7 +448,10 @@ various templating languages.
     :mode (("\\.html?\\'" . web-mode)
            ("\\.css\\'" . web-mode))
     :config
-    (setq web-mode-enable-auto-pairing t)
+    (setq web-mode-enable-auto-pairing t
+          web-mode-enable-engine-detection t
+          web-mode-engines-alist
+          '(("jinja2" . "\\.html?\\'")))
     :init
     (add-hook 'web-mode-hook (lambda ()
                                (set-fill-column 120))))
@@ -565,6 +579,20 @@ We probably want our lines wrapped when we're writing
   (add-hook 'text-mode-hook 
             (lambda ()
               (visual-line-mode 1)))
+
+  ;; from http://endlessparentheses.com/fill-and-unfill-paragraphs-with-a-single-key.html
+  (defun endless/fill-or-unfill ()
+    "Like `fill-paragraph', but unfill if used twice."
+    (interactive)
+    (let ((fill-column
+           (if (eq last-command 'endless/fill-or-unfill)
+               (progn (setq this-command nil)
+                      (point-max))
+             fill-column)))
+      (call-interactively #'fill-paragraph)))
+
+  (global-set-key [remap fill-paragraph]
+                  #'endless/fill-or-unfill)
 #+END_SRC
 
 #+NAME: editing
@@ -590,50 +618,38 @@ Hippie-expand is a nice autocompletion engine
     (use-package evil-smartparens
       :diminish evil-smartparens-mode
       :config
-      (progn
         (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
-        (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
-
-        (bind-keys
-         :map smartparens-mode-map
+        (add-hook 'prog-mode-hook #'evil-smartparens-mode)
+      :bind
+      (:map smartparens-mode-map
          ("C-M-a" . sp-beginning-of-sexp)
          ("C-M-e" . sp-end-of-sexp)
-
          ("C-<down>" . sp-down-sexp)
          ("C-<up>"   . sp-up-sexp)
          ("M-<down>" . sp-backward-down-sexp)
          ("M-<up>"   . sp-backward-up-sexp)
-
          ("C-M-f" . sp-forward-sexp)
          ("C-M-b" . sp-backward-sexp)
-
          ("C-M-n" . sp-next-sexp)
          ("C-M-p" . sp-previous-sexp)
-
          ("C-S-f" . sp-forward-symbol)
          ("C-S-b" . sp-backward-symbol)
-
          ("M-<right>" . sp-forward-slurp-sexp)
          ("C-<right>" . sp-forward-barf-sexp)
          ("M-<left>"  . sp-backward-slurp-sexp)
          ("C-<left>"  . sp-backward-barf-sexp)
-
          ("C-M-t" . sp-transpose-sexp)
          ("C-M-k" . sp-kill-sexp)
          ("C-k"   . sp-kill-hybrid-sexp)
          ("M-k"   . sp-backward-kill-sexp)
          ("C-M-w" . sp-copy-sexp)
-
          ("C-M-d" . delete-sexp)
-
          ("M-<backspace>" . backward-kill-word)
          ("C-<backspace>" . sp-backward-kill-word)
          ([remap sp-backward-kill-word] . backward-kill-word)
-
          ("M-[" . sp-backward-unwrap-sexp)
          ("M-]" . sp-unwrap-sexp)
-
-         ("C-x C-t" . sp-transpose-hybrid-sexp)))
+         ("C-x C-t" . sp-transpose-hybrid-sexp))))
 #+END_SRC
 
 ** LaTeX
@@ -773,13 +789,7 @@ Hippie-expand is a nice autocompletion engine
        (add-hook 'markdown-mode-hook
                (defun my-markdown-mode-hook ()
                  (flyspell-mode)
-                 (turn-on-reftex)
-                 (eval-after-load 'reftex-vars
-                   '(progn
-                     (setq-local reftex-cite-format '((?\C-m . "@%l")
-                                                      (?p . "[@%l]")))))
                  (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                 (local-set-key (kbd "C-M-]") 'ivy-bibtex)
                  (orgtbl-mode 1)
                  (pandoc-mode)
                  (outline-minor-mode)
@@ -814,7 +824,7 @@ Hippie-expand is a nice autocompletion engine
           ""
           text))
        (defun pandoc--smallcaps (output-format txt)
-         (format "<span style=\"font-variant:small-caps;\">%s</span>" txt))
+         (format "[%s]{.smallcaps}" txt))
 
        (defun markdown-insert-smallcaps ()
          (interactive
@@ -823,26 +833,12 @@ Hippie-expand is a nice autocompletion engine
               (let ((bounds (markdown-unwrap-things-in-region
                              (region-beginning) (region-end)
                              markdown-regex-code 2 4)))
-                (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" nil (car bounds) (cdr bounds)))
+                (markdown-wrap-or-insert "[" "].{smallcaps}>" nil (car bounds) (cdr bounds)))
          ;; Code markup removal, code markup for word, or empty markup insertion
          (if (thing-at-point-looking-at markdown-regex-code)
                 (markdown-unwrap-thing-at-point nil 0 1)
-              (markdown-wrap-or-insert "<span style=\"font-variant:small-caps;\">" "</span>" 'word nil nil)))))
+              (markdown-wrap-or-insert "[" "]{.smallcaps}" 'word nil nil)))))
 
-     (defun markdown-catalan ()
-       "I'm using Catalan as a workaround to have a different font for
-     IPA when creating LaTeX documents through markdown. Ugh"
-         (interactive
-          (if (markdown-use-region-p)
-              ;; Active region
-              (let ((bounds (markdown-unwrap-things-in-region
-                             (region-beginning) (region-end)
-                             markdown-regex-code 2 4)))
-                (markdown-wrap-or-insert "<span lang=\"ca\">" "</span>" nil (car bounds) (cdr bounds)))
-         ;; Code markup removal, code markup for word, or empty markup insertion
-         (if (markdown-code-at-point-p)
-                (markdown-unwrap-thing-at-point nil 0 1)
-              (markdown-wrap-or-insert "<span lang=\"ca\">" "</span>" 'word nil nil)))))
 
      (setq my-pandoc-directives
              '(("references" . pandoc--add-references-header)
@@ -862,7 +858,9 @@ Hippie-expand is a nice autocompletion engine
      (add-hook 'pandoc-mode-hook
                (defun my-pandoc-mode-hook ()
                  (setq pandoc-use-async t
+                       pandoc-process-connection-type nil
                        pandoc-binary "/usr/bin/pandoc")
+                 (local-set-key (kbd "C-c &") 'pandoc-jump-to-reference)
                  (pandoc-load-default-settings)
                  (dolist (x my-pandoc-directives)
                    (add-to-list 'pandoc-directives x))))
@@ -1110,10 +1108,11 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                helm-occur)
     :config
     (helm-mode)
-    (use-package helm-config)
-    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to run persistent action
-    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
-    (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+    (use-package helm-config
+      :bind (:map helm-map
+                  ("tab" . helm-execute-persistent-action)
+                  ("C-i" . helm-execute-persistent-action)
+                  ("C-z" . helm-select-action)))
 
     (when (executable-find "curl")
       (setq helm-google-suggest-use-curl-p t))
@@ -1121,14 +1120,13 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
           helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
           helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+          helm-use-frame-when-more-than-two-windows nil
           helm-ff-file-name-history-use-recentf t
           helm-buffers-fuzzy-matching t
           helm-recentf-fuzzy-match t)
 
     (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
-                               helm-source-locate)
-    (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
-                               helm-source-recentf)) 
+                               helm-source-locate)) 
 
 #+END_SRC
 
@@ -1142,6 +1140,13 @@ don't want or don't have that much space.
     :config
     (global-set-key (kbd "C-c b") 'helm-backup)
     (add-hook 'after-save-hook 'helm-backup-versioning))
+#+END_SRC
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package helm-descbinds
+    :config
+    (helm-descbinds-mode))
 #+END_SRC
 ** Autocompletion
 
@@ -1252,6 +1257,7 @@ calendar app.
                                                 :url google)))) 
 
 
+
   (defun sync-calendar ()
     (interactive)
     (let ((org-icalendar-combined-agenda-file "~/ownCloud/varia/org/org.ics"))
@@ -1348,15 +1354,20 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-compose-keep-self-cc nil
           mu4e-org-contacts-file (car org-contacts-files))
 
+    (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
 
     (use-package helm-mu
       :bind ("C-c C-x m" . helm-mu-contacts)
       ("<f6>" . helm-mu)
       :config
       (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
-      (define-key mu4e-main-mode-map "s" 'helm-mu)
-      (define-key mu4e-headers-mode-map "s" 'helm-mu)
-      (define-key mu4e-view-mode-map "s" 'helm-mu))
+      :bind
+      (:map mu4e-main-mode-map
+            ("s" . helm-mu))
+      (:map mu4e-headers-mode-map
+            ("s" . helm-mu))
+      (:map mu4e-view-mode-map
+            ("s" . helm-mu)))
 
     (setq unread-query "flag:unread maildir:/work/INBOX or flag:unread maildir:/work/AllMail or flag:unread maildir:/st/INBOX or flag:unread maildir:/st/Archives")
 
@@ -1399,7 +1410,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
               :leave-func (lambda () (mu4e-message "Leaving Senior Tutor context"))
               :match-func (lambda (msg)
                             (when msg
-                              (mu4e-message-contact-field-matches msg :to '("tutor" "pplsge08"))))
+                              (mu4e-message-contact-field-matches msg :to '("senior.tutor" "pplsge08"))))
               :vars `((user-mail-address . "PPLS.senior.tutor@ed.ac.uk")
                       (user-full-name . "PPLS Senior Tutor")
                       (mu4e-user-mail-address-list . ("PPLS.senior.tutor@ed.ac.uk" "pplsge08@exseed.ed.ac.uk"))
@@ -1486,6 +1497,13 @@ This monitors the remote IMAP folders.
       :kill-signal 'sigkill))
 #+END_SRC
 
+Check mail if the timer breaks down
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq mail-timer (run-with-idle-timer 600 t 'mu4e-update-index))
+#+END_SRC
+
 ** EWW
 
 =eww= is the emacs browser, which we want to use to open URLs
@@ -1545,24 +1563,13 @@ Much better than DocView
   (use-package pdf-tools
     :config (pdf-tools-install))
 #+END_SRC
-** Packer
-
-Manage Arch Linux packages
+** Dired
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (use-package arch-packer)
-#+END_SRC
-** Eyebrowse
-
-Workspace management
-
-#+NAME: utils
-#+BEGIN_SRC emacs-lisp tangle no
-  (use-package eyebrowse
-    :config
-    (eyebrowse-setup-opinionated-keys)
-    (eyebrowse-mode))
+  (use-package dired-narrow
+    :bind (:map dired-mode-map
+                ("/" . dired-narrow)))
 #+END_SRC
 * Configuration layout
 
