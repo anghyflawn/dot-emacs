@@ -210,7 +210,7 @@ This sets the colours of the background and fonts.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
-  (add-to-list 'default-frame-alist '(font . "Cousine-12"))
+  (set-frame-font "Iosevka-13" nil t)
 #+END_SRC
 
 ** Misc
@@ -269,7 +269,7 @@ Never type out 'yes' or 'no'.
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
-** COMMENT Mode-line
+** Mode-line
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -608,6 +608,7 @@ Hippie-expand is a nice autocompletion engine
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package smartparens-config
     :ensure smartparens
+    :bind 
     :config
     (show-smartparens-global-mode t)
     (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
@@ -615,44 +616,43 @@ Hippie-expand is a nice autocompletion engine
     (add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
     (sp-local-pair 'LaTeX-mode "'" "'" :actions nil)
     (sp-local-pair 'markdown-mode "'" "'")
+    (bind-keys :map smartparens-mode-map
+               ("C-M-a" . sp-beginning-of-sexp)
+               ("C-M-e" . sp-end-of-sexp)
+               ("C-<down>" . sp-down-sexp)
+               ("C-<up>"   . sp-up-sexp)
+               ("M-<down>" . sp-backward-down-sexp)
+               ("M-<up>"   . sp-backward-up-sexp)
+               ("C-M-f" . sp-forward-sexp)
+               ("C-M-b" . sp-backward-sexp)
+               ("C-M-n" . sp-next-sexp)
+               ("C-M-p" . sp-previous-sexp)
+               ("C-S-f" . sp-forward-symbol)
+               ("C-S-b" . sp-backward-symbol)
+               ("M-<right>" . sp-forward-slurp-sexp)
+               ("C-<right>" . sp-forward-barf-sexp)
+               ("M-<left>"  . sp-backward-slurp-sexp)
+               ("C-<left>"  . sp-backward-barf-sexp)
+               ("C-M-t" . sp-transpose-sexp)
+               ("C-M-k" . sp-kill-sexp)
+               ("C-k"   . sp-kill-hybrid-sexp)
+               ("M-k"   . sp-backward-kill-sexp)
+               ("C-M-w" . sp-copy-sexp)
+               ("C-M-d" . delete-sexp)
+               ("M-<backspace>" . backward-kill-word)
+               ("C-<backspace>" . sp-backward-kill-word)
+               ([remap sp-backward-kill-word] . backward-kill-word)
+               ("M-[" . sp-backward-unwrap-sexp)
+               ("M-]" . sp-unwrap-sexp)
+               ("C-x C-t" . sp-transpose-hybrid-sexp))
     (use-package evil-smartparens
       :diminish evil-smartparens-mode
       :config
-        (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
-        (add-hook 'prog-mode-hook #'evil-smartparens-mode)
-      :bind
-      (:map smartparens-mode-map
-         ("C-M-a" . sp-beginning-of-sexp)
-         ("C-M-e" . sp-end-of-sexp)
-         ("C-<down>" . sp-down-sexp)
-         ("C-<up>"   . sp-up-sexp)
-         ("M-<down>" . sp-backward-down-sexp)
-         ("M-<up>"   . sp-backward-up-sexp)
-         ("C-M-f" . sp-forward-sexp)
-         ("C-M-b" . sp-backward-sexp)
-         ("C-M-n" . sp-next-sexp)
-         ("C-M-p" . sp-previous-sexp)
-         ("C-S-f" . sp-forward-symbol)
-         ("C-S-b" . sp-backward-symbol)
-         ("M-<right>" . sp-forward-slurp-sexp)
-         ("C-<right>" . sp-forward-barf-sexp)
-         ("M-<left>"  . sp-backward-slurp-sexp)
-         ("C-<left>"  . sp-backward-barf-sexp)
-         ("C-M-t" . sp-transpose-sexp)
-         ("C-M-k" . sp-kill-sexp)
-         ("C-k"   . sp-kill-hybrid-sexp)
-         ("M-k"   . sp-backward-kill-sexp)
-         ("C-M-w" . sp-copy-sexp)
-         ("C-M-d" . delete-sexp)
-         ("M-<backspace>" . backward-kill-word)
-         ("C-<backspace>" . sp-backward-kill-word)
-         ([remap sp-backward-kill-word] . backward-kill-word)
-         ("M-[" . sp-backward-unwrap-sexp)
-         ("M-]" . sp-unwrap-sexp)
-         ("C-x C-t" . sp-transpose-hybrid-sexp))))
+      (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
+      (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
 #+END_SRC
 
-** LaTeX
+** COMMENT LaTeX
    #+NAME: editing
    #+BEGIN_SRC emacs-lisp :tangle no
      (use-package auctex 
@@ -673,39 +673,44 @@ Hippie-expand is a nice autocompletion engine
 
 
 
-            (add-hook 'LaTeX-mode-hook
-                      (defun my-LaTeX-mode-hook ()
-                        (flyspell-mode 1)
-                        (TeX-fold-mode 1)
-                        ;; This activates the X-SAMPA layout, making
-                        ;; it accessible via C-\
-                        (set-input-method "ipa-x-sampa")
-                        (toggle-input-method)
-                        (outline-minor-mode 1)
-                        (turn-on-reftex)
-                        (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-                        (TeX-source-correlate-mode 1)
-                        (local-set-key (kbd "C-c f") 'insert-feature)
-                        (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                        (local-set-key (kbd "C-M-]") 'ivy-bibtex)
-                        (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
-                        (add-to-list 'TeX-view-program-selection
-                                     '(output-pdf "PDF Tools"))
-                        (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-                        (setq font-latex-match-function-keywords '(("ipa" "{")
-                                                                   ("twe" "{")
-                                                                   ("mbi" "{")
-                                                                   ("x" "{")
-                                                                   ("ox" "{")
-                                                                   "ex" "pex" "pex~" "xe" "a")
-                              TeX-parse-self t
-                              TeX-auto-save t
-                              TeX-electric-sub-and-superscript t
-                              LaTeX-csquotes-close-quote "}"
-                              LaTeX-csquotes-open-quote "\\enquote{"
-                              TeX-outline-extra '(("\\\\printbibliography" 2))
-                              TeX-source-correlate t
-                              TeX-engine 'luatex))))
+       (add-hook 'LaTeX-mode-hook
+                 (defun my-LaTeX-mode-hook ()
+                   (flyspell-mode 1)
+                   (TeX-fold-mode 1)
+                   ;; This activates the X-SAMPA layout, making
+                   ;; it accessible via C-\
+                   (set-input-method "ipa-x-sampa")
+                   (toggle-input-method)
+                   (outline-minor-mode 1)
+                   (turn-on-reftex)
+                   (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                   (TeX-source-correlate-mode 1)
+                   (local-set-key (kbd "C-c f") 'insert-feature)
+                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                   (local-set-key (kbd "C-M-]") 'ivy-bibtex)
+                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
+                   (add-to-list 'TeX-view-program-selection
+                                '(output-pdf "PDF Tools"))
+                   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+                   (setq font-latex-match-function-keywords '(("ipa" "{")
+                                                              ("twe" "{")
+                                                              ("mbi" "{")
+                                                              ("x" "{")
+                                                              ("ox" "{")
+                                                              "ex" "pex" "pex~" "xe" "a")
+                         TeX-parse-self t
+                         TeX-auto-save t
+                         TeX-electric-sub-and-superscript t
+                         LaTeX-csquotes-close-quote "}"
+                         LaTeX-csquotes-open-quote "\\enquote{"
+                         TeX-outline-extra '(("\\\\printbibliography" 2))
+                         TeX-source-correlate t
+                         TeX-engine 'luatex)))
+       :config
+       (use-package auctex-latexmk
+         :config
+         (auctex-latexmk-setup)
+         (setq auctex-latexmk-inherit-TeX-PDF-mode t)))
 #+END_SRC
 
 ** Org-mode
@@ -734,42 +739,43 @@ Hippie-expand is a nice autocompletion engine
 
    #+NAME: utils
    #+BEGIN_SRC emacs-lisp :tangle no
-     (use-package org
-       :diminish org-indent-mode
-       :bind
-       ("C-c l" . org-store-link)
-       ("C-c a" . org-agenda)
-       ("C-c t" . org-capture)
-       :config
-       (setq org-log-done t
-             org-use-property-inheritance t
-             org-agenda-files private/org-files
-             org-directory private/org-directory
-             org-startup-indented t
-             org-src-fontify-natively t
-             org-icalendar-timezone "Europe/London"
-             org-refile-targets '((org-agenda-files . (:maxlevel . 5))
-                                  ("~/ownCloud/admin/senior-tutor.org" . (:maxlevel . 5)))
-             org-icalendar-use-deadline '(todo-due)
-             org-agenda-window-setup 'current-window
-             org-agenda-span 'week
-             org-agenda-skip-scheduled-if-deadline-is-shown t
-             org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
-             org-icalendar-alarm-time 15)
+          (use-package org
+            :diminish org-indent-mode
+            :bind
+            ("C-c l" . org-store-link)
+            ("C-c a" . org-agenda)
+            ("C-c t" . org-capture)
+            :config
+            (setq org-log-done t
+                  org-use-property-inheritance t
+                  org-agenda-files private/org-files
+                  org-directory private/org-directory
+                  org-startup-indented t
+                  org-src-fontify-natively t
+                  org-icalendar-timezone "Europe/London"
+                  org-refile-targets '((org-agenda-files . (:maxlevel . 5))
+                                       ("~/ownCloud/admin/senior-tutor.org" . (:maxlevel . 5)))
+                  org-icalendar-use-deadline '(todo-due)
+                  org-agenda-window-setup 'current-window
+                  org-agenda-span 'week
+                  org-agenda-skip-scheduled-if-deadline-is-shown t
+                  org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
+                  org-icalendar-alarm-time 15
+                  org-latex-bib-compiler "biber")
 
-       (use-package ox-taskjuggler
-         :config
-         (add-to-list 'org-export-backends 'taskjuggler t))
+            (use-package ox-taskjuggler
+              :config
+              (add-to-list 'org-export-backends 'taskjuggler t))
 
-       (use-package org-contacts
-         :config
-         (setq org-contacts-files private/org-contacts-files))
+            (use-package org-contacts
+              :config
+              (setq org-contacts-files private/org-contacts-files))
 
-       (use-package org-crypt
-         :config
-         (org-crypt-use-before-save-magic)
-         (setq org-tags-exclude-from-inheritance '("crypt")
-               org-crypt-key nil)))
+            (use-package org-crypt
+              :config
+              (org-crypt-use-before-save-magic)
+              (setq org-tags-exclude-from-inheritance '("crypt")
+                    org-crypt-key nil)))
    #+END_SRC
   
 ** Markdown and pandoc
@@ -931,6 +937,18 @@ This sets up RefTeX and BibTeX-mode.
      :config
      (setq bu-bibtex-fields-ignore-list '(url abstract)))
 #+END_SRC
+
+This sets up =org-ref=
+
+#+NAME: editing
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package org-ref
+    :config
+    (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+          org-ref-pdf-directory '("~/ownCloud/PDF/"))
+    (global-set-key (kbd "C-c C-x k") 'org-ref-cite-hydra/body))
+#+END_SRC
+
 
 This sets-up =helm-bibtex=
 
@@ -1108,11 +1126,10 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                helm-occur)
     :config
     (helm-mode)
-    (use-package helm-config
-      :bind (:map helm-map
-                  ("tab" . helm-execute-persistent-action)
-                  ("C-i" . helm-execute-persistent-action)
-                  ("C-z" . helm-select-action)))
+    (use-package helm-config)
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-z") 'helm-select-action)
 
     (when (executable-find "curl")
       (setq helm-google-suggest-use-curl-p t))
@@ -1243,18 +1260,13 @@ calendar app.
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package org-caldav
     :config
-    (setq org-caldav-url private/org-caldav-url
-          org-caldav-calendar-id private/org-caldav-calendar-id
+    (setq org-caldav-url private/org-caldav-private-url
+          org-caldav-calendar-id private/org-caldav-private-id
           org-caldav-inbox private/org-caldav-inbox
           org-caldav-files private/org-caldav-files
-          org-caldav-oauth2-client-id private/org-caldav-oauth2-client-id
-          org-caldav-oauth2-client-secret private/org-caldav-oauth2-client-secret
-          plstore-cache-passphrase-for-symmetric-encryption t
-          org-icalendar-timezone "Europe/London"
-          org-caldav-calendars  `((:calendar-id ,private/org-caldav-calendar-id
-                                              :url ,org-caldav-url)
-                                  (:calendar-id ,private/google-calendar-id
-                                                :url google)))) 
+          org-icalendar-timezone "UTC"
+          org-caldav-calendars  `((:calendar-id ,private/org-caldav-private-id
+                                  :url ,private/org-caldav-private-url))))
 
 
 
@@ -1268,9 +1280,6 @@ calendar app.
     (with-current-buffer (get-file-buffer org-caldav-inbox)
       (save-buffer)))
 
-  ;(setq kill-emacs-query-functions '(lambda ()
-  ;                                    (interactive)
-  ;                                    (ignore-errors (sync-calendar))))
 #+END_SRC
 
 ** Email
@@ -1369,7 +1378,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       (:map mu4e-view-mode-map
             ("s" . helm-mu)))
 
-    (setq unread-query "flag:unread maildir:/work/INBOX or flag:unread maildir:/work/AllMail or flag:unread maildir:/st/INBOX or flag:unread maildir:/st/Archives")
+    (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive or flag:unread maildir:/st/INBOX or flag:unread maildir:/st/Archives")
 
     (add-to-list 'mu4e-bookmarks
                  '("date:today..now AND NOT flag:trashed AND NOT from:iosad AND NOT from:tutor" "Today's messages" ?t))
@@ -1396,12 +1405,12 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                       (user-mail-address . "pavel.iosad@ed.ac.uk")
                       (mu4e-compose-signature . (make-random-signature))
                       (mu4e-drafts-folder . "/work/Drafts")
-                      (mu4e-sent-folder . "/work/Sent Items")
+                      (mu4e-sent-folder . "/work/Sent")
                       (mu4e-trash-folder . "/work/Trash")
-                      (mu4e-refile-folder . "/work/AllMail")
-                      (mu4e-maildir-shortcuts . (("/work/INBOX" . ?i)
-                                                 ("/work/AllMail" . ?a)
-                                                 ("/work/Sent Items" . ?s)
+                      (mu4e-refile-folder . "/work/Archive")
+                      (mu4e-maildir-shortcuts . (("/work/Inbox" . ?i)
+                                                 ("/work/Archive" . ?a)
+                                                 ("/work/Sent" . ?s)
                                                  ("/work/Trash" . ?t)))
                       (message-sendmail-extra-arguments . nil)))
             ,(make-mu4e-context
@@ -1510,7 +1519,7 @@ Check mail if the timer breaks down
 
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
-  (setq browse-url-browser-function 'eww-browse-url)
+  (setq browse-url-browser-function 'helm-browse-url-firefox)
 #+END_SRC
 ** Search
 
@@ -1561,7 +1570,10 @@ Much better than DocView
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package pdf-tools
-    :config (pdf-tools-install))
+    :config
+    (pdf-tools-install)
+    (setq pdf-view-resize-factor 1.1)
+    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 #+END_SRC
 ** Dired
 
@@ -1570,6 +1582,10 @@ Much better than DocView
   (use-package dired-narrow
     :bind (:map dired-mode-map
                 ("/" . dired-narrow)))
+
+  (use-package dired-open
+    :bind (:map dired-mode-map
+                ("K" . dired-open-xdg)))
 #+END_SRC
 * Configuration layout
 

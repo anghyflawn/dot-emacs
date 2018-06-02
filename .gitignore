@@ -17,3 +17,5 @@
 /*.el#
 *.pandoc
 /diary
+elpa/*
+.cache*
