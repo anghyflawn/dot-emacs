@@ -150,24 +150,6 @@ This sets up Emacs for GPG pinentry
     (setq epa-pinentry-mode 'loopback)
     (pinentry-start))
 #+END_SRC
-** Alerts
-
-#+NAME: init-after
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package sauron
-    :disabled
-    :config
-    (bind-key "C-c s" 'sauron-toggle-hide-show)
-    (bind-key "C-c t" 'sauron-clear)
-    (setq sauron-separate-frame nil)
-    (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
-    (add-hook 'sauron-event-added-functions
-              (lambda (origin prio msg &optional props)
-                (when (>= prio 4)
-                  (sauron-fx-notify "Emacs" msg 10))))
-    (sauron-start))
-#+END_SRC
-
 * Appearance
 ** Unneeded chrome
 
@@ -405,7 +387,7 @@ Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package flycheck
-    :commands (global-flycheck-mode flycheck-mode)
+    :init (global-flycheck-mode)
     :config 
     (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck)))
 #+END_SRC
@@ -420,6 +402,12 @@ Magit provides featureful Git integration.
     :commands (magit-status magit-diff magit-log magit-blame-mode)
     :bind ("C-x g" . magit-status)
     :init (setq magit-last-seen-setup-instructions "1.4.0"))
+
+  (use-package magithub
+    :after magit
+    :config
+    (magithub-feature-autoinject t)
+    (setq magithub-clone-default-directory "~/src"))
 #+END_SRC
 
 ** Programming modes
@@ -670,9 +658,6 @@ Hippie-expand is a nice autocompletion engine
                     "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
 
-
-
-
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
                    (flyspell-mode 1)
@@ -705,12 +690,13 @@ Hippie-expand is a nice autocompletion engine
                          LaTeX-csquotes-open-quote "\\enquote{"
                          TeX-outline-extra '(("\\\\printbibliography" 2))
                          TeX-source-correlate t
-                         TeX-engine 'luatex)))
+                         TeX-engine 'luatex))))
+
+     (use-package auctex-latexmk
+       :after auctex
        :config
-       (use-package auctex-latexmk
-         :config
-         (auctex-latexmk-setup)
-         (setq auctex-latexmk-inherit-TeX-PDF-mode t)))
+       (auctex-latexmk-setup)
+       (setq auctex-latexmk-inherit-TeX-PDF-mode t))
 #+END_SRC
 
 ** Org-mode
