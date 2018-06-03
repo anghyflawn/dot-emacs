@@ -66,6 +66,7 @@
 (depends-on "helm-system-packages")
 (depends-on "helm-themes")
 (depends-on "helm-unicode")
+(depends-on "helpful")
 (depends-on "ht")
 (depends-on "htmlize")
 (depends-on "hydra")
