@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: rawtex
+# key: rawtex
+# --
+\begin{rawtex}
+$0
+\end{rawtex}

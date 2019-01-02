@@ -1,13 +1,25 @@
 #+TITLE: Pavel Iosad's Emacs init
 #+AUTHOR: Pavel Iosad
 
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+;;; emacs.el --- Emacs configuration generated via Org Babel
+
+;;; Commentary:
+
+;; Do not modify this file by hand.  It was automatically generated
+;; from `emacs.org` in the same directory.  See that file for more
+;; information.
+
+;;; Code:
+#+END_SRC
+
 * Configuration
 ** use-package
 
 We use [[http://github.com/jwiegley/use-package][use-package]] to manage packages. Thus we start off by installing it.
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (eval-when-compile
     (require 'use-package))
   (require 'diminish)
@@ -19,14 +31,25 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
 We also need to actually make sure Pallet is in use.
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
 (pallet-mode)
+#+END_SRC
+** Pinentry
+
+This sets up Emacs for GPG pinentry
+
+#+NAME: init-before
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+  (use-package pinentry
+    :config
+    (setq epa-pinentry-mode 'loopback)
+    (pinentry-start))
 #+END_SRC
 
 ** Keep =~/.emacs.d= clean
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package no-littering)
 #+END_SRC
 
@@ -36,7 +59,7 @@ We also need to actually make sure Pallet is in use.
 Keep temporary files away from working directories
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (defvar conf/temp-directory "~/.emacs.temp.dir")
   (unless (file-exists-p conf/temp-directory)
     (mkdir conf/temp-directory))
@@ -45,7 +68,7 @@ Keep temporary files away from working directories
 Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs.org/article/keeping-secrets-in-emacs-gnupg-auth-sources][here]])
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq auth-sources
 	'((:source "~/.emacs.d/secrets/authinfo.gpg")))
 #+END_SRC
@@ -55,7 +78,7 @@ Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs
 I have recently moved (back) from OS X to Linux, so just keeping this in case
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq delete-by-moving-to-trash t)
   (exec-path-from-shell-initialize)
 
@@ -78,7 +101,7 @@ I have recently moved (back) from OS X to Linux, so just keeping this in case
 Put autosave and backup files into the directory we defined above
 
 #+NAME: init-after
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq backup-directory-alist (list (cons ".*"  (expand-file-name "saves/" conf/temp-directory)))
         backup-by-copying t      ; don't clobber symlinks
         delete-old-versions t
@@ -95,7 +118,7 @@ Put autosave and backup files into the directory we defined above
    accessible (=chmod 600= or --- better yet --- encryption)
 
    #+NAME: init-before
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
      (defvar conf/private-file (expand-file-name "private.el.gpg" user-emacs-directory))
      (load-library conf/private-file)
   #+END_SRC
@@ -105,7 +128,7 @@ Put autosave and backup files into the directory we defined above
 Emacs is launched by a =systemd= service, so we need to launch the server for the daemon to make sense
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-list :tangle no
+#+BEGIN_SRC emacs-list :tangle yes :noweb no-export :exports code
 (server-start)
 #+END_SRC
 
@@ -115,7 +138,7 @@ Set alternative location for =custom-set-variables= and =custom-set-faces=,
 to make sure Emacs doesn't dump them in your =init.el=.
 
 #+NAME: init-after
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
   (load custom-file 'noerror)
 #+END_SRC
@@ -125,7 +148,7 @@ to make sure Emacs doesn't dump them in your =init.el=.
 Return to where we were
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package saveplace
     :init (save-place-mode 1))
 #+END_SRC
@@ -135,20 +158,9 @@ Return to where we were
 Update buffers if files have been changed on disk.
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (global-auto-revert-mode 1)
   (add-hook 'dired-mode-hook 'auto-revert-mode)
-#+END_SRC
-** Pinentry
-
-This sets up Emacs for GPG pinentry
-
-#+NAME: init-before
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package pinentry
-    :config
-    (setq epa-pinentry-mode 'loopback)
-    (pinentry-start))
 #+END_SRC
 * Appearance
 ** Unneeded chrome
@@ -156,7 +168,7 @@ This sets up Emacs for GPG pinentry
 We don't need scroll bars or tool bars
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (when (fboundp 'tool-bar-mode) 
     (tool-bar-mode -1))
   (when (fboundp 'scroll-bar-mode) 
@@ -166,9 +178,12 @@ We don't need scroll bars or tool bars
 Diminish some modes that are always on and which serve no purpose in the mode-line
 
 #+NAME: init-after
-#+BEGIN_SRC emacs-lisp :tangle no
-(diminish 'auto-revert-mode)
-(diminish 'undo-tree-mode)
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+  (diminish 'auto-revert-mode)
+  (diminish 'undo-tree-mode)
+  (diminish 'company-mode)
+  (diminish 'yas-minor-mode)
+  (diminish 'evil-goggles-mode)
 #+END_SRC
 
 ** Theme
@@ -176,8 +191,8 @@ Diminish some modes that are always on and which serve no purpose in the mode-li
 This sets the colours of the background and fonts.
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
-  (setq my-theme 'doom-one)
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+  (setq my-theme 'doom-dracula)
 
   (defun load-my-theme (frame)
     (select-frame frame)
@@ -191,7 +206,7 @@ This sets the colours of the background and fonts.
 ** Fonts
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
 (setq default-frame-alist '((font . "Iosevka-13")))
 #+END_SRC
 
@@ -200,7 +215,7 @@ This sets the colours of the background and fonts.
 Highlight the current line: not everyone's cup of tea, of course
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (global-hl-line-mode 0)
 #+END_SRC
 
@@ -208,7 +223,7 @@ When possible, automatically scroll so that the cursor is in the
 middle of the window
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package centered-cursor-mode
     :diminish centered-cursor-mode
     :config
@@ -220,7 +235,7 @@ This is to prevent emacs from getting in your way when run from
 the terminal
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (defun conf/after-make-frame (frame)
     (unless (display-graphic-p frame)
       (when (fboundp 'menu-bar-mode) 
@@ -233,28 +248,28 @@ the terminal
 No need for the bell
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq ring-bell-function 'ignore)
 #+END_SRC
 
 Use colours in the shell
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
 #+END_SRC
 
 Never type out 'yes' or 'no'.
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
 ** Mode-line
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package telephone-line
     :disabled t
     :init
@@ -278,7 +293,7 @@ Never type out 'yes' or 'no'.
 We want that to be informative too
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq frame-title-format
         '("emacs@" (:eval (system-name)) ": "(:eval (if (buffer-file-name)
                                                         (abbreviate-file-name (buffer-file-name))
@@ -293,7 +308,7 @@ useful not just for Lisp but also for all sorts of nested structures,
 like in =forest= trees.
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
     (use-package rainbow-delimiters
                  :commands rainbow-delimiters-mode
                  :init
@@ -304,7 +319,7 @@ like in =forest= trees.
 Highlight matching parentheses, braces, etc.
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (show-paren-mode t)
 #+END_SRC
 
@@ -313,7 +328,7 @@ Highlight matching parentheses, braces, etc.
 Makes it clearer which buffer is active
 
 #+NAME: appearance
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package dimmer
     :config
     (dimmer-mode)
@@ -325,7 +340,7 @@ Makes it clearer which buffer is active
 Use UTF-8 encoding wherever possible:
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (set-default-coding-systems 'utf-8-unix)
   (set-terminal-coding-system 'utf-8-unix)
   (set-keyboard-coding-system 'utf-8-unix)
@@ -339,7 +354,7 @@ Use UTF-8 encoding wherever possible:
 Even so, ~ansi-term~ doesn't obey:
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (defadvice ansi-term (after advise-ansi-term-coding-system)
     (set-buffer-process-coding-system 'utf-8-unix 'utf-8-unix))
   (ad-activate 'ansi-term)
@@ -348,7 +363,7 @@ Even so, ~ansi-term~ doesn't obey:
 ** Spelling
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package flyspell
     :diminish flyspell-mode
     :config
@@ -385,12 +400,14 @@ Even so, ~ansi-term~ doesn't obey:
 Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the fly.
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package flycheck
-    :init (global-flycheck-mode)
-    :config 
-    (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck))
-    (setq flycheck-highlighting-mode 'lines))
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+    (use-package flycheck
+      :init (global-flycheck-mode)
+      :config 
+      (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck))
+      (setq flycheck-highlighting-mode 'lines
+            flycheck-check-syntax-automatically '(save idle-change mode-enabled)
+            flycheck-idle-change-delay 2))
 #+END_SRC
 
 ** Version control
@@ -398,7 +415,7 @@ Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the
 Magit provides featureful Git integration.
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package magit
     :commands (magit-status magit-diff magit-log magit-blame-mode)
     :bind ("C-x g" . magit-status)
@@ -417,7 +434,7 @@ Magit provides featureful Git integration.
 This sets up ~eldoc~.
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package emacs-lisp-mode
     :init
     (use-package eldoc
@@ -432,7 +449,7 @@ Javascript and CSS embedded in HTML as well as highlighting for
 various templating languages.
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package web-mode
     :mode (("\\.html?\\'" . web-mode)
            ("\\.css\\'" . web-mode))
@@ -451,7 +468,7 @@ various templating languages.
 Elpy is a bunch of nice Python utilities.
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package python
     :mode ("\\.py\\'" . python-mode)
     :init
@@ -465,7 +482,7 @@ Elpy is a bunch of nice Python utilities.
 *** Common Lisp
 
      #+NAME: editing
-     #+BEGIN_SRC emacs-lisp :tangle no
+     #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
        (use-package slime
                     :mode ("\\.lisp\\'" . lisp-mode)
                     :init
@@ -479,15 +496,17 @@ Elpy is a bunch of nice Python utilities.
 **** Basic ESS setup
 
     #+NAME: editing
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (use-package ess
-        :init (require 'ess-site)
-        :commands R
+    #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+      (use-package ess-site
+        :ensure ess
         :mode ("\\.R\\'" . ess-r-mode)
         :config
         (use-package ess-smart-underscore)
         (use-package ess-R-data-view)
         (use-package ess-rutils)  
+
+        (setq ess-eval-visibly 'nowait
+              ess-default-style 'RStudio)
 
         (defun tex-Rnw-check (name)
           "When opening a .tex file, check to make sure there isn't a
@@ -533,7 +552,7 @@ Elpy is a bunch of nice Python utilities.
 This is the recommended solution for Rmarkdown files.
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
     (use-package polymode           ; ESS with polymode
       :mode (("\\.[Rr]md" . poly-markdown+r-mode)
              ("\\.[Rr]nw" . poly-noweb+r-mode))
@@ -549,7 +568,7 @@ This is the recommended solution for Rmarkdown files.
 *** Stan
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package stan-mode
     :mode "\\.stan\\'"
     :config
@@ -563,7 +582,7 @@ This is the recommended solution for Rmarkdown files.
 We probably want our lines wrapped when we're writing
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (diminish 'visual-line-mode)
   (add-hook 'text-mode-hook 
             (lambda ()
@@ -588,13 +607,13 @@ We probably want our lines wrapped when we're writing
 
 Hippie-expand is a nice autocompletion engine
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (global-set-key (kbd "M-/") 'hippie-expand)
 #+END_SRC
 ** Smartparens
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package smartparens-config
     :ensure smartparens
     :config
@@ -642,7 +661,7 @@ Hippie-expand is a nice autocompletion engine
 
 ** LaTeX
    #+NAME: editing
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
      (use-package auctex 
        :ensure t
        :mode ("\\.tex\\'" . LaTeX-mode)
@@ -657,6 +676,7 @@ Hippie-expand is a nice autocompletion engine
                       "\\mbox{\\ensuremath{%s}%s}"
                     "\\mbox{[\\ensuremath{%s}%s]}")
                   value feature)))
+       (setq-default my-alternative-input-method "ipa-x-sampa")
 
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
@@ -664,7 +684,7 @@ Hippie-expand is a nice autocompletion engine
                    (TeX-fold-mode 1)
                    ;; This activates the X-SAMPA layout, making
                    ;; it accessible via C-\
-                   (set-input-method "ipa-x-sampa")
+                   (set-input-method my-alternative-input-method)
                    (toggle-input-method)
                    (outline-minor-mode 1)
                    (turn-on-reftex)
@@ -712,7 +732,7 @@ Hippie-expand is a nice autocompletion engine
    path to that in your =private.el.gpg=
 
    #+NAME: utils
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
      (setq main-agenda-file (expand-file-name (car private/org-files)))
 
      (global-set-key (kbd "C-x C-a C-w") 
@@ -724,7 +744,7 @@ Hippie-expand is a nice autocompletion engine
    The following sets up Org-mode itself
 
    #+NAME: utils
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
           (use-package org
             :diminish org-indent-mode
             :bind
@@ -774,7 +794,7 @@ Hippie-expand is a nice autocompletion engine
    This bit loads markdown-mode and sets up various customizations.
 
    #+NAME: editing
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
      (use-package markdown-mode
        :mode ("\\.\\(m\\(ark\\)?down\\|md\\)$" . markdown-mode)
        :config
@@ -791,7 +811,7 @@ Hippie-expand is a nice autocompletion engine
    Now we set up pandoc-mode and add some utility functions
 
    #+NAME: editing
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
      (use-package pandoc-mode
        :defer t
        :bind
@@ -866,24 +886,24 @@ that, given a DOI (or an http://dx.doi.org/ URL) gets a BibTeX entry
 and inserts it at point.
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (defun get-bibtex-from-doi (doi)
    "Get a BibTeX entry from the DOI"
    (interactive "MDOI: ")
    (let ((url-mime-accept-string "text/bibliography;style=bibtex")
          (clean-doi (replace-regexp-in-string "https?://.*doi.org/" "" doi)))
-     (with-current-buffer (url-retrieve-synchronously (format "https://doi.org/%s" clean-doi))
+     (with-current-buffer (url-retrieve-synchronously (format "http://doi.org/%s" clean-doi))
        (switch-to-buffer (current-buffer))
        (setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
        (kill-buffer (current-buffer))))
    (insert (decode-coding-string bibtex-entry 'utf-8))
-   (bibtex-fill-entry)) 
+   (bibtex-fill-entry))
 #+END_SRC
 
 This sets up RefTeX and BibTeX-mode.
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
    (use-package reftex
      :commands turn-on-reftex
      :config
@@ -927,7 +947,7 @@ This sets up RefTeX and BibTeX-mode.
 This sets up =org-ref=
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package org-ref
     :config
     (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
@@ -939,7 +959,7 @@ This sets up =org-ref=
 This sets-up =helm-bibtex=
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package helm-bibtex
     :config
     (setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
@@ -962,7 +982,7 @@ This sets-up =helm-bibtex=
 Bog is an extension for research notes
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package bog
     :diminish bog-mode
     :config
@@ -980,7 +1000,7 @@ Bog is an extension for research notes
 Evil is a mode that makes vi(m) like keybindings
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no 
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code 
   (use-package evil
     :diminish undo-tree-mode
     :init
@@ -1014,6 +1034,7 @@ Evil is a mode that makes vi(m) like keybindings
             (undo-tree-visualizer . emacs)
             (mu4e-view-mode . emacs)
             (paradox-menu-mode . emacs)
+            (pomidor-mode . emacs)
             (flycheck-error-list-mode . emacs))
           do (evil-set-initial-state mode state)))
 
@@ -1033,7 +1054,7 @@ Evil is a mode that makes vi(m) like keybindings
 Edit Chrome textareas with Emacs
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package edit-server
     :if window-system
     :config (edit-server-start))
@@ -1042,14 +1063,14 @@ Edit Chrome textareas with Emacs
 ** Lilypond
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package lilypond-mode
     :mode ("\\.ly$" . LilyPond-mode))
 #+END_SRC
 ** Typopunct-mode
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package typopunct
     :config
     (typopunct-change-language 'english t)
@@ -1070,7 +1091,7 @@ Edit Chrome textareas with Emacs
 ** Haskell setup
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package intero
     :commands intero-mode)
 
@@ -1088,7 +1109,7 @@ alternatives. No more blind tabbing! This setup follows the
 introduction [[http://tuhdo.github.io/helm-intro.html][here]].
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package helm
     :bind
     (("M-x" . helm-M-x)
@@ -1138,7 +1159,7 @@ source control, by default under =~/.helm-backup=. Disable it if you
 don't want or don't have that much space.
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package helm-backup
     :config
     (global-set-key (kbd "C-c b") 'helm-backup)
@@ -1146,7 +1167,7 @@ don't want or don't have that much space.
 #+END_SRC
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package helm-descbinds
     :config
     (helm-descbinds-mode))
@@ -1156,7 +1177,7 @@ don't want or don't have that much space.
 Set up =company-mode= for autocompletion.
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package company
       :config (global-company-mode 1)
       (setq company-global-modes '(not message-mode latex-mode markdown-mode)))
@@ -1167,7 +1188,7 @@ Set up =company-mode= for autocompletion.
 Yasnippet is a handy framework for storing little bits of code/text that you reuse a lot
 
 #+NAME: editing
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
     (use-package yasnippet
       :config (yas-global-mode 1))
 #+END_SRC
@@ -1175,7 +1196,7 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
 ** Various niceties
 
 #+NAME: init-after
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
     (setq display-time-day-and-date t)
     (setq display-time-string-forms
           '((format "%s:%s  "
@@ -1191,7 +1212,7 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
 These are some convenience functions for my own use
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
 
   (defmacro clean-buffer (form)
     `(save-excursion
@@ -1227,7 +1248,7 @@ These are some convenience functions for my own use
 Golden-ratio mode makes sure your window splits are of a sensible size
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package golden-ratio
     :disabled t
     :diminish golden-ratio-mode
@@ -1243,7 +1264,7 @@ and copies it to a remote server, where it gets picked up by the phone
 calendar app.
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package org-caldav
     :config
     (setq org-caldav-url private/org-caldav-private-url
@@ -1275,7 +1296,7 @@ calendar app.
 This is just a convenience function to choose a signature at random from four versions
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
 
   (defun make-random-signature ()
     (interactive)
@@ -1299,7 +1320,7 @@ This is just a convenience function to choose a signature at random from four ve
 Keep the Drafts folder clean
 
 #+NAME:utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (defun draft-auto-save-buffer-name-handler (operation &rest args)
   "for `make-auto-save-file-name' set '.' in front of the file name; do nothing for other operations"  
     (if
@@ -1322,7 +1343,7 @@ Keep the Drafts folder clean
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package mu4e
     :commands (mu4e compose-mail)
     :load-path  "/usr/share/emacs/site-lisp/mu4e/"
@@ -1347,6 +1368,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           message-kill-buffer-on-exit t
           mu4e-compose-dont-reply-to-self t
           mu4e-compose-keep-self-cc nil
+	        smtpmail-queue-dir "~/mail/queue/cur"
           mu4e-org-contacts-file (car org-contacts-files))
 
     (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
@@ -1418,9 +1440,29 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                                                  ("/st/Archives"     . ?a)
                                                  ("/st/Sent Items"  . ?s)
                                                  ("/st/Trash"       . ?t)))
-                      (message-sendmail-extra-arguments . ("-a" "st")))))
+                      (message-sendmail-extra-arguments . ("-a" "st"))))
+            ,(make-mu4e-context
+              :name "Personal"
+              :enter-func (lambda () (mu4e-message "Entering personal context"))
+              :leave-func (lambda () (mu4e-message "Leaving personal context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches msg :to "anghyflawn")))
+              :vars '((mu4e-user-mail-address-list . ("pavel@anghyflawn.net"))
+                      (user-full-name . "Pavel Iosad")
+                      (user-mail-address . "pavel@anghyflawn.net")
+                      (mu4e-compose-signature . "Pavel Iosad")
+                      (mu4e-drafts-folder . "/work/Drafts")
+                      (mu4e-sent-folder . "/work/Sent")
+                      (mu4e-trash-folder . "/work/Trash")
+                      (mu4e-refile-folder . "/work/Archive")
+                      (mu4e-maildir-shortcuts . (("/work/Inbox" . ?i)
+                                                 ("/work/Archive" . ?a)
+                                                 ("/work/Sent" . ?s)
+                                                 ("/work/Trash" . ?t)))
+                      (message-sendmail-extra-arguments . ("-a" "personal")))))
           mu4e-context-policy 'pick-first
-          mu4e-compose-context-policy 'ask)
+      mu4e-compose-context-policy 'ask)
 
     (defun my-mu4e-context-switch ()
       "Interactively update the context"
@@ -1470,33 +1512,11 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 *** Mail check
 
-This monitors the remote IMAP folders.
-
-#+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package prodigy
-    :init (prodigy-define-tag
-            :name 'email
-            :ready-message "Checking Email using IMAP IDLE. Ctrl-C to shutdown.")
-    (prodigy-define-service
-      :name "imapnotify-inbox"
-      :command "pyimapnotify"
-      :args (list "-c" (expand-file-name ".config/imapnotify.work.json" (getenv "HOME")))
-      :tags '(email)
-      :kill-signal 'sigkill)
-   (prodigy-define-service
-      :name "imapnotify-st"
-      :command "pyimapnotify"
-      :args (list "-c" (expand-file-name ".config/imapnotify.st.json" (getenv "HOME")))
-      :tags '(email)
-      :kill-signal 'sigkill))
-#+END_SRC
-
 Check mail if the timer breaks down
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
-  (setq mail-timer (run-with-idle-timer 600 t 'mu4e-update-index))
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+  (setq mail-timer (run-with-timer 0 600 'mu4e-update-mail-and-index t))
 #+END_SRC
 
 ** EWW
@@ -1504,7 +1524,7 @@ Check mail if the timer breaks down
 =eww= is the emacs browser, which we want to use to open URLs
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq browse-url-browser-function 'helm-browse-url-firefox)
 #+END_SRC
 ** Search
@@ -1512,7 +1532,7 @@ Check mail if the timer breaks down
 =avy= is a better search-based navigation.
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package avy
     :bind
     ("C-:" . avy-goto-char)
@@ -1528,7 +1548,7 @@ Check mail if the timer breaks down
 And =swiper= is nice for searching longer files
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package swiper
     :disabled t
     :commands (swiper swiper-query-replace)
@@ -1542,7 +1562,7 @@ And =swiper= is nice for searching longer files
 An RSS reader
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package elfeed
     :config
     (global-set-key (kbd "C-x w") 'elfeed)
@@ -1554,7 +1574,7 @@ An RSS reader
 Much better than DocView
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package pdf-tools
     :config
     (pdf-tools-install)
@@ -1564,7 +1584,7 @@ Much better than DocView
 ** Dired
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package dired-narrow
     :bind (:map dired-mode-map
                 ("/" . dired-narrow)))
@@ -1578,7 +1598,7 @@ Much better than DocView
 A drop-in replacement for Emacs' help buffers
 
 #+NAME: utils
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package helpful
     :bind
     (("C-h f" . helpful-callable)
@@ -1588,39 +1608,6 @@ A drop-in replacement for Emacs' help buffers
      ("C-c C" . helpful-command)))
 #+END_SRC
 
-* Configuration layout
-
-Here we define the =emacs.el= file that gets generated by the source
-blocks in our Org document. This is the file that actually gets
-loaded on startup. The placeholders in angled brackets correspond to
-the ~NAME~ directives above the ~SRC~ blocks throughout this document.
-
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-;;; emacs.el --- Emacs configuration generated via Org Babel
-
-;;; Commentary:
-
-;; Do not modify this file by hand.  It was automatically generated
-;; from `emacs.org` in the same directory.  See that file for more
-;; information.
-
-;;; Code:
-
-;; Configuration group: init-before
-<<init-before>>
-
-;; Configuration group: appearance
-<<appearance>>
-
-;; Configuration group: editing
-<<editing>>
-
-;; Configuration group: utilities
-<<utils>>
-
-;; Configuration group: init-after
-<<init-after>>
-
-
 ;; emacs.el ends here
 #+END_SRC

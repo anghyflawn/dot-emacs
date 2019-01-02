@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: latexex
+# key: latexex
+# --
+\ex
+\begingl
+\gla $1 //
+\glb $2 //
+\endgl
+\xe
+
+$0

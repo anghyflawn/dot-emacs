@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: tree
+# key: tree
+# --
+\begin{rawtex}
+\begin{forest}
+$0
+\end{forest}
+\end{rawtex}

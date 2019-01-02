@@ -5,7 +5,10 @@
 \begin{rawtex}
 \ex
 \begingl
-$0
+\gla $1//
+\glb $2//
 \endgl
 \xe
 \end{rawtex}
+
+$0

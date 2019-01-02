@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: ltx
+# key: ltx
+# --
+\`\`\`{=latex}
+$0
+\`\`\`

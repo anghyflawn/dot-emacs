@@ -124,7 +124,7 @@ ${2:\usepackage{ebgaramond-maths}}
     \microtypesetup{expansion=false, protrusion=false}
     \renewcommand\foottextfont{\footnotesize\RaggedRight}
     \nonzeroparskip
-    \DoubleSpacing*}}{} 
+    \OnehalfSpacing*}}{} 
 
 \DeclareBibliographyCategory{notinbib}
 % \addtocategory{notinbib}{}
