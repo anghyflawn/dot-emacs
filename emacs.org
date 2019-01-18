@@ -1117,20 +1117,21 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
      ("C-x b" . helm-mini)
      ("C-x C-f" . helm-find-files)
      ("C-x C-h" . helm-for-files)
-     ("C-s" . helm-occur) 
+     ("C-s" . helm-occur)
+     ("C-x C-d" . helm-browse-project)
      ("C-c u" . helm-org-in-buffer-headings))
     :commands (helm-buffers-list
-               helm-colors
-               helm-find-files
-               helm-for-files
-               helm-google-suggest
-               helm-mini
-               helm-help
-               helm-show-kill-ring
-               helm-org-keywords
-               helm-org-in-buffer-headings
-               helm-M-x
-               helm-occur)
+	       helm-colors
+	       helm-find-files
+	       helm-for-files
+	       helm-google-suggest
+	       helm-mini
+	       helm-help
+	       helm-show-kill-ring
+	       helm-org-keywords
+	       helm-org-in-buffer-headings
+	       helm-M-x
+	       helm-occur)
     :config
     (helm-mode)
     (use-package helm-config)
@@ -1142,15 +1143,15 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
       (setq helm-google-suggest-use-curl-p t))
 
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-          helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-          helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-          helm-use-frame-when-more-than-two-windows nil
-          helm-ff-file-name-history-use-recentf t
-          helm-buffers-fuzzy-matching t
-          helm-recentf-fuzzy-match t)
+	  helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+	  helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+	  helm-use-frame-when-more-than-two-windows nil
+	  helm-ff-file-name-history-use-recentf t
+	  helm-buffers-fuzzy-matching t
+	  helm-recentf-fuzzy-match t)
 
     (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
-                               helm-source-locate)) 
+			       helm-source-locate)) 
 
 #+END_SRC
 
@@ -1608,6 +1609,20 @@ A drop-in replacement for Emacs' help buffers
      ("C-c C" . helpful-command)))
 #+END_SRC
 
+** Anki-editor
+
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+(use-package anki-editor
+  :config
+  (add-hook 'anki-editor-mode-hook
+	    '(lambda ()
+	       (use-local-map (copy-key-map org-mode-map))
+	       (local-set-key (kbd "M-RET") 'anki-editor-insert-note))))
+#+END_SRC
+
+* End of file
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
 ;; emacs.el ends here
 #+END_SRC
+
+
