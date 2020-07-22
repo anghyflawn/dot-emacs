@@ -2,13 +2,13 @@
 # name: mdex
 # key: mdex
 # --
-\begin{rawtex}
+\`\`\`{=latex}
 \ex
 \begingl
 \gla $1//
 \glb $2//
 \endgl
 \xe
-\end{rawtex}
+\`\`\`
 
 $0

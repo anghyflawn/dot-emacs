@@ -1,7 +1,7 @@
 ;; -*- mode: emacs-lisp -*-
 
 ;; pandoc-mode global settings file
-;; saved on 2016.08.20 14:53
+;; saved on 2020.04.16 09:17
 
 ((master-file)
  (html-q-tags)
@@ -150,13 +150,13 @@
  (filter)
  (bibliography "/home/piosad/texmf/bibtex/bib/biblio.bib")
  (variable
-  ("biblatexoptions" . "backend=biber, bibstyle=biblatex-langsci-unified, citestyle=langsci-authoryear-comp, mincrossrefs=50, maxcitenames=3, maxbibnames=50, useprefix=true, doi=false")
+  ("mainfontoptions" . "Numbers=OldStyle")
+  ("biblatexoptions" . "backend=biber, style=langsci-unified, mincrossrefs=50, maxcitenames=3, maxbibnames=50, useprefix=true")
   ("fontsize" . "12pt")
   ("indent" . "true")
   ("papersize" . "a4")
-  ("geometry" . "a4paper")
   ("monofont" . "Iosevka")
-  ("mainfont" . "Adobe Caslon Pro")
+  ("mainfont" . "Minion 3")
   ("lang" . "en-GB"))
  (metadata)
  (pdf-engine . "lualatex")

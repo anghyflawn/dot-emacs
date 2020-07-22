@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: onl
+# key: onl
+# --
+\<onl>$1\</onl>$0

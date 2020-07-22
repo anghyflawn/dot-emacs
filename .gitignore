@@ -19,3 +19,6 @@
 /diary
 elpa/*
 .cache*
+/.trello/
+/elpy/
+/etc/elegant-emacs/

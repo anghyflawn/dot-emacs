@@ -12,12 +12,13 @@
 \usepackage[main=british${1:,otherlanguages}]{babel}
 \usepackage[autostyle]{csquotes}
 \usepackage[backend=biber,
-        bibstyle=biblatex-langsci-unified,
-        citestyle=langsci-authoryear-comp,
+        style=langsci-unified,
         mincrossrefs=50,
         maxcitenames=3,
         maxbibnames=50,
         useprefix=true,
+	autolang=hyphen,
+	parentracker=true,
         doi=false]{biblatex}
 
 \newbibmacro{string+doi+emph}[1]{\iffieldundef{doi}{\mkbibemph{#1}}{\href{http://dx.doi.org/\thefield{doi}}{\mkbibemph{#1}}}}
@@ -44,6 +45,11 @@
   \iffieldequalstr{labeldatesource}{pubstate}{}
   {\newunit\newblock\printfield{pubstate}}}
 
+\NewBibliographyString{reprintedin}
+\DefineBibliographyStrings{english}{
+  phdthesis = {PhD dissertation},
+  reprintedin = {Reprinted in}
+}
 
 
 
@@ -59,9 +65,9 @@
 
 % Package settings
 \defaultfontfeatures{Ligatures=TeX, Numbers=OldStyle}
-${2:\usepackage{ebgaramond-maths}}
-\setmonofont[Scale=MatchLowercase]{${3:Hack}}
-\newfontfamily\ipafont[Ligatures=NoCommon]{${4:EB Garamond}}
+\setmainfont${2:{Minion 3}}
+\setmonofont[Scale=MatchLowercase]{${3:Iosevka}}
+\newfontfamily\ipafont[Ligatures=NoCommon]{${4:Minion 3}}
 
 \usepackage[activate={true,nocompatibility}, tracking]{microtype}
 \usepackage[english, ngerman]{selnolig}
@@ -129,6 +135,7 @@ ${2:\usepackage{ebgaramond-maths}}
 \DeclareBibliographyCategory{notinbib}
 % \addtocategory{notinbib}{}
 
+\frenchspacing
 \begin{document}
 
 \maketitle
