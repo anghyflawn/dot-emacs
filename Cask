@@ -148,6 +148,7 @@
 (depends-on "powerline")
 (depends-on "prodigy")
 (depends-on "projectile")
+(depends-on "psession")
 (depends-on "py-autopep8")
 (depends-on "pyvenv")
 (depends-on "rainbow-delimiters")

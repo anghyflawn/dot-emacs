@@ -392,13 +392,15 @@ Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-    (use-package flycheck
-      :init (global-flycheck-mode)
-      :config 
-      (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck))
-      (setq flycheck-highlighting-mode 'lines
-            flycheck-check-syntax-automatically '(save idle-change mode-enabled)
-            flycheck-idle-change-delay 2))
+  (use-package flycheck
+    :init (global-flycheck-mode)
+    :diminish
+    flycheck-mode
+    :config 
+    (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck))
+    (setq flycheck-highlighting-mode 'lines
+          flycheck-check-syntax-automatically '(save idle-change mode-enabled)
+          flycheck-idle-change-delay 2))
 #+END_SRC
 
 ** Version control
@@ -540,7 +542,8 @@ Elpy is a bunch of nice Python utilities.
                     (company-mode)
                     (local-set-key (kbd "TAB") 'company-complete))))
 
-         (use-package ess-smart-equals
+      (use-package ess-smart-equals
+        :disabled t
            :init   (setq ess-smart-equals-extra-ops '(brace paren))
            :after  (:any ess-r-mode inferior-ess-r-mode ess-r-transcript-mode)
            :config (ess-smart-equals-activate))
@@ -727,22 +730,6 @@ Hippie-expand is a nice autocompletion engine
        :config
        (auctex-latexmk-setup)
        (setq auctex-latexmk-inherit-TeX-PDF-mode t))
-
-     (defun bibtex-autokey-parse-date ()
-       "Get the year from the `date' field in biblatex format, else the `year' field"
-       (let ((date-string (car (split-string (bibtex-autokey-get-field "date") "-"))))
-         (if (string-equal date-string "")
-             (bibtex-autokey-get-field "year")
-           date-string)))
-
-     (defun bibtex-autokey-get-year ()
-       "Use the custom date parse function, and return year field
-     contents as a string obeying `bibtex-autokey-year-length'."
-       (let ((yearfield (bibtex-autokey-parse-date)))
-         (substring yearfield (max 0 (- (length yearfield)
-                                        bibtex-autokey-year-length)))))
-
-
 
 #+END_SRC
 
@@ -942,44 +929,57 @@ and inserts it at point.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-   (use-package reftex
-     :commands turn-on-reftex
-     :config
-     (setq reftex-use-external-file-finders t
-           reftex-plug-into-AUCTeX t
-           reftex-default-bibliography `(,private/bibliography-file)
-           reftex-cite-prompt-optional-args nil
-           reftex-cite-cleanup-optional-args t)
-     (global-unset-key "\C-c /")
-     (add-to-list 'reftex-bibliography-commands "addbibresource")
+  (use-package reftex
+    :commands turn-on-reftex
+    :config
+    (setq reftex-use-external-file-finders t
+          reftex-plug-into-AUCTeX t
+          reftex-default-bibliography `(,private/bibliography-file)
+          reftex-cite-prompt-optional-args nil
+          reftex-cite-cleanup-optional-args t)
+    (global-unset-key "\C-c /")
+    (add-to-list 'reftex-bibliography-commands "addbibresource")
 
-     (let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
-       (setq reftex-external-file-finders
-             `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
-               ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
-
-
-
-
-   (use-package bibtex
-     :mode ("\\.bib" . bibtex-mode)
-     :init
-     (setq bibtex-align-at-equal-sign t
-           bibtex-autokey-year-length 4
-           bibtex-autokey-titleword-length nil
-           bibtex-autokey-titlewords-stretch 0
-           bibtex-autokey-titlewords 1
-           bibtex-autokey-year-title-separator "")
-
-     (add-hook 'bibtex-mode-hook
-               (lambda ()
-                 (set-fill-column 120))))
+    (let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
+      (setq reftex-external-file-finders
+            `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
+              ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
 
 
 
-   (use-package bibtex-utils
-     :config
-     (setq bu-bibtex-fields-ignore-list '(url abstract)))
+
+  (use-package bibtex
+    :mode ("\\.bib" . bibtex-mode)
+    :config
+    (setq bibtex-align-at-equal-sign t
+          bibtex-autokey-year-length 4
+          bibtex-autokey-titleword-length nil
+          bibtex-autokey-titlewords-stretch 0
+          bibtex-autokey-titlewords 1
+          bibtex-autokey-year-title-separator "")
+
+    (add-hook 'bibtex-mode-hook
+              (lambda ()
+                (set-fill-column 120)))
+
+    (defun bibtex-autokey-parse-date ()
+      "Get the year from the `date' field in biblatex format, else the `year' field"
+      (let ((date-string (car (split-string (bibtex-autokey-get-field "date") "-"))))
+        (if (string-equal date-string "")
+            (bibtex-autokey-get-field "year")
+          date-string)))
+    (defun bibtex-autokey-get-year ()
+      "Use the custom date parse function, and return year field
+       contents as a string obeying `bibtex-autokey-year-length'."
+      (let ((yearfield (bibtex-autokey-parse-date)))
+        (substring yearfield (max 0 (- (length yearfield)
+                                       bibtex-autokey-year-length))))))
+
+
+
+  (use-package bibtex-utils
+    :config
+    (setq bu-bibtex-fields-ignore-list '(url abstract)))
 #+END_SRC
 
 *** Org-ref
@@ -1084,7 +1084,7 @@ Evil is a mode that makes vi(m) like keybindings
     (evil-snipe-override-mode +1)
     (add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
     :diminish
-    evil-snipe-mode
+    evil-snipe-local-mode
     evil-snipe-override-mode
     :custom
     (evil-snipe-scope 'whole-line)
@@ -1105,6 +1105,7 @@ Evil is a mode that makes vi(m) like keybindings
   (use-package typopunct
     :load-path "~/.emacs.d/lisp/"
     :config
+    (setq-default typopunct-buffer-language 'english)
     (defconst typopunct-ellipsis (decode-char 'ucs #x2026))
     (defun typopunct-insert-ellipsis (arg)
       "Change three consecutive dots to an ellipsis mark"
@@ -1120,6 +1121,16 @@ Evil is a mode that makes vi(m) like keybindings
     (define-key typopunct-map "." 'typopunct-insert-ellipsis))
 #+END_SRC
 * Other useful utilities
+** Session management
+
+#+NAME: utils
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :export code
+  (use-package psession
+    :config
+    (psession-mode 1)
+    (add-to-list 'psession-object-to-save-alist '(helm-ucs--names . "helm-ucs--names.el")))
+#+END_SRC
+
 ** Helm
 
 Helm is a powerful engine for completion and narrowing down
@@ -1150,6 +1161,8 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                helm-org-in-buffer-headings
                helm-M-x
                helm-occur)
+    :diminish
+    helm-mode
     :config
     (helm-mode)
     (use-package helm-config)
@@ -1175,7 +1188,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
     :after helm)
 #+END_SRC
 
-Helm-backup is a handy tool which puts all your saved files under Git
+Helm-backup is a handy tool which puts all your saed files under Git
 source control, by default under =~/.helm-backup=. Disable it if you
 don't want or don't have that much space.
 
@@ -1390,7 +1403,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
     (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
 
-    (defvar ignore-email t)
+    (defvar ignore-email nil)
     (defun ignore-email-toggle ()
       (interactive)
       (setq ignore-email (not ignore-email)))
@@ -1427,10 +1440,8 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                  '("flag:flagged" "Flagged messages" ?f))
 
     (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
-    (add-to-list 'mu4e-headers-actions
-                 '("org-contact-add" . mu4e-action-add-org-contact) t)
     (add-to-list 'mu4e-view-actions
-                 '("org-contact-add" . mu4e-action-add-org-contact) t)
+                 '("ViewInBrowser" . mu4e-action-view-in-browser) t)
 
     (setq mu4e-contexts
           `(,(make-mu4e-context
@@ -1816,7 +1827,7 @@ Time tracking
     :config
     (projectile-mode +1)
     (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-    (setq projectile-project-search-path prviate/projectile-project-search-path))
+    (setq projectile-project-search-path private/projectile-project-search-path))
 
   (use-package helm-projectile
     :config
@@ -1864,6 +1875,24 @@ Time tracking
     (deft-use-filter-string-for-filename t)
     (deft-default-extension "org")
     (deft-directory private/org-roam-directory))
+#+END_SRC
+
+** Subed
+
+Subtitle editing, because that is apparently my life now
+
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+  (use-package subed
+    :load-path "~/.emacs.d/etc/subed/"
+    :config
+    (add-hook 'subed-mode-hook 'subed-disable-sync-point-to-player)
+    (add-hook 'subed-mode-hook 'turn-on-auto-fill)
+    (add-hook 'subed-mode-hook 'typopunct-mode)
+    (add-hook 'subed-mode-hook
+              (lambda ()
+                (setq-local fill-column 40)))
+    :bind (:map subed-mode-map
+                ("C-SPC" . subed-mpv-toggle-pause)))
 #+END_SRC
 * End of file
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
