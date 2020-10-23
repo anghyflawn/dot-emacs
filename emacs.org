@@ -325,6 +325,21 @@ Makes it clearer which buffer is active
     (dimmer-mode)
     (setq dimmer-exclusion-regexp "helm"))
 #+END_SRC
+** Zoom windows
+
+Sensible window layouts
+
+#+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
+  (use-package zoom
+    :config
+    :disabled t
+    (defun zoom-size-callback ()
+      (cond ((> (frame-pixel-width) 1280) '(90 . 0.75))
+            (t                            '(0.5 . 0.5))))
+    (zoom-mode 1)
+    (custom-set-variables
+     '(zoom-size 'zoom-size-callback)))
+#+end_src
 * General editing
 ** Encodings
 
@@ -424,6 +439,12 @@ Magit provides featureful Git integration.
     :after magit
     :config
     (add-to-list 'forge-alist '("git.ecdf.ed.ac.uk" "git.ecdf.ed.ac.uk/api/v4/" "UoE GitLab" forge-gitlab-repository)))
+
+  (use-package abridge-diff
+    :after magit
+    :diminish abridge-diff-mode
+    :init
+    (abridge-diff-mode 1))
 #+END_SRC
 
 ** Programming modes
@@ -1030,6 +1051,7 @@ Evil is a mode that makes vi(m) like keybindings
     (setq evil-want-C-i-jump nil)
     :config
     (evil-mode 1)
+    (setq evil-undo-system 'undo-redo)
     (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
     (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
@@ -1127,6 +1149,7 @@ Evil is a mode that makes vi(m) like keybindings
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :export code
   (use-package psession
     :config
+    :disabled t
     (psession-mode 1)
     (add-to-list 'psession-object-to-save-alist '(helm-ucs--names . "helm-ucs--names.el")))
 #+END_SRC
@@ -1223,8 +1246,10 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-    (use-package yasnippet
-      :config (yas-global-mode 1))
+  (use-package yasnippet
+    :config
+    (yas-global-mode 1)
+    (setq yas-wrap-around-region t))
 #+END_SRC
 
 ** Various niceties
@@ -1884,6 +1909,8 @@ Subtitle editing, because that is apparently my life now
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package subed
     :load-path "~/.emacs.d/etc/subed/"
+    :mode
+    ("\\.srt\\'" . subed-mode)
     :config
     (add-hook 'subed-mode-hook 'subed-disable-sync-point-to-player)
     (add-hook 'subed-mode-hook 'turn-on-auto-fill)
@@ -1894,6 +1921,43 @@ Subtitle editing, because that is apparently my life now
     :bind (:map subed-mode-map
                 ("C-SPC" . subed-mpv-toggle-pause)))
 #+END_SRC
+** Spotify
+
+#+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
+  (use-package spotify
+    :load-path "~/.emacs.d/spotify.el/"
+    :config
+    (setq
+     spotify-oauth2-client-secret private/spotify-client-secret
+     spotify-oauth2-client-id private/spotify-client-id)
+    (define-key spotify-mode-map (kbd "C-c .") 'spotify-command-map)
+    (defhydra hydra-spotify (:hint nil)
+      "
+  ^Search^                  ^Control^               ^Manage^
+  ^^^^^^^^-----------------------------------------------------------------
+  _t_: Track               _SPC_: Play/Pause        _+_: Volume up
+  _m_: My Playlists        _n_  : Next Track        _-_: Volume down
+  _f_: Featured Playlists  _p_  : Previous Track    _x_: Mute
+  _u_: User Playlists      _r_  : Repeat            _d_: Device
+  ^^                       _s_  : Shuffle           _q_: Quit
+  "
+      ("t" spotify-track-search :exit t)
+      ("m" spotify-my-playlists :exit t)
+      ("f" spotify-featured-playlists :exit t)
+      ("u" spotify-user-playlists :exit t)
+      ("SPC" spotify-toggle-play :exit nil)
+      ("n" spotify-next-track :exit nil)
+      ("p" spotify-previous-track :exit nil)
+      ("r" spotify-toggle-repeat :exit nil)
+      ("s" spotify-toggle-shuffle :exit nil)
+      ("+" spotify-volume-up :exit nil)
+      ("-" spotify-volume-down :exit nil)
+      ("x" spotify-volume-mute-unmute :exit nil)
+      ("d" spotify-select-device :exit nil)
+      ("q" quit-window "quit" :color blue))
+
+   (bind-key "a" #'hydra-spotify/body spotify-command-map))
+#+end_src
 * End of file
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
 ;; emacs.el ends here

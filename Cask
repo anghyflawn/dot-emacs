@@ -3,6 +3,7 @@
 (source melpa)
 (source org)
 
+(depends-on "abridge-diff")
 (depends-on "ace-window")
 (depends-on "alert")
 (depends-on "all-the-icons")
@@ -180,3 +181,4 @@
 (depends-on "writeroom-mode")
 (depends-on "yaml-mode")
 (depends-on "yasnippet")
+(depends-on "zoom")

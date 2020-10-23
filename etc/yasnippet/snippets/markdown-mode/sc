@@ -2,4 +2,4 @@
 # name: sc
 # key: sc
 # --
-[$1]{.smallcaps} $0
+[$0]{.smallcaps}
