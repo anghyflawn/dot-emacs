@@ -492,6 +492,7 @@ Elpy is a bunch of nice Python utilities.
     :mode ("\\.py\\'" . python-mode)
     :init
     (use-package elpy
+      :disabled t
       :config (elpy-enable))
     :config
     (setq-default python-shell-interpreter "/usr/bin/python"))
@@ -600,6 +601,37 @@ This is the recommended solution for Rmarkdown files.
       :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
 #+END_SRC
 
+*** LSP mode
+
+Language server protocol setup
+
+#+begin_src emacs-lisp :tangle yes :noweb no-expert :exports code
+  (setq lsp-keymap-prefix "C-c M-l")
+
+  (use-package lsp-mode
+    :hook ((r-mode . lsp)
+           (tex-mode . lsp)
+           (latex-mode . lsp)
+           (LaTeX-mode . lsp)
+           (bibtex-mode . lsp)
+           (python-mode . lsp)
+           (lsp-mode . lsp-enable-which-key-integration))
+      :commands lsp)
+
+  ;; optionally
+  (use-package lsp-ui :commands lsp-ui-mode)
+  (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+  (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+
+  (use-package lsp-latex
+    :config
+    (setq lsp-latex-texlab-executable "~/.cargo/bin/texlab"))
+
+  ;; optional if you want which-key integration
+  (use-package which-key
+      :config
+      (which-key-mode))
+#+end_src
 ** Keyboard layout
 
 Tell Emacs that I have a UK keyboard.
