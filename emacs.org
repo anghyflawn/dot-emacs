@@ -24,6 +24,12 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
     (require 'use-package))
   (require 'diminish)
   (require 'bind-key)
+  (use-package dash
+    :defer t)
+  (use-package s
+    :defer t)
+  (use-package f
+    :defer t)
 #+END_SRC
 
 ** Pallet
@@ -34,6 +40,18 @@ We also need to actually make sure Pallet is in use.
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
 (pallet-mode)
 #+END_SRC
+
+** Keep packages up to date
+
+#+NAME: init-before
+#+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
+  (use-package auto-package-update
+    :config
+    (setq auto-package-update-delete-old-versions t
+          auto-package-update-hide-results t)
+    (auto-package-update-maybe))
+#+end_src
+
 ** Pinentry
 
 This sets up Emacs for GPG pinentry
@@ -130,7 +148,7 @@ Emacs is launched by a =systemd= service, so we need to launch the server for th
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-list :tangle yes :noweb no-export :exports code
-(server-start)
+(unless (daemonp) (server-start))
 #+END_SRC
 
 ** Custom
@@ -221,6 +239,7 @@ This sets the colours of the background and fonts.
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (setq default-frame-alist '((font . "Iosevka SS05 Light-12")))
+  (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
 #+END_SRC
 
 ** Misc
@@ -314,6 +333,18 @@ Highlight matching parentheses, braces, etc.
   (show-paren-mode t)
 #+END_SRC
 
+Prism for colour-coding embedding in code. 
+
+#+NAME: appearance
+#+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
+  (use-package prism
+    :hook
+    (lisp-mode . prism-mode)
+    (lisp-mode . prism-mode) 
+    (ess-mode . prism-mode)
+    (python-mode . prism-whitespace-mode))
+#+end_src
+
 ** Dimmer
 
 Makes it clearer which buffer is active
@@ -325,6 +356,7 @@ Makes it clearer which buffer is active
     (dimmer-mode)
     (setq dimmer-exclusion-regexp "helm"))
 #+END_SRC
+
 ** Zoom windows
 
 Sensible window layouts
@@ -340,6 +372,7 @@ Sensible window layouts
     (custom-set-variables
      '(zoom-size 'zoom-size-callback)))
 #+end_src
+
 * General editing
 ** Encodings
 
@@ -454,11 +487,9 @@ This sets up ~eldoc~.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-  (use-package emacs-lisp-mode
-    :init
     (use-package eldoc
                  :commands turn-on-eldoc-mode
-                 :init (add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode)))
+                 :init (add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode))
 #+END_SRC
 
 *** Web
@@ -609,13 +640,17 @@ Language server protocol setup
   (setq lsp-keymap-prefix "C-c M-l")
 
   (use-package lsp-mode
-    :hook ((r-mode . lsp)
+    :init
+    (setq gc-cons-threshold 100000000)
+    (setq read-process-output-max (* 1024 1024))
+    :hook ((R-mode . lsp)
            (tex-mode . lsp)
            (latex-mode . lsp)
            (LaTeX-mode . lsp)
            (bibtex-mode . lsp)
            (python-mode . lsp)
-           (lsp-mode . lsp-enable-which-key-integration))
+           (lsp-mode . lsp-enable-which-key-integration)
+           (LaTeX-mode . lsp-headerline-breadcrumb-mode))
       :commands lsp)
 
   ;; optionally
@@ -623,14 +658,12 @@ Language server protocol setup
   (use-package helm-lsp :commands helm-lsp-workspace-symbol)
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 
-  (use-package lsp-latex
-    :config
-    (setq lsp-latex-texlab-executable "~/.cargo/bin/texlab"))
+  (use-package lsp-latex)
 
-  ;; optional if you want which-key integration
   (use-package which-key
-      :config
-      (which-key-mode))
+    :diminish which-key-mode
+    :config
+    (which-key-mode))
 #+end_src
 ** Keyboard layout
 
@@ -841,10 +874,6 @@ Hippie-expand is a nice autocompletion engine
                  (defun my-org-mode-hook ()
                    (local-set-key (kbd "C-c '") 'org-edit-src-code)))
 
-       (add-to-list 'org-agenda-custom-commands
-                    '("A" "Agenda: only deadlines" agenda ""
-                      ((org-agenda-entry-types '(:deadline)))))
-
        (use-package org-crypt
          :config
          (org-crypt-use-before-save-magic)
@@ -852,6 +881,7 @@ Hippie-expand is a nice autocompletion engine
                org-crypt-key nil)))
 
      (use-package org-trello
+       :disabled t
        :after org
        :config
        (add-to-list 'auto-mode-alist '("\\.trello$" . org-mode)) 
@@ -1040,10 +1070,10 @@ and inserts it at point.
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package org-ref
+    :after org-roam
     :config
     (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
-          org-ref-pdf-directory private/pdf-directory)
-    (global-set-key (kbd "C-c C-x k") 'org-ref-cite-hydra/body))
+          org-ref-pdf-directory private/pdf-directory))
 #+END_SRC
 
 
@@ -1111,7 +1141,7 @@ Evil is a mode that makes vi(m) like keybindings
             (undo-tree-visualizer . emacs)
             (mu4e-view-mode . emacs)
             (paradox-menu-mode . emacs)
-            (pomidor-mode . emacs)
+            (vterm-mode . emacs)
             (flycheck-error-list-mode . emacs)
             (reaper-mode . emacs)
             (iESS-mode . emacs)
@@ -1180,8 +1210,8 @@ Evil is a mode that makes vi(m) like keybindings
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :export code
   (use-package psession
-    :config
     :disabled t
+    :config
     (psession-mode 1)
     (add-to-list 'psession-object-to-save-alist '(helm-ucs--names . "helm-ucs--names.el")))
 #+END_SRC
@@ -1250,6 +1280,7 @@ don't want or don't have that much space.
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package helm-backup
+    :disabled t
     :config
     (global-set-key (kbd "C-c b") 'helm-backup)
     (add-hook 'after-save-hook 'helm-backup-versioning))
@@ -1300,6 +1331,8 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
     (setq enable-recursive-minibuffers t)
 
     (use-package all-the-icons)
+
+    (use-package vterm)
 #+END_SRC
 
 These are some convenience functions for my own use
@@ -1376,6 +1409,22 @@ calendar app.
   (use-package calfw
        :config (use-package calfw-org))
 
+
+  (use-package excorporate
+    :disabled t
+    :config
+    ;; allow opening the exchange calendar with 'e' from calendar 
+    (evil-define-key 'motion calendar-mode-map "e" #'exco-calendar-show-day)
+    (setq-default
+     ;; configure email address and office 365 exchange server adddress for exchange web services
+     excorporate-configuration (quote ("piosad@exseed.ed.ac.uk" . "https://outlook.office365.com/EWS/Exchange.asmx"))
+     org-agenda-include-diary t)
+    (excorporate)
+    (excorporate-diary-enable))
+    ;; (defun ab/agenda-update-diary ()
+    ;;   "call excorporate to update the diary for today"
+    ;;   (exco-diary-diary-advice (calendar-current-date) (calendar-current-date) #'message "diary updated"))
+    ;; (add-hook 'org-agenda-cleanup-fancy-diary-hook 'ab/agenda-update-diary))
 #+END_SRC
 
 ** Email
@@ -1664,8 +1713,9 @@ Much better than DocView
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package pdf-tools
+    :magic ("%PDF" . pdf-view-mode)
     :config
-    (pdf-tools-install)
+    (pdf-tools-install :no-query)
     (setq pdf-view-resize-factor 1.1)
     (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 #+END_SRC
@@ -1779,7 +1829,8 @@ A drop-in replacement for Emacs' help buffers
     :hook
     (dashboard-mode . centaur-tabs-local-mode)
     (org-agenda-mode . centaur-tabs-local-mode)
-    (helpful-mode . centaur-tabs-local-mode) 
+    (helpful-mode . centaur-tabs-local-mode)
+    (lsp-ui-doc-mode . centaur-tabs-local-mode)
     :bind
     ("C-<prior>" . centaur-tabs-backward)
     ("C-<next>" . centaur-tabs-forward)
@@ -1881,9 +1932,9 @@ Time tracking
 
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code 
   (use-package projectile
+    :bind-keymap ("C-c p" . projectile-command-map)
     :config
     (projectile-mode +1)
-    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
     (setq projectile-project-search-path private/projectile-project-search-path))
 
   (use-package helm-projectile
@@ -1894,27 +1945,37 @@ Time tracking
 
 ** Org-roam and related
 
+#+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package org-roam
     :hook
     (after-init . org-roam-mode)
     :custom
     (org-roam-directory private/org-roam-directory)
-    :bind (:map org-roam-mode-map
-                (("C-c n l" . org-roam)
-                 ("C-c n f" . org-roam-find-file)
-                 ("C-c n g" . org-roam-graph))
-                :map org-mode-map
-                (("C-c n i" . org-roam-insert)
-                 ("C-c n I" . org-roam-insert-immediate)))
     :config
+    (bind-keys :map org-roam-mode-map
+               ("C-c n l" . org-roam)
+               ("C-c n f" . org-roam-find-file)
+               ("C-c n g" . org-roam-graph))
+    (bind-keys :map org-mode-map
+               ("C-c n i" . org-roam-insert)
+               ("C-c n I" . org-roam-insert-immediate))
     (require 'org-roam-protocol)
     (diminish 'org-roam-mode))
 
   (use-package org-roam-bibtex
     :hook (org-roam-mode . org-roam-bibtex-mode)
-    :bind (:map org-mode-map
-                (("C-c n a" . orb-note-actions)))
+    :config
+    ;; Remove the C-c ) binding, which conflicts with RefTeX
+    (eval-after-load "org-roam-bibtex"
+      '(define-key org-roam-bibtex-mode-map (kbd "C-c )") nil))
+    (bind-keys :map org-mode-map
+               ("C-c n a" . orb-note-actions)
+               :map org-roam-bibtex-mode-map
+               ("C-c n a" . orb-note-actions)
+               ("C-c n i" . orb-insert)
+               ("C-c n C-f" . orb-find-non-ref-file)
+               ("C-c n i" . orb-insert-non-ref))
     :diminish org-roam-bibtex-mode)
 
   (use-package company-org-roam
@@ -1958,11 +2019,11 @@ Subtitle editing, because that is apparently my life now
 #+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package spotify
     :load-path "~/.emacs.d/spotify.el/"
+    :bind-keymap ("C-c s" . spotify-command-map)
     :config
     (setq
      spotify-oauth2-client-secret private/spotify-client-secret
      spotify-oauth2-client-id private/spotify-client-id)
-    (define-key spotify-mode-map (kbd "C-c .") 'spotify-command-map)
     (defhydra hydra-spotify (:hint nil)
       "
   ^Search^                  ^Control^               ^Manage^
