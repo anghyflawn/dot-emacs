@@ -147,8 +147,9 @@ Put autosave and backup files into the directory we defined above
 Emacs is launched by a =systemd= service, so we need to launch the server for the daemon to make sense
 
 #+NAME: init-before
-#+BEGIN_SRC emacs-list :tangle yes :noweb no-export :exports code
-(unless (daemonp) (server-start))
+#+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
+  (or server-process
+      (server-start))
 #+END_SRC
 
 ** Custom
@@ -339,7 +340,7 @@ Prism for colour-coding embedding in code.
 #+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package prism
     :hook
-    (lisp-mode . prism-mode)
+    (emacs-lisp-mode . prism-mode)
     (lisp-mode . prism-mode) 
     (ess-mode . prism-mode)
     (python-mode . prism-whitespace-mode))
@@ -363,14 +364,19 @@ Sensible window layouts
 
 #+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package zoom
+    :disabled nil
     :config
-    :disabled t
     (defun zoom-size-callback ()
       (cond ((> (frame-pixel-width) 1280) '(90 . 0.75))
             (t                            '(0.5 . 0.5))))
     (zoom-mode 1)
     (custom-set-variables
      '(zoom-size 'zoom-size-callback)))
+
+  (use-package edwina
+    :config
+    (setq display-buffer-base-action '(display-buffer-below-selected))
+    (edwina-mode 1))
 #+end_src
 
 * General editing
@@ -478,6 +484,8 @@ Magit provides featureful Git integration.
     :diminish abridge-diff-mode
     :init
     (abridge-diff-mode 1))
+
+  (use-package git-timemachine)
 #+END_SRC
 
 ** Programming modes
@@ -1509,7 +1517,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
     (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
 
-    (defvar ignore-email nil)
+    (defvar ignore-email t)
     (defun ignore-email-toggle ()
       (interactive)
       (setq ignore-email (not ignore-email)))
@@ -2014,6 +2022,7 @@ Subtitle editing, because that is apparently my life now
     :bind (:map subed-mode-map
                 ("C-SPC" . subed-mpv-toggle-pause)))
 #+END_SRC
+
 ** Spotify
 
 #+begin_src emacs-lisp :tangle yes :noweb no-export :exports code
