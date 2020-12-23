@@ -148,8 +148,7 @@ Emacs is launched by a =systemd= service, so we need to launch the server for th
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-  (or server-process
-      (server-start))
+;; (when (daemonp) (server-start))
 #+END_SRC
 
 ** Custom
@@ -375,7 +374,7 @@ Sensible window layouts
 
   (use-package edwina
     :config
-    (setq display-buffer-base-action '(display-buffer-below-selected))
+    ;; (setq display-buffer-base-action '(display-buffer-below-selected))
     (edwina-mode 1))
 #+end_src
 
@@ -933,24 +932,24 @@ Hippie-expand is a nice autocompletion engine
        :defer t
        :bind
        ("C-c f" . pandoc--insert-feature)
-       ("C-c C-s g" . markdown-insert-smallcaps))
+       ("C-c C-s g" . markdown-insert-smallcaps)
        :init
        (defun pandoc--hline-for-new-slide (output-format)
          (if (member output-format '("revealjs" "beamer"))
              "---"
            ""))
-     (defun pandoc--not-in-beamer (output-format text)
-       (if (member output-format '("revealjs" "beamer"))
-                   ""
-                   text))
+       (defun pandoc--not-in-beamer (output-format text)
+         (if (member output-format '("revealjs" "beamer"))
+             ""
+           text))
        (defun pandoc--pause (output-format)
          (if (member output-format '("revealjs" "beamer"))
              ". . ."
-        ""))
+           ""))
        (defun pandoc--not-in-latex (output-format text)
          (if (string-equal output-format "latex")
-          ""
-          text))
+             ""
+           text))
        (defun pandoc--smallcaps (output-format txt)
          (format "[%s]{.smallcaps}" txt))
 
@@ -968,30 +967,56 @@ Hippie-expand is a nice autocompletion engine
               (markdown-wrap-or-insert "[" "]{.smallcaps}" 'word nil nil)))))
 
 
-     (setq my-pandoc-directives
+       (setq my-pandoc-directives
              '(("slide" . pandoc--hline-for-new-slide)
                ("pause" . pandoc--pause)
                ("sc" . pandoc--smallcaps)
                ("notlatex" . pandoc--not-in-latex)
                ("notbeamer" . pandoc--not-in-beamer)))
 
-     (defun pandoc--insert-feature (arg feature value)
-       (interactive "P\nMFeature: \nMValue: ")
-       (insert (format
-                (if arg
-                    "$%s$%s"
-                  "[$%s$%s]")
-                value feature)))
-     :config
-     (add-hook 'pandoc-mode-hook
-               (defun my-pandoc-mode-hook ()
-                 (setq pandoc-use-async t
-                       pandoc-process-connection-type nil
-                       pandoc-binary "/usr/bin/pandoc")
-                 (local-set-key (kbd "C-c &") 'pandoc-jump-to-reference)
-                 (pandoc-load-default-settings)
-                 (dolist (x my-pandoc-directives)
-                   (add-to-list 'pandoc-directives x))))
+       (defun pandoc--insert-feature (arg feature value)
+         (interactive "P\nMFeature: \nMValue: ")
+         (insert (format
+                  (if arg
+                      "$%s$%s"
+                    "[$%s$%s]")
+                  value feature)))
+       :config
+       (add-hook 'pandoc-mode-hook
+                 (defun my-pandoc-mode-hook ()
+                   (setq pandoc-use-async t
+                         pandoc-process-connection-type nil
+                         pandoc-binary "/usr/bin/pandoc")
+                   (local-set-key (kbd "C-c &") 'pandoc-jump-to-reference)
+                   (pandoc-load-default-settings)
+                   (dolist (x my-pandoc-directives)
+                     (add-to-list 'pandoc-directives x))))
+
+       (defun make-slides-handout-filename (filename)
+         "For non-nil filenames, add an appropriate suffix to the
+     filename depending on the output format."
+         (when filename
+           (format "%s%s.%s"
+                   (file-name-sans-extension filename)
+                   (pcase (pandoc--get 'write)
+                     ("latex" "-handout")
+                     ("beamer" "-slides")
+                     (- ""))
+                   (file-name-extension filename))))
+
+       (defun make-slides-or-handout (oldfun &rest args)
+         "Hijack the output setting to wrangle the filenames if
+     necessary, otherwise just pass through."
+         (if (eq (pandoc--get 'output) 'slides-or-handout)
+             (progn (pandoc--set 'output t)
+                    (setq final-filename (make-slides-handout-filename (apply oldfun args)))
+                    (pandoc--set 'output 'slides-or-handout)
+                    final-filename)
+           (apply oldfun args)))
+
+       (advice-add 'pandoc--compose-output-file-name :around #'make-slides-or-handout))
+
+
 
    #+END_SRC
 
@@ -1135,30 +1160,31 @@ Evil is a mode that makes vi(m) like keybindings
     evil-default-state 'normal)
 
     (cl-loop for (mode . state) in
-          '((inferior-emacs-lisp-mode . emacs)
-            (shell-mode . insert)
-            (git-commit-mode . insert)
-            (term-mode . emacs)
-            (dired-mode . emacs)
-            (wdired-mode . normal)
-            (inferior-ess-mode . emacs)
-            (help-mode . emacs)
-            (comint-mode . emacs)
-            (inferior-python-mode . emacs)
-            (eww-mode . emacs)
-            (undo-tree-visualizer . emacs)
-            (mu4e-view-mode . emacs)
-            (paradox-menu-mode . emacs)
-            (vterm-mode . emacs)
-            (flycheck-error-list-mode . emacs)
-            (reaper-mode . emacs)
-            (iESS-mode . emacs)
-            (cfw:details-mode . emacs)
-            (cfw:calendar-mode . emacs)
-            (dashboard-mode . emacs)
-            (helpful-mode . emacs)
-            (deft-mode . emacs))
-          do (evil-set-initial-state mode state)))
+	  '((inferior-emacs-lisp-mode . emacs)
+	    (shell-mode . insert)
+	    (git-commit-mode . insert)
+	    (term-mode . emacs)
+	    (dired-mode . emacs)
+	    (wdired-mode . normal)
+	    (inferior-ess-mode . emacs)
+	    (help-mode . emacs)
+	    (comint-mode . emacs)
+	    (inferior-python-mode . emacs)
+	    (eww-mode . emacs)
+	    (undo-tree-visualizer . emacs)
+	    (mu4e-view-mode . emacs)
+	    (paradox-menu-mode . emacs)
+	    (vterm-mode . emacs)
+	    (flycheck-error-list-mode . emacs)
+	    (reaper-mode . emacs)
+	    (iESS-mode . emacs)
+	    (cfw:details-mode . emacs)
+	    (cfw:calendar-mode . emacs)
+	    (dashboard-mode . emacs)
+	    (helpful-mode . emacs)
+	    (deft-mode . emacs)
+	    (git-timemachine-mode . emacs))
+	  do (evil-set-initial-state mode state)))
 
   (use-package evil-surround
     :config (global-evil-surround-mode 1))
