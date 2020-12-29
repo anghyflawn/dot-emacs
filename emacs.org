@@ -24,12 +24,9 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
     (require 'use-package))
   (require 'diminish)
   (require 'bind-key)
-  (use-package dash
-    :defer t)
-  (use-package s
-    :defer t)
-  (use-package f
-    :defer t)
+  (use-package dash)
+  (use-package s)
+  (use-package f)
 #+END_SRC
 
 ** Pallet
@@ -148,7 +145,7 @@ Emacs is launched by a =systemd= service, so we need to launch the server for th
 
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-;; (when (daemonp) (server-start))
+(server-start)
 #+END_SRC
 
 ** Custom
@@ -400,7 +397,7 @@ Even so, ~ansi-term~ doesn't obey:
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (defadvice ansi-term (after advise-ansi-term-coding-system)
-    (set-buffer-process-coding-system 'utf-8-unix 'utf-8-unix))
+    (set-process-coding-system 'utf-8-unix 'utf-8-unix))
   (ad-activate 'ansi-term)
 #+END_SRC
 
