@@ -1,0 +1,4 @@
+# key: tc
+# name: textcolor
+# --
+\textcolor<$1->{$2}{$0}

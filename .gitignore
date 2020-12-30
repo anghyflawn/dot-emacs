@@ -22,3 +22,10 @@ elpa/*
 /.trello/
 /elpy/
 /etc/elegant-emacs/
+/*.eln
+/.last-package-update-day
+/forge-database.sqlite
+/org-roam.db
+*.log
+/eaf/
+/eln-cache/

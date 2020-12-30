@@ -21,12 +21,12 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
 #+NAME: init-before
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (eval-when-compile
-    (require 'use-package))
+    (require 'use-package)
+    (require 'dash)
+    (require 's)
+    (require 'f))
   (require 'diminish)
   (require 'bind-key)
-  (use-package dash)
-  (use-package s)
-  (use-package f)
 #+END_SRC
 
 ** Pallet
@@ -208,9 +208,6 @@ Diminish some modes that are always on and which serve no purpose in the mode-li
 #+NAME: init-after
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (diminish 'auto-revert-mode)
-  (diminish 'undo-tree-mode)
-  (diminish 'company-mode)
-  (diminish 'yas-minor-mode)
   (diminish 'evil-goggles-mode)
 #+END_SRC
 
@@ -316,11 +313,12 @@ like in =forest= trees.
 
 #+NAME: appearance
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-    (use-package rainbow-delimiters
-                 :commands rainbow-delimiters-mode
-                 :init
-                 (dolist (x '(LaTeX-mode-hook lisp-mode-hook emacs-lisp-mode-hook))
-                   (add-hook x 'rainbow-delimiters-mode)))
+  (use-package rainbow-delimiters
+               :commands rainbow-delimiters-mode
+               :hook
+               ((LaTeX-mode-hook . rainbow-delimiters-mode)
+                (lisp-mode-hook . rainbow-delimiters-mode)
+                (emacs-lisp-mode-hook . rainbow-delimiters-mode)))
 #+END_SRC
 
 Highlight matching parentheses, braces, etc.
@@ -370,6 +368,7 @@ Sensible window layouts
      '(zoom-size 'zoom-size-callback)))
 
   (use-package edwina
+    :disabled t
     :config
     ;; (setq display-buffer-base-action '(display-buffer-below-selected))
     (edwina-mode 1))
@@ -407,33 +406,34 @@ Even so, ~ansi-term~ doesn't obey:
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package flyspell
     :diminish flyspell-mode
+    :hook
+    ((text-mode-hook . flyspell-mode)
+     (prog-mode-hook . flyspell-prog-mode-hook))
     :config
     (setq-default ispell-program-name "/usr/bin/aspell"
                   ispell-really-aspell t)
     (add-to-list 'ispell-dictionary-alist
-		 '("nynorsk"
+                 '("nynorsk"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "nynorsk") nil utf-8))
     (add-to-list 'ispell-dictionary-alist
-		 '("gaidhlig"
+                 '("gaidhlig"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "gd") nil utf-8))
     (add-to-list 'ispell-dictionary-alist
-		 '("gaeilge"
+                 '("gaeilge"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "ga") nil utf-8))
     (add-to-list 'ispell-dictionary-alist
-		 '("bokmal"
+                 '("bokmal"
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "nb") nil utf-8))
 
-    (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")
-    (add-hook 'text-mode-hook 'flyspell-mode)
-    (add-hook 'prog-mode-hook 'flyspell-prog-mode))                 
+    (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
 #+END_SRC
 
 ** Syntax checking
@@ -491,9 +491,13 @@ This sets up ~eldoc~.
 
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
-    (use-package eldoc
-                 :commands turn-on-eldoc-mode
-                 :init (add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode))
+  (use-package eldoc
+    :commands
+    turn-on-eldoc-mode
+    :diminish
+    eldoc-mode
+    :hook
+    ((emacs-lisp-mode-hook . turn-on-eldoc-mode)))
 #+END_SRC
 
 *** Web
@@ -717,6 +721,7 @@ Hippie-expand is a nice autocompletion engine
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package smartparens-config
     :ensure smartparens
+    :diminish smartparens-mode
     :config
     (show-smartparens-global-mode t)
     (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
@@ -779,6 +784,16 @@ Hippie-expand is a nice autocompletion engine
                   value feature)))
        (setq-default my-alternative-input-method "ipa-x-sampa")
 
+       (defun LaTeX-narrow-to-subtree ()
+         "Make text outside current section invisible."
+         (interactive)
+         (save-excursion
+           (widen)
+           (outline-mark-subtree)
+           (narrow-to-region (point) (mark))
+           (deactivate-mark)))
+
+
        (add-hook 'LaTeX-mode-hook
                  (defun my-LaTeX-mode-hook ()
                    (setq font-latex-match-function-keywords '(("ipa" "{")
@@ -808,12 +823,14 @@ Hippie-expand is a nice autocompletion engine
                    (turn-on-reftex)
                    (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
                    (TeX-source-correlate-mode 1)
-                   (local-set-key (kbd "C-c f") 'insert-feature)
-                   (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                   (local-set-key (kbd "C-c }") 'LaTeX-close-environment)
                    (add-to-list 'TeX-view-program-selection
                                 '(output-pdf "PDF Tools"))
-                   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
+                   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)))
+       :config
+       (bind-keys :map TeX-mode-map
+                  ("C-x n @" . LaTeX-narrow-to-subtree)
+                  ("C-c f" . insert-feature)
+                  ("C-c }" . LaTeX-close-environment)))
 
      (use-package auctex-latexmk
        :after auctex
@@ -1157,31 +1174,32 @@ Evil is a mode that makes vi(m) like keybindings
     evil-default-state 'normal)
 
     (cl-loop for (mode . state) in
-	  '((inferior-emacs-lisp-mode . emacs)
-	    (shell-mode . insert)
-	    (git-commit-mode . insert)
-	    (term-mode . emacs)
-	    (dired-mode . emacs)
-	    (wdired-mode . normal)
-	    (inferior-ess-mode . emacs)
-	    (help-mode . emacs)
-	    (comint-mode . emacs)
-	    (inferior-python-mode . emacs)
-	    (eww-mode . emacs)
-	    (undo-tree-visualizer . emacs)
-	    (mu4e-view-mode . emacs)
-	    (paradox-menu-mode . emacs)
-	    (vterm-mode . emacs)
-	    (flycheck-error-list-mode . emacs)
-	    (reaper-mode . emacs)
-	    (iESS-mode . emacs)
-	    (cfw:details-mode . emacs)
-	    (cfw:calendar-mode . emacs)
-	    (dashboard-mode . emacs)
-	    (helpful-mode . emacs)
-	    (deft-mode . emacs)
-	    (git-timemachine-mode . emacs))
-	  do (evil-set-initial-state mode state)))
+          '((inferior-emacs-lisp-mode . emacs)
+            (shell-mode . insert)
+            (git-commit-mode . insert)
+            (term-mode . emacs)
+            (dired-mode . emacs)
+            (wdired-mode . normal)
+            (inferior-ess-mode . emacs)
+            (help-mode . emacs)
+            (comint-mode . emacs)
+            (inferior-python-mode . emacs)
+            (eww-mode . emacs)
+            (undo-tree-visualizer . emacs)
+            (mu4e-view-mode . emacs)
+            (paradox-menu-mode . emacs)
+            (vterm-mode . emacs)
+            (flycheck-error-list-mode . emacs)
+            (reaper-mode . emacs)
+            (iESS-mode . emacs)
+            (cfw:details-mode . emacs)
+            (cfw:calendar-mode . emacs)
+            (dashboard-mode . emacs)
+            (helpful-mode . emacs)
+            (deft-mode . emacs)
+            (git-timemachine-mode . emacs)
+            (reftex-index-mode . emacs))
+          do (evil-set-initial-state mode state)))
 
   (use-package evil-surround
     :config (global-evil-surround-mode 1))
@@ -1330,7 +1348,10 @@ Set up =company-mode= for autocompletion.
 #+NAME: utils
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package company
-      :config (global-company-mode 1)
+    :diminish
+    company-mode
+    :config
+    (global-company-mode 1)
       (setq company-global-modes '(not message-mode latex-mode markdown-mode)))
 #+END_SRC
 
@@ -1341,6 +1362,9 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
 #+NAME: editing
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   (use-package yasnippet
+    :diminish
+    yas-global-mode
+    yas-minor-mode
     :config
     (yas-global-mode 1)
     (setq yas-wrap-around-region t))
@@ -1688,6 +1712,20 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (require 'mu4e-icalendar)
     (mu4e-icalendar-setup))
 
+  (use-package mu4e-views
+    :after mu4e
+    :defer nil
+    :bind (:map mu4e-headers-mode-map
+                ("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
+                ("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
+                ("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
+                ("f" . mu4e-views-toggle-auto-view-selected-message)) ;; toggle opening messages automatically when moving in the headers view
+    :config
+    (setq mu4e-views-completion-method 'helm) ;; use ivy for completion
+    (setq mu4e-views-default-view-method "gnus") ;; make xwidgets default
+    (mu4e-views-mu4e-use-view-msg-method "gnus") ;; select the default
+    (setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
+    (setq mu4e-views-auto-view-selected-message nil)) 
 #+END_SRC
 
 *** Mail check
@@ -1964,6 +2002,7 @@ Time tracking
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code 
   (use-package projectile
     :bind-keymap ("C-c p" . projectile-command-map)
+    :diminish projectile-mode
     :config
     (projectile-mode +1)
     (setq projectile-project-search-path private/projectile-project-search-path))
@@ -2036,12 +2075,12 @@ Subtitle editing, because that is apparently my life now
     :mode
     ("\\.srt\\'" . subed-mode)
     :config
-    (add-hook 'subed-mode-hook 'subed-disable-sync-point-to-player)
-    (add-hook 'subed-mode-hook 'turn-on-auto-fill)
-    (add-hook 'subed-mode-hook 'typopunct-mode)
     (add-hook 'subed-mode-hook
-              (lambda ()
-                (setq-local fill-column 40)))
+              (defun my-subed-mode-hook ()
+                (setq-local fill-column 40)
+                (subed-disable-sync-point-to-player)
+                (turn-on-auto-fill)
+                (typopunct-mode)))
     :bind (:map subed-mode-map
                 ("C-SPC" . subed-mpv-toggle-pause)))
 #+END_SRC
