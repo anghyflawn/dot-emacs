@@ -833,28 +833,7 @@ The following sets up Org-mode itself
     ;; The following sets up my LaTeX export preferences
 
     (add-to-list 'org-latex-classes
-                 '("memoir-article" "\\documentclass[12pt, article, oneside, a4paper]{memoir}\n
-  [DEFAULT-PACKAGES]\n
-  [PACKAGES]\n
-  \\DeclareLabeldate{\\field{date}\\field{eventdate}\\field{origdate}\\field{urldate}\\field{pubstate}\\literal{nodate}}\n
-  \\renewbibmacro*{addendum+pubstate}{\\printfield{addendum}\\iffieldequalstr{labeldatesource}{pubstate}{}{\\newunit\\newblock\\printfield{pubstate}}}\n
-  \\NewBibliographyString{reprintedin}
-
-  \\DefineBibliographyStrings{english}{phdthesis = {PhD dissertation},reprintedin = {Reprinted in}}
-
-  \\defaultfontfeatures{Ligatures=TeX, Numbers=OldStyle}
-  \\isopage[12]
-  \\setsecnumdepth{subsubsection}
-  \\setcounter{tocdepth}{3}
-  \\counterwithout{section}{chapter}
-  \\setlength\\bibitemsep{0pt}
-
-  \\widowpenalty=10000
-  \\clubpenalty=10000
-
-  \\lingset{interpartskip=0pt}
-  [EXTRA]
-  \\checkandfixthelayout"
+                 '("memoir-article" (f-read-text (expand-file-name "etc/ox-latex-preamble.txt" user-emacs-directory))
                    ("\\section{%s}" . "\\section*{%s}")
                    ("\\subsection{%s}" . "\\subsection*{%s}")
                    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")

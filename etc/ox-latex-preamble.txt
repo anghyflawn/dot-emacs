@@ -1,0 +1,24 @@
+\documentclass[12pt, article, oneside, a4paper]{memoir}
+[DEFAULT-PACKAGES]
+[PACKAGES]
+
+\DeclareLabeldate{\field{date}\field{eventdate}\field{origdate}\field{urldate}\field{pubstate}\literal{nodate}}
+
+\renewbibmacro*{addendum+pubstate}{\printfield{addendum}\iffieldequalstr{labeldatesource}{pubstate}{}{\newunit\newblock\printfield{pubstate}}}
+
+\NewBibliographyString{reprintedin}
+\DefineBibliographyStrings{english}{phdthesis = {PhD dissertation},reprintedin = {Reprinted in}}
+
+\defaultfontfeatures{Ligatures=TeX, Numbers=OldStyle}
+isopage[12]
+\setsecnumdepth{subsubsection}
+\setcounter{tocdepth}{3}
+\counterwithout{section}{chapter}
+\setlength\bibitemsep{0pt}
+
+\widowpenalty=10000
+\clubpenalty=10000
+
+\lingset{interpartskip=0pt}
+[EXTRA]
+\checkandfixthelayout

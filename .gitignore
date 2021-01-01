@@ -29,3 +29,6 @@ elpa/*
 *.log
 /eaf/
 /eln-cache/
+/spotify.el/
+/etc/subed/
+/excorporate/
