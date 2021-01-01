@@ -7,13 +7,13 @@
 We use [[http://github.com/jwiegley/use-package][use-package]] to manage packages. Thus we start off by installing it.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(eval-when-compile
-(require 'use-package)
-(require 'dash)
-(require 's)
-(require 'f))
+  (eval-when-compile
+    (require 'use-package)
+    (require 'dash)
+    (require 's)
+    (require 'f))
 (require 'diminish)
-(require 'bind-key)
+  (require 'bind-key)
 #+END_SRC
 
 ** Pallet
@@ -21,17 +21,17 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
 We also need to actually make sure Pallet is in use.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(pallet-mode)
+  (pallet-mode)
 #+END_SRC
 
 ** Keep packages up to date
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(use-package auto-package-update
-:config
-(setq auto-package-update-delete-old-versions t
-auto-package-update-hide-results t)
-(auto-package-update-maybe))
+  (use-package auto-package-update
+    :config
+    (setq auto-package-update-delete-old-versions t
+          auto-package-update-hide-results t)
+    (auto-package-update-maybe))
 #+END_SRC
 
 ** Pinentry
@@ -39,16 +39,16 @@ auto-package-update-hide-results t)
 This sets up Emacs for GPG pinentry
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(use-package pinentry
-:config
-(setq epa-pinentry-mode 'loopback)
-(pinentry-start))
+  (use-package pinentry
+    :config
+    (setq epa-pinentry-mode 'loopback)
+    (pinentry-start))
 #+END_SRC
 
 ** Keep =~/.emacs.d= clean
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(use-package no-littering)
+  (use-package no-littering)
 #+END_SRC
 
 * Initialization
@@ -57,37 +57,37 @@ This sets up Emacs for GPG pinentry
 Keep temporary files away from working directories
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(defvar conf/temp-directory "~/.emacs.temp.dir")
+  (defvar conf/temp-directory "~/.emacs.temp.dir")
 (unless (file-exists-p conf/temp-directory)
-(mkdir conf/temp-directory))
+  (mkdir conf/temp-directory))
 #+END_SRC
 
 Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs.org/article/keeping-secrets-in-emacs-gnupg-auth-sources][here]])
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(setq auth-sources
-'((:source "~/.emacs.d/secrets/authinfo.gpg")))
+  (setq auth-sources
+        '((:source "~/.emacs.d/secrets/authinfo.gpg")))
 #+END_SRC
 
 ** System  specifics
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(setq x-alt-keysym 'meta)
+  (setq x-alt-keysym 'meta)
 (setq delete-by-moving-to-trash t)
 (exec-path-from-shell-initialize)
 
 (pcase system-type
-('darwin
-(setq trash-directory "~/.Trash/")
-;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
-(when (executable-find "gls")
-(setq insert-directory-program "gls"))
-(global-set-key (kbd "M-3")  ;; My Mac had # on Alt-3
-(lambda () 
-(interactive) 
-(insert "#"))) )
-('gnu/linux
-(setq trash-directory "~/.local/share/Trash/files/")))
+  ('darwin
+   (setq trash-directory "~/.Trash/")
+   ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
+   (when (executable-find "gls")
+     (setq insert-directory-program "gls"))
+   (global-set-key (kbd "M-3")  ;; My Mac had # on Alt-3
+                   (lambda () 
+                     (interactive) 
+                     (insert "#"))) )
+  ('gnu/linux
+   (setq trash-directory "~/.local/share/Trash/files/")))
 #+END_SRC
 
 ** Temporary files
@@ -95,12 +95,12 @@ Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs
 Put autosave and backup files into the directory we defined above
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-after
-(setq backup-directory-alist (list (cons "."  (expand-file-name "saves/" conf/temp-directory)))
-backup-by-copying t      ; don't clobber symlinks
-delete-old-versions t
-kept-new-versions 6
-kept-old-versions 2
-version-control t)       ; use versioned backups
+  (setq backup-directory-alist (list (cons "."  (expand-file-name "saves/" conf/temp-directory)))
+        backup-by-copying t      ; don't clobber symlinks
+        delete-old-versions t
+        kept-new-versions 6
+        kept-old-versions 2
+        version-control t)       ; use versioned backups
 #+END_SRC
 
 ** Private
@@ -112,7 +112,7 @@ accessible (=chmod 600= or --- better yet --- encryption)
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
   (defvar conf/private-file (expand-file-name "private.el.gpg" user-emacs-directory))
-  (load-library conf/private-file)
+(load-library conf/private-file)
 #+END_SRC
 
 ** Start the emacs server
@@ -120,11 +120,11 @@ accessible (=chmod 600= or --- better yet --- encryption)
 Emacs is launched by a =systemd= service, so we need to launch the server for the daemon to make sense
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(use-package server
-:if window-system
-:config
-(unless (server-running-p)
-(server-start)))
+  (use-package server
+    :if window-system
+    :config
+    (unless (server-running-p)
+      (server-start)))
 #+END_SRC
 
 ** Custom
@@ -133,8 +133,9 @@ Set alternative location for =custom-set-variables= and =custom-set-faces=,
 to make sure Emacs doesn't dump them in your =init.el=.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-after
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file 'noerror)
+(put 'narrow-to-region 'disabled nil)
 #+END_SRC
 
 ** Save place
@@ -142,8 +143,8 @@ to make sure Emacs doesn't dump them in your =init.el=.
 Return to where we were
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package saveplace
-:init (save-place-mode 1))
+  (use-package saveplace
+    :init (save-place-mode 1))
 #+END_SRC
 
 ** Auto revert
@@ -151,37 +152,37 @@ Return to where we were
 Update buffers if files have been changed on disk.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(global-auto-revert-mode 1)
-(add-hook 'dired-mode-hook 'auto-revert-mode)
+  (global-auto-revert-mode 1)
+  (add-hook 'dired-mode-hook 'auto-revert-mode)
 #+END_SRC
 * Appearance
 ** Dashboard
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(use-package dashboard
-:config
-(dashboard-setup-startup-hook)
-(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))
-dashboard-items '((recents . 5)
-(projects . 5)
-(agenda . 10))))
+  (use-package dashboard
+    :config
+    (dashboard-setup-startup-hook)
+    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))
+          dashboard-items '((recents . 5)
+                            (projects . 5)
+                            (agenda . 10))))
 #+END_SRC
 ** Unneeded chrome
 
 We don't need scroll bars or tool bars
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(when (fboundp 'tool-bar-mode) 
-(tool-bar-mode -1))
+  (when (fboundp 'tool-bar-mode) 
+    (tool-bar-mode -1))
 (when (fboundp 'scroll-bar-mode) 
-(scroll-bar-mode -1))
+  (scroll-bar-mode -1))
 #+END_SRC
 
 Diminish some modes that are always on and which serve no purpose in the mode-line
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-after
-(diminish 'auto-revert-mode)
-(diminish 'evil-goggles-mode)
+  (diminish 'auto-revert-mode)
+  (diminish 'evil-goggles-mode)
 #+END_SRC
 
 ** Theme
@@ -189,22 +190,23 @@ Diminish some modes that are always on and which serve no purpose in the mode-li
 This sets the colours of the background and fonts.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(setq my-theme 'doom-dracula)
+  (setq my-theme 'doom-dracula)
 
 (defun load-my-theme (frame)
-(select-frame frame)
-(load-theme my-theme t))
+  (select-frame frame)
+  (load-theme my-theme t))
 
 (if (daemonp)
-(add-hook 'after-make-frame-functions #'load-my-theme)
-(load-theme my-theme t))
+    (add-hook 'after-make-frame-functions #'load-my-theme)
+  (load-theme my-theme t))
 #+END_SRC
 
 ** Fonts
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(setq default-frame-alist '((font . "Iosevka SS05 Light-12")))
+  (setq default-frame-alist '((font . "Iosevka SS05 Light-12")))
 (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
+  (setq buffer-face-mode-face '(:family "Iosevka Fixed SS05"))
 #+END_SRC
 
 ** Misc
@@ -212,49 +214,49 @@ This sets the colours of the background and fonts.
 Highlight the current line: not everyone's cup of tea, of course
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(global-hl-line-mode 0)
+  (global-hl-line-mode 0)
 #+END_SRC
 
 When possible, automatically scroll so that the cursor is in the 
 middle of the window
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(use-package centered-cursor-mode
-:diminish centered-cursor-mode
-:config
-(global-centered-cursor-mode 1)
-(setq ccm-recenter-at-end-of-file t))
+  (use-package centered-cursor-mode
+    :diminish centered-cursor-mode
+    :config
+    (global-centered-cursor-mode 1)
+    (setq ccm-recenter-at-end-of-file t))
 #+END_SRC
 
 This is to prevent emacs from getting in your way when run from 
 the terminal
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(defun conf/after-make-frame (frame)
-(unless (display-graphic-p frame)
-(when (fboundp 'menu-bar-mode) 
-(menu-bar-mode -1))
-(set-face-background 'default "dummy-color" frame)))
-  
-(add-hook 'after-make-frame 'conf/after-make-frame)
+  (defun conf/after-make-frame (frame)
+    (unless (display-graphic-p frame)
+      (when (fboundp 'menu-bar-mode) 
+        (menu-bar-mode -1))
+      (set-face-background 'default "dummy-color" frame)))
+
+  (add-hook 'after-make-frame 'conf/after-make-frame)
 #+END_SRC
 
 No need for the bell
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(setq ring-bell-function 'ignore)
+  (setq ring-bell-function 'ignore)
 #+END_SRC
 
 Use colours in the shell
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
+  (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
 #+END_SRC
 
 Never type out 'yes' or 'no'.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(defalias 'yes-or-no-p 'y-or-n-p)
+  (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
 ** Window title
@@ -262,10 +264,10 @@ Never type out 'yes' or 'no'.
 We want that to be informative too
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(setq frame-title-format
-'("emacs@" (:eval (system-name)) ": "(:eval (if (buffer-file-name)
-(abbreviate-file-name (buffer-file-name))
-"%b")) " [%*]"))
+  (setq frame-title-format
+        '("emacs@" (:eval (system-name)) ": "(:eval (if (buffer-file-name)
+                                                        (abbreviate-file-name (buffer-file-name))
+                                                      "%b")) " [%*]"))
 
 #+END_SRC
 
@@ -276,29 +278,29 @@ useful not just for Lisp but also for all sorts of nested structures,
 like in =forest= trees.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(use-package rainbow-delimiters
-:commands rainbow-delimiters-mode
-:hook
-((LaTeX-mode-hook . rainbow-delimiters-mode)
-(lisp-mode-hook . rainbow-delimiters-mode)
-(emacs-lisp-mode-hook . rainbow-delimiters-mode)))
+  (use-package rainbow-delimiters
+    :commands rainbow-delimiters-mode
+    :hook
+    ((LaTeX-mode-hook . rainbow-delimiters-mode)
+     (lisp-mode-hook . rainbow-delimiters-mode)
+     (emacs-lisp-mode-hook . rainbow-delimiters-mode)))
 #+END_SRC
 
 Highlight matching parentheses, braces, etc.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(show-paren-mode t)
+  (show-paren-mode t)
 #+END_SRC
 
 Prism for colour-coding embedding in code. 
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(use-package prism
-:hook
-(emacs-lisp-mode . prism-mode)
-(lisp-mode . prism-mode) 
-(ess-mode . prism-mode)
-(python-mode . prism-whitespace-mode))
+  (use-package prism
+    :hook
+    (emacs-lisp-mode . prism-mode)
+    (lisp-mode . prism-mode) 
+    (ess-mode . prism-mode)
+    (python-mode . prism-whitespace-mode))
 #+END_SRC
 
 ** Dimmer
@@ -306,10 +308,10 @@ Prism for colour-coding embedding in code.
 Makes it clearer which buffer is active
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-(use-package dimmer
-:config
-(dimmer-mode)
-(setq dimmer-exclusion-regexp "helm"))
+  (use-package dimmer
+    :config
+    (dimmer-mode)
+    (setq dimmer-exclusion-regexp "helm"))
 #+END_SRC
 
 ** Zoom windows
@@ -317,21 +319,21 @@ Makes it clearer which buffer is active
 Sensible window layouts. These currently don't seem to work well for me.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package zoom
-:disabled nil
-:config
-(defun zoom-size-callback ()
-(cond ((> (frame-pixel-width) 1280) '(90 . 0.75))
-(t                            '(0.5 . 0.5))))
-(zoom-mode 1)
-(custom-set-variables
-'(zoom-size 'zoom-size-callback)))
+  (use-package zoom
+    :disabled nil
+    :config
+    (defun zoom-size-callback ()
+      (cond ((> (frame-pixel-width) 1280) '(90 . 0.75))
+            (t                            '(0.5 . 0.5))))
+    (zoom-mode 1)
+    (custom-set-variables
+     '(zoom-size 'zoom-size-callback)))
 
 (use-package edwina
-:disabled t
-:config
-;; (setq display-buffer-base-action '(display-buffer-below-selected))
-(edwina-mode 1))
+  :disabled t
+  :config
+  ;; (setq display-buffer-base-action '(display-buffer-below-selected))
+  (edwina-mode 1))
 #+END_SRC
 
 * General editing
@@ -340,57 +342,57 @@ Sensible window layouts. These currently don't seem to work well for me.
 Use UTF-8 encoding wherever possible:
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(set-default-coding-systems 'utf-8-unix)
+  (set-default-coding-systems 'utf-8-unix)
 (set-terminal-coding-system 'utf-8-unix)
 (set-keyboard-coding-system 'utf-8-unix)
 (prefer-coding-system 'utf-8-unix)
 (setenv "LANG" "en_GB.UTF-8")
 (setenv "LC_ALL" "en_GB.UTF-8")
 (setenv "LC_CTYPE" "en_GB.UTF-8")
-(setenv "PYTHONIOENCODING" "utf-8")
+  (setenv "PYTHONIOENCODING" "utf-8")
 #+END_SRC
 
 Even so, ~ansi-term~ doesn't obey:
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(defadvice ansi-term (after advise-ansi-term-coding-system)
-(set-process-coding-system 'utf-8-unix 'utf-8-unix))
-(ad-activate 'ansi-term)
+  (defadvice ansi-term (after advise-ansi-term-coding-system)
+    (set-process-coding-system 'utf-8-unix 'utf-8-unix))
+  (ad-activate 'ansi-term)
 #+END_SRC
 
 ** Spelling
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package flyspell
-:diminish flyspell-mode
-:hook
-((text-mode-hook . flyspell-mode)
-(prog-mode-hook . flyspell-prog-mode-hook))
-:config
-(setq-default ispell-program-name "/usr/bin/aspell"
-ispell-really-aspell t)
-(add-to-list 'ispell-dictionary-alist
-'("nynorsk"
-"[[:alpha:]]"
-"[^[:alpha:]]"
-"[']" t ("-C" "-d" "nynorsk") nil utf-8))
-(add-to-list 'ispell-dictionary-alist
-'("gaidhlig"
-"[[:alpha:]]"
-"[^[:alpha:]]"
-"[']" t ("-C" "-d" "gd") nil utf-8))
-(add-to-list 'ispell-dictionary-alist
-'("gaeilge"
-"[[:alpha:]]"
-"[^[:alpha:]]"
-"[']" t ("-C" "-d" "ga") nil utf-8))
-(add-to-list 'ispell-dictionary-alist
-'("bokmal"
-"[[:alpha:]]"
-"[^[:alpha:]]"
-"[']" t ("-C" "-d" "nb") nil utf-8))
+  (use-package flyspell
+    :diminish flyspell-mode
+    :hook
+    ((text-mode-hook . flyspell-mode)
+     (prog-mode-hook . flyspell-prog-mode-hook))
+    :config
+    (setq-default ispell-program-name "/usr/bin/aspell"
+                  ispell-really-aspell t)
+    (add-to-list 'ispell-dictionary-alist
+                 '("nynorsk"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "nynorsk") nil utf-8))
+    (add-to-list 'ispell-dictionary-alist
+                 '("gaidhlig"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "gd") nil utf-8))
+    (add-to-list 'ispell-dictionary-alist
+                 '("gaeilge"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "ga") nil utf-8))
+    (add-to-list 'ispell-dictionary-alist
+                 '("bokmal"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "nb") nil utf-8))
 
-(setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
+    (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
 #+END_SRC
 
 ** Syntax checking
@@ -398,15 +400,15 @@ ispell-really-aspell t)
 Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the fly.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package flycheck
-:init (global-flycheck-mode)
-:diminish
-flycheck-mode
-:config 
-(setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck))
-(setq flycheck-highlighting-mode 'lines
-flycheck-check-syntax-automatically '(save idle-change mode-enabled)
-flycheck-idle-change-delay 2))
+  (use-package flycheck
+    :init (global-flycheck-mode)
+    :diminish
+    flycheck-mode
+    :config 
+    (setq-default flycheck-disabled-checkers '(html-tidy emacs-lisp-checkdoc tex-chktex tex-lacheck))
+    (setq flycheck-highlighting-mode 'lines
+          flycheck-check-syntax-automatically '(save idle-change mode-enabled)
+          flycheck-idle-change-delay 2))
 #+END_SRC
 
 ** Version control
@@ -414,27 +416,27 @@ flycheck-idle-change-delay 2))
 Magit provides featureful Git integration.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package magit
-:commands (magit-status magit-diff magit-log magit-blame-mode)
-:bind ("C-x g" . magit-status)
-:init (setq magit-last-seen-setup-instructions "1.4.0"))
+  (use-package magit
+    :commands (magit-status magit-diff magit-log magit-blame-mode)
+    :bind ("C-x g" . magit-status)
+    :init (setq magit-last-seen-setup-instructions "1.4.0"))
 
 (use-package magithub
-:after magit
-:config
-(magithub-feature-autoinject t)
-(setq magithub-clone-default-directory "~/src"))
+  :after magit
+  :config
+  (magithub-feature-autoinject t)
+  (setq magithub-clone-default-directory "~/src"))
 
 (use-package forge
-:after magit
-:config
-(add-to-list 'forge-alist '("git.ecdf.ed.ac.uk" "git.ecdf.ed.ac.uk/api/v4/" "UoE GitLab" forge-gitlab-repository)))
+  :after magit
+  :config
+  (add-to-list 'forge-alist '("git.ecdf.ed.ac.uk" "git.ecdf.ed.ac.uk/api/v4/" "UoE GitLab" forge-gitlab-repository)))
 
 (use-package abridge-diff
-:after magit
-:diminish abridge-diff-mode
-:init
-(abridge-diff-mode 1))
+  :after magit
+  :diminish abridge-diff-mode
+  :init
+  (abridge-diff-mode 1))
 
 (use-package git-timemachine)
 #+END_SRC
@@ -445,13 +447,13 @@ Magit provides featureful Git integration.
 This sets up ~eldoc~.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package eldoc
-:commands
-turn-on-eldoc-mode
-:diminish
-eldoc-mode
-:hook
-((emacs-lisp-mode-hook . turn-on-eldoc-mode)))
+  (use-package eldoc
+    :commands
+    turn-on-eldoc-mode
+    :diminish
+    eldoc-mode
+    :hook
+    ((emacs-lisp-mode-hook . turn-on-eldoc-mode)))
 #+END_SRC
 
 *** Web
@@ -461,17 +463,17 @@ Javascript and CSS embedded in HTML as well as highlighting for
 various templating languages.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package web-mode
-:mode (("\\.html?\\'" . web-mode)
-("\\.css\\'" . web-mode))
-:config
-(setq web-mode-enable-auto-pairing t
-web-mode-enable-engine-detection t
-web-mode-engines-alist
-'(("jinja2" . "\\.html?\\'")))
-:init
-(add-hook 'web-mode-hook (lambda ()
-(set-fill-column 120))))
+  (use-package web-mode
+    :mode (("\\.html?\\'" . web-mode)
+           ("\\.css\\'" . web-mode))
+    :config
+    (setq web-mode-enable-auto-pairing t
+          web-mode-enable-engine-detection t
+          web-mode-engines-alist
+          '(("jinja2" . "\\.html?\\'")))
+    :init
+    (add-hook 'web-mode-hook (lambda ()
+                               (set-fill-column 120))))
 #+END_SRC
 
 *** Python
@@ -479,26 +481,26 @@ web-mode-engines-alist
 Elpy is a bunch of nice Python utilities.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package python
-:mode ("\\.py\\'" . python-mode)
-:init
-(use-package elpy
-:disabled t
-:config (elpy-enable))
-:config
-(setq-default python-shell-interpreter "/usr/bin/python"))
+  (use-package python
+    :mode ("\\.py\\'" . python-mode)
+    :init
+    (use-package elpy
+      :disabled t
+      :config (elpy-enable))
+    :config
+    (setq-default python-shell-interpreter "/usr/bin/python"))
 #+END_SRC
 
 *** Common Lisp
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package slime
-:mode ("\\.lisp\\'" . lisp-mode)
-:init
-(setq slime-net-coding-system 'utf-8-unix
-inferior-lisp-program "sbcl")
-(add-to-list 'slime-contribs 'slime-fancy)
-(add-to-list 'slime-contribs 'slime-repl))
+  (use-package slime
+    :mode ("\\.lisp\\'" . lisp-mode)
+    :init
+    (setq slime-net-coding-system 'utf-8-unix
+          inferior-lisp-program "sbcl")
+    (add-to-list 'slime-contribs 'slime-fancy)
+    (add-to-list 'slime-contribs 'slime-repl))
 #+END_SRC
 
 *** R
@@ -552,11 +554,11 @@ inferior-lisp-program "sbcl")
                 (company-mode)
                 (local-set-key (kbd "TAB") 'company-complete))))
 
-  (use-package ess-smart-equals
-    :disabled t
-    :init   (setq ess-smart-equals-extra-ops '(brace paren))
-    :after  (:any ess-r-mode inferior-ess-r-mode ess-r-transcript-mode)
-    :config (ess-smart-equals-activate))
+(use-package ess-smart-equals
+  :disabled t
+  :init   (setq ess-smart-equals-extra-ops '(brace paren))
+  :after  (:any ess-r-mode inferior-ess-r-mode ess-r-transcript-mode)
+  :config (ess-smart-equals-activate))
 #+END_SRC
 
 **** Polymode
@@ -564,27 +566,27 @@ inferior-lisp-program "sbcl")
 This is the recommended solution for Rmarkdown files.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package polymode           ; ESS with polymode
-:mode (("\\.[Rr]md" . poly-markdown+r-mode)
-("\\.[Rr]nw" . poly-noweb+r-mode))
-:config
-(require 'poly-R)               ; Load necessary modes
-(require 'poly-markdown)
-(require 'poly-noweb)
-(setq-default 
-pm-weaver "knitR-ESS"
-polymode-weaver-output-file-format "%s"
-polymode-exporter-output-file-format "%s"))
+  (use-package polymode           ; ESS with polymode
+    :mode (("\\.[Rr]md" . poly-markdown+r-mode)
+           ("\\.[Rr]nw" . poly-noweb+r-mode))
+    :config
+    (require 'poly-R)               ; Load necessary modes
+    (require 'poly-markdown)
+    (require 'poly-noweb)
+    (setq-default 
+     pm-weaver "knitR-ESS"
+     polymode-weaver-output-file-format "%s"
+     polymode-exporter-output-file-format "%s"))
 #+END_SRC
 
 *** Stan
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package stan-mode
-  :mode "\\.stan\\'"
-  :config
-  (use-package stan-snippets
-  :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
+    :mode "\\.stan\\'"
+    :config
+    (use-package stan-snippets
+      :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
 #+END_SRC
 
 *** LSP mode
@@ -594,38 +596,38 @@ Language server protocol setup
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (setq lsp-keymap-prefix "C-c M-l")
 
-  (use-package lsp-mode
-    :init
-    (setq gc-cons-threshold 100000000)
-    (setq read-process-output-max (* 1024 1024))
-    :hook ((R-mode . lsp)
-           (tex-mode . lsp)
-           (latex-mode . lsp)
-           (LaTeX-mode . lsp)
-           (bibtex-mode . lsp)
-           (python-mode . lsp)
-           (lsp-mode . lsp-enable-which-key-integration)
-           (LaTeX-mode . lsp-headerline-breadcrumb-mode))
-    :commands lsp)
+(use-package lsp-mode
+  :init
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024))
+  :hook ((R-mode . lsp)
+         (tex-mode . lsp)
+         (latex-mode . lsp)
+         (LaTeX-mode . lsp)
+         (bibtex-mode . lsp)
+         (python-mode . lsp)
+         (lsp-mode . lsp-enable-which-key-integration)
+         (LaTeX-mode . lsp-headerline-breadcrumb-mode))
+  :commands lsp)
 
-  ;; optionally
-  (use-package lsp-ui :commands lsp-ui-mode)
-  (use-package helm-lsp :commands helm-lsp-workspace-symbol)
-  (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+;; optionally
+(use-package lsp-ui :commands lsp-ui-mode)
+(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+(use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 
-  (use-package lsp-latex)
+(use-package lsp-latex)
 
-  (use-package which-key
-    :diminish which-key-mode
-    :config
-    (which-key-mode))
+(use-package which-key
+  :diminish which-key-mode
+  :config
+  (which-key-mode))
 #+END_SRC
 ** Keyboard layout
 
 Tell Emacs that I have a UK keyboard.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(quail-set-keyboard-layout "pc105-uk")
+  (quail-set-keyboard-layout "pc105-uk")
 #+END_SRC
 
 * Working with text
@@ -634,79 +636,79 @@ Tell Emacs that I have a UK keyboard.
 We probably want our lines wrapped when we're writing
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(diminish 'visual-line-mode)
+  (diminish 'visual-line-mode)
 (add-hook 'text-mode-hook 
-(lambda ()
-(visual-line-mode 1)))
+          (lambda ()
+            (visual-line-mode 1)))
 
 ;; from http://endlessparentheses.com/fill-and-unfill-paragraphs-with-a-single-key.html
 (defun endless/fill-or-unfill ()
-"Like `fill-paragraph', but unfill if used twice."
-(interactive)
-(let ((fill-column
-(if (eq last-command 'endless/fill-or-unfill)
-(progn (setq this-command nil)
-(point-max))
-fill-column)))
-(call-interactively #'fill-paragraph)))
+  "Like `fill-paragraph', but unfill if used twice."
+  (interactive)
+  (let ((fill-column
+         (if (eq last-command 'endless/fill-or-unfill)
+             (progn (setq this-command nil)
+                    (point-max))
+           fill-column)))
+    (call-interactively #'fill-paragraph)))
 
 (global-set-key [remap fill-paragraph]
-#'endless/fill-or-unfill)
+                #'endless/fill-or-unfill)
 #+END_SRC
 
 
 Hippie-expand is a nice autocompletion engine
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(global-set-key (kbd "M-/") 'hippie-expand)
+  (global-set-key (kbd "M-/") 'hippie-expand)
 #+END_SRC
 ** Smartparens
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package smartparens-config
-:ensure smartparens
-:diminish smartparens-mode
-:config
-(show-smartparens-global-mode t)
-(add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
-(add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
-(add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
-(sp-local-pair 'LaTeX-mode "'" "'" :actions nil)
-(sp-local-pair 'markdown-mode "'" "'")
-(bind-keys :map smartparens-mode-map
-("C-M-a" . sp-beginning-of-sexp)
-("C-M-e" . sp-end-of-sexp)
-("C-<down>" . sp-down-sexp)
-("C-<up>"   . sp-up-sexp)
-("M-<down>" . sp-backward-down-sexp)
-("M-<up>"   . sp-backward-up-sexp)
-("C-M-f" . sp-forward-sexp)
-("C-M-b" . sp-backward-sexp)
-("C-M-n" . sp-next-sexp)
-("C-M-p" . sp-previous-sexp)
-("C-S-f" . sp-forward-symbol)
-("C-S-b" . sp-backward-symbol)
-("M-<right>" . sp-forward-slurp-sexp)
-("C-<right>" . sp-forward-barf-sexp)
-("M-<left>"  . sp-backward-slurp-sexp)
-("C-<left>"  . sp-backward-barf-sexp)
-("C-M-t" . sp-transpose-sexp)
-("C-M-k" . sp-kill-sexp)
-("C-k"   . sp-kill-hybrid-sexp)
-("M-k"   . sp-backward-kill-sexp)
-("C-M-w" . sp-copy-sexp)
-("C-M-d" . delete-sexp)
-("M-<backspace>" . backward-kill-word)
-("C-<backspace>" . sp-backward-kill-word)
-([remap sp-backward-kill-word] . backward-kill-word)
-("M-[" . sp-backward-unwrap-sexp)
-("M-]" . sp-unwrap-sexp)
-("C-x C-t" . sp-transpose-hybrid-sexp))
-(use-package evil-smartparens
-:diminish evil-smartparens-mode
-:config
-(add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
-(add-hook 'prog-mode-hook #'evil-smartparens-mode)))
+  (use-package smartparens-config
+    :ensure smartparens
+    :diminish smartparens-mode
+    :config
+    (show-smartparens-global-mode t)
+    (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+    (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
+    (add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
+    (sp-local-pair 'LaTeX-mode "'" "'" :actions nil)
+    (sp-local-pair 'markdown-mode "'" "'")
+    (bind-keys :map smartparens-mode-map
+               ("C-M-a" . sp-beginning-of-sexp)
+               ("C-M-e" . sp-end-of-sexp)
+               ("C-<down>" . sp-down-sexp)
+               ("C-<up>"   . sp-up-sexp)
+               ("M-<down>" . sp-backward-down-sexp)
+               ("M-<up>"   . sp-backward-up-sexp)
+               ("C-M-f" . sp-forward-sexp)
+               ("C-M-b" . sp-backward-sexp)
+               ("C-M-n" . sp-next-sexp)
+               ("C-M-p" . sp-previous-sexp)
+               ("C-S-f" . sp-forward-symbol)
+               ("C-S-b" . sp-backward-symbol)
+               ("M-<right>" . sp-forward-slurp-sexp)
+               ("C-<right>" . sp-forward-barf-sexp)
+               ("M-<left>"  . sp-backward-slurp-sexp)
+               ("C-<left>"  . sp-backward-barf-sexp)
+               ("C-M-t" . sp-transpose-sexp)
+               ("C-M-k" . sp-kill-sexp)
+               ("C-k"   . sp-kill-hybrid-sexp)
+               ("M-k"   . sp-backward-kill-sexp)
+               ("C-M-w" . sp-copy-sexp)
+               ("C-M-d" . delete-sexp)
+               ("M-<backspace>" . backward-kill-word)
+               ("C-<backspace>" . sp-backward-kill-word)
+               ([remap sp-backward-kill-word] . backward-kill-word)
+               ("M-[" . sp-backward-unwrap-sexp)
+               ("M-]" . sp-unwrap-sexp)
+               ("C-x C-t" . sp-transpose-hybrid-sexp))
+    (use-package evil-smartparens
+      :diminish evil-smartparens-mode
+      :config
+      (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
+      (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
 #+END_SRC
 
 ** LaTeX
@@ -776,11 +778,11 @@ Hippie-expand is a nice autocompletion engine
                ("C-c f" . insert-feature)
                ("C-c }" . LaTeX-close-environment)))
 
-  (use-package auctex-latexmk
-    :after auctex
-    :config
-    (auctex-latexmk-setup)
-    (setq auctex-latexmk-inherit-TeX-PDF-mode t))
+(use-package auctex-latexmk
+  :after auctex
+  :config
+  (auctex-latexmk-setup)
+  (setq auctex-latexmk-inherit-TeX-PDF-mode t))
 
 #+END_SRC
 
@@ -793,18 +795,18 @@ of the settings are geared towards that.
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (setq main-agenda-file (expand-file-name (car private/org-files)))
 
-  (defun find-main-agenda-file ()
-    "This is just a shortcut to open the main agenda file. Change the
+(defun find-main-agenda-file ()
+  "This is just a shortcut to open the main agenda file. Change the
      path to that in your =private.el.gpg="
-    (interactive) 
-    (find-file main-agenda-file))
+  (interactive) 
+  (find-file main-agenda-file))
 #+END_SRC
 
 The following sets up Org-mode itself
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org
-    :diminish org-indent-mode
+  :diminish org-indent-mode
     :bind
     ("C-c l" . org-store-link)
     ("C-c a" . org-agenda)
@@ -815,7 +817,7 @@ The following sets up Org-mode itself
           org-use-property-inheritance t
           org-agenda-files private/org-files
           org-directory private/org-directory
-          org-startup-indented t
+        org-startup-indented t
           org-src-fontify-natively t
           org-icalendar-timezone "Europe/London"
           org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
@@ -839,16 +841,16 @@ The following sets up Org-mode itself
       (setq org-tags-exclude-from-inheritance '("crypt")
             org-crypt-key nil)))
 
-  (use-package org-trello
-    :disabled t
-    :after org
-    :config
-    (add-to-list 'auto-mode-alist '("\\.trello$" . org-mode)) 
-    :hook
-    (org-mode-hook . (lambda ()
-                       (let ((filename (buffer-file-name (current-buffer))))
-                         (when (and filename (string= "trello" (file-name-extension filename)))
-                           (org-trello-mode))))))
+(use-package org-trello
+  :disabled t
+  :after org
+  :config
+  (add-to-list 'auto-mode-alist '("\\.trello$" . org-mode)) 
+  :hook
+  (org-mode-hook . (lambda ()
+                     (let ((filename (buffer-file-name (current-buffer))))
+                       (when (and filename (string= "trello" (file-name-extension filename)))
+                         (org-trello-mode))))))
 #+END_SRC
   
 ** Markdown and pandoc
@@ -975,106 +977,106 @@ that, given a DOI (or an http://dx.doi.org/ URL) gets a BibTeX entry
 and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(defun get-bibtex-from-doi (doi)
-"Get a BibTeX entry from the DOI"
-(interactive "MDOI: ")
-(let ((url-mime-accept-string "text/bibliography;style=bibtex")
-(clean-doi (replace-regexp-in-string "https?://.*doi.org/" "" doi)))
-(with-current-buffer (url-retrieve-synchronously (format "http://doi.org/%s" clean-doi))
-(switch-to-buffer (current-buffer))
-(setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
-(kill-buffer (current-buffer))))
-(insert (decode-coding-string bibtex-entry 'utf-8))
-(bibtex-fill-entry))
+  (defun get-bibtex-from-doi (doi)
+    "Get a BibTeX entry from the DOI"
+    (interactive "MDOI: ")
+    (let ((url-mime-accept-string "text/bibliography;style=bibtex")
+          (clean-doi (replace-regexp-in-string "https?://.*doi.org/" "" doi)))
+      (with-current-buffer (url-retrieve-synchronously (format "http://doi.org/%s" clean-doi))
+        (switch-to-buffer (current-buffer))
+        (setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
+        (kill-buffer (current-buffer))))
+    (insert (decode-coding-string bibtex-entry 'utf-8))
+    (bibtex-fill-entry))
 #+END_SRC
 
 *** RefTex and bibtex-mode
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package reftex
-:commands turn-on-reftex
-:config
-(setq reftex-use-external-file-finders t
-reftex-plug-into-AUCTeX t
-reftex-default-bibliography `(,private/bibliography-file)
-reftex-cite-prompt-optional-args nil
-reftex-cite-cleanup-optional-args t)
-(global-unset-key "\C-c /")
-(add-to-list 'reftex-bibliography-commands "addbibresource")
+  (use-package reftex
+    :commands turn-on-reftex
+    :config
+    (setq reftex-use-external-file-finders t
+          reftex-plug-into-AUCTeX t
+          reftex-default-bibliography `(,private/bibliography-file)
+          reftex-cite-prompt-optional-args nil
+          reftex-cite-cleanup-optional-args t)
+    (global-unset-key "\C-c /")
+    (add-to-list 'reftex-bibliography-commands "addbibresource")
 
-(let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
-(setq reftex-external-file-finders
-`(("tex" . ,(concat kpsewhich " -format=.tex %f"))
-("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
+    (let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
+      (setq reftex-external-file-finders
+            `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
+              ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
 
 
 
 
 (use-package bibtex
-:mode ("\\.bib" . bibtex-mode)
-:config
-(setq bibtex-align-at-equal-sign t
-bibtex-autokey-year-length 4
-bibtex-autokey-titleword-length nil
-bibtex-autokey-titlewords-stretch 0
-bibtex-autokey-titlewords 1
-bibtex-autokey-year-title-separator "")
+  :mode ("\\.bib" . bibtex-mode)
+  :config
+  (setq bibtex-align-at-equal-sign t
+        bibtex-autokey-year-length 4
+        bibtex-autokey-titleword-length nil
+        bibtex-autokey-titlewords-stretch 0
+        bibtex-autokey-titlewords 1
+        bibtex-autokey-year-title-separator "")
 
-(add-hook 'bibtex-mode-hook
-(lambda ()
-(set-fill-column 120)))
+  (add-hook 'bibtex-mode-hook
+            (lambda ()
+              (set-fill-column 120)))
 
-(defun bibtex-autokey-parse-date ()
-"Get the year from the `date' field in biblatex format, else the `year' field"
-(let ((date-string (car (split-string (bibtex-autokey-get-field "date") "-"))))
-(if (string-equal date-string "")
-(bibtex-autokey-get-field "year")
-date-string)))
-(defun bibtex-autokey-get-year ()
-"Use the custom date parse function, and return year field
+  (defun bibtex-autokey-parse-date ()
+    "Get the year from the `date' field in biblatex format, else the `year' field"
+    (let ((date-string (car (split-string (bibtex-autokey-get-field "date") "-"))))
+      (if (string-equal date-string "")
+          (bibtex-autokey-get-field "year")
+        date-string)))
+  (defun bibtex-autokey-get-year ()
+    "Use the custom date parse function, and return year field
 contents as a string obeying `bibtex-autokey-year-length'."
-(let ((yearfield (bibtex-autokey-parse-date)))
-(substring yearfield (max 0 (- (length yearfield)
-bibtex-autokey-year-length))))))
+    (let ((yearfield (bibtex-autokey-parse-date)))
+      (substring yearfield (max 0 (- (length yearfield)
+                                     bibtex-autokey-year-length))))))
 
 
 
 (use-package bibtex-utils
-:config
-(setq bu-bibtex-fields-ignore-list '(url abstract)))
+  :config
+  (setq bu-bibtex-fields-ignore-list '(url abstract)))
 #+END_SRC
 
 *** Org-ref
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
-(use-package org-ref
-:after org-roam
-:config
-(setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
-org-ref-pdf-directory private/pdf-directory))
+  (use-package org-ref
+    :after org-roam
+    :config
+    (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+          org-ref-pdf-directory private/pdf-directory))
 #+END_SRC
 
 
 *** Helm-Bibtex
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package helm-bibtex
-:bind
-(("C-c ]" . helm-bibtex))
-:config
-(setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
-bibtex-completion-library-path private/pdf-directory
-bibtex-completion-pdf-open-function 'find-file
-bibtex-completion-cite-prompt-for-optional-arguments nil
-bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date maintitle mainsubtitle)
-bibtex-completion-cite-default-command "parencite"
-bibtex-completion-display-formats '((t . "${author:20} ${title:*} ${date:4} ${=has-pdf=:1} ${=type=:7}")))
+  (use-package helm-bibtex
+    :bind
+    (("C-c ]" . helm-bibtex))
+    :config
+    (setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+          bibtex-completion-library-path private/pdf-directory
+          bibtex-completion-pdf-open-function 'find-file
+          bibtex-completion-cite-prompt-for-optional-arguments nil
+          bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date maintitle mainsubtitle)
+          bibtex-completion-cite-default-command "parencite"
+          bibtex-completion-display-formats '((t . "${author:20} ${title:*} ${date:4} ${=has-pdf=:1} ${=type=:7}")))
 
-(advice-add 'bibtex-completion-candidates
-:filter-return 'reverse)
+    (advice-add 'bibtex-completion-candidates
+                :filter-return 'reverse)
 
-(helm-delete-action-from-source "Insert citation" helm-source-bibtex)
-(helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
+    (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
+    (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
 #+END_SRC
 
 
@@ -1083,103 +1085,103 @@ bibtex-completion-display-formats '((t . "${author:20} ${title:*} ${date:4} ${=h
 Evil is a mode that makes vi(m) like keybindings
 
 #+BEGIN_SRC emacs-lisp :noweb-ref evil 
-(use-package evil
-:diminish undo-tree-mode
-:init
-(setq evil-want-C-i-jump nil)
-:config
-(evil-mode 1)
-(setq evil-undo-system 'undo-redo)
-(define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
-(define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
-(define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
-(define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
-(define-key evil-insert-state-map "\C-e" 'end-of-line)
+  (use-package evil
+    :diminish undo-tree-mode
+    :init
+    (setq evil-want-C-i-jump nil)
+    :config
+    (evil-mode 1)
+    (setq evil-undo-system 'undo-redo)
+    (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+    (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+    (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+    (define-key evil-insert-state-map "\C-e" 'end-of-line)
 
-(setq-default 
-; Make horizontal movement cross lines                                    
-evil-cross-lines t
-sentence-end-double-space nil
-evil-default-state 'normal)
+    (setq-default 
+                                        ; Make horizontal movement cross lines                                    
+     evil-cross-lines t
+     sentence-end-double-space nil
+     evil-default-state 'normal)
 
-(cl-loop for (mode . state) in
-'((inferior-emacs-lisp-mode . emacs)
-(shell-mode . insert)
-(git-commit-mode . insert)
-(term-mode . emacs)
-(dired-mode . emacs)
-(wdired-mode . normal)
-(inferior-ess-mode . emacs)
-(help-mode . emacs)
-(comint-mode . emacs)
-(inferior-python-mode . emacs)
-(eww-mode . emacs)
-(undo-tree-visualizer . emacs)
-(mu4e-view-mode . emacs)
-(paradox-menu-mode . emacs)
-(vterm-mode . emacs)
-(flycheck-error-list-mode . emacs)
-(reaper-mode . emacs)
-(iESS-mode . emacs)
-(cfw:details-mode . emacs)
-(cfw:calendar-mode . emacs)
-(dashboard-mode . emacs)
-(helpful-mode . emacs)
-(deft-mode . emacs)
-(git-timemachine-mode . emacs)
-(reftex-index-mode . emacs))
-do (evil-set-initial-state mode state)))
+    (cl-loop for (mode . state) in
+             '((inferior-emacs-lisp-mode . emacs)
+               (shell-mode . insert)
+               (git-commit-mode . insert)
+               (term-mode . emacs)
+               (dired-mode . emacs)
+               (wdired-mode . normal)
+               (inferior-ess-mode . emacs)
+               (help-mode . emacs)
+               (comint-mode . emacs)
+               (inferior-python-mode . emacs)
+               (eww-mode . emacs)
+               (undo-tree-visualizer . emacs)
+               (mu4e-view-mode . emacs)
+               (paradox-menu-mode . emacs)
+               (vterm-mode . emacs)
+               (flycheck-error-list-mode . emacs)
+               (reaper-mode . emacs)
+               (iESS-mode . emacs)
+               (cfw:details-mode . emacs)
+               (cfw:calendar-mode . emacs)
+               (dashboard-mode . emacs)
+               (helpful-mode . emacs)
+               (deft-mode . emacs)
+               (git-timemachine-mode . emacs)
+               (reftex-index-mode . emacs))
+             do (evil-set-initial-state mode state)))
 
-(use-package evil-surround
-:config (global-evil-surround-mode 1))
+  (use-package evil-surround
+    :config (global-evil-surround-mode 1))
 
 (use-package evil-exchange
-:config (evil-exchange-install))
+  :config (evil-exchange-install))
 
 (use-package evil-goggles
-:diminish evil-goggles-mode
-:config (evil-goggles-mode))
+  :diminish evil-goggles-mode
+  :config (evil-goggles-mode))
 
 (use-package evil-snipe
-:config
-(evil-snipe-mode +1)
-(evil-snipe-override-mode +1)
-(add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
-:diminish
-evil-snipe-local-mode
-evil-snipe-override-mode
-:custom
-(evil-snipe-scope 'whole-line)
-(evil-snipe-repeat-scope 'whole-visible))
+  :config
+  (evil-snipe-mode +1)
+  (evil-snipe-override-mode +1)
+  (add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
+  :diminish
+  evil-snipe-local-mode
+  evil-snipe-override-mode
+  :custom
+  (evil-snipe-scope 'whole-line)
+  (evil-snipe-repeat-scope 'whole-visible))
 #+END_SRC
 
 ** Lilypond
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package lilypond-mode
-:mode ("\\.ly$" . LilyPond-mode))
+  (use-package lilypond-mode
+    :mode ("\\.ly$" . LilyPond-mode))
 #+END_SRC
 
 ** Typopunct-mode
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package typopunct
-:load-path "~/.emacs.d/lisp/"
-:config
-(setq-default typopunct-buffer-language 'english)
-(defconst typopunct-ellipsis (decode-char 'ucs #x2026))
-(defun typopunct-insert-ellipsis (arg)
-"Change three consecutive dots to an ellipsis mark"
-(interactive "p")
-(cond
-((and (= 1 arg)
-(eq this-command last-command)
-(looking-back "\\.\\."))
-(replace-match "")
-(insert typopunct-ellipsis))
-(t
-(self-insert-command arg))))
-(define-key typopunct-map "." 'typopunct-insert-ellipsis))
+  (use-package typopunct
+    :load-path "~/.emacs.d/lisp/"
+    :config
+    (setq-default typopunct-buffer-language 'english)
+    (defconst typopunct-ellipsis (decode-char 'ucs #x2026))
+    (defun typopunct-insert-ellipsis (arg)
+      "Change three consecutive dots to an ellipsis mark"
+      (interactive "p")
+      (cond
+       ((and (= 1 arg)
+             (eq this-command last-command)
+             (looking-back "\\.\\."))
+        (replace-match "")
+        (insert typopunct-ellipsis))
+       (t
+        (self-insert-command arg))))
+    (define-key typopunct-map "." 'typopunct-insert-ellipsis))
 #+END_SRC
 
 * Other useful utilities
@@ -1200,53 +1202,53 @@ alternatives. No more blind tabbing! This setup follows the
 introduction [[http://tuhdo.github.io/helm-intro.html][here]].
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package helm
-:bind
-(("M-x" . helm-M-x)
-("M-y" . helm-show-kill-ring)
-("C-x b" . helm-mini)
-("C-x C-f" . helm-find-files)
-("C-x C-h" . helm-for-files)
-("C-s" . helm-occur)
-("C-x C-d" . helm-browse-project)
-("C-c u" . helm-org-in-buffer-headings))
-:commands (helm-buffers-list
-helm-colors
-helm-find-files
-helm-for-files
-helm-google-suggest
-helm-mini
-helm-help
-helm-show-kill-ring
-helm-org-keywords
-helm-org-in-buffer-headings
-helm-M-x
-helm-occur)
-:diminish
-helm-mode
-:config
-(helm-mode)
-(use-package helm-config)
-(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
-(define-key helm-map (kbd "C-z") 'helm-select-action)
+  (use-package helm
+    :bind
+    (("M-x" . helm-M-x)
+     ("M-y" . helm-show-kill-ring)
+     ("C-x b" . helm-mini)
+     ("C-x C-f" . helm-find-files)
+     ("C-x C-h" . helm-for-files)
+     ("C-s" . helm-occur)
+     ("C-x C-d" . helm-browse-project)
+     ("C-c u" . helm-org-in-buffer-headings))
+    :commands (helm-buffers-list
+               helm-colors
+               helm-find-files
+               helm-for-files
+               helm-google-suggest
+               helm-mini
+               helm-help
+               helm-show-kill-ring
+               helm-org-keywords
+               helm-org-in-buffer-headings
+               helm-M-x
+               helm-occur)
+    :diminish
+    helm-mode
+    :config
+    (helm-mode)
+    (use-package helm-config)
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-z") 'helm-select-action)
 
-(when (executable-find "curl")
-(setq helm-google-suggest-use-curl-p t))
+    (when (executable-find "curl")
+      (setq helm-google-suggest-use-curl-p t))
 
-(setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-helm-use-frame-when-more-than-two-windows nil
-helm-ff-file-name-history-use-recentf t
-helm-buffers-fuzzy-matching t
-helm-recentf-fuzzy-match t)
+    (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
+          helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+          helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+          helm-use-frame-when-more-than-two-windows nil
+          helm-ff-file-name-history-use-recentf t
+          helm-buffers-fuzzy-matching t
+          helm-recentf-fuzzy-match t)
 
-(helm-add-action-to-source "Attach to Email" #'mml-attach-file 
-helm-source-locate))
+    (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
+                               helm-source-locate))
 
 (use-package helm-dictionary
-:after helm)
+  :after helm)
 #+END_SRC
 
 Helm-backup is a handy tool which puts all your saed files under Git
@@ -1254,17 +1256,17 @@ source control, by default under =~/.helm-backup=. Disable it if you
 don't want or don't have that much space.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package helm-backup
-:disabled t
-:config
-(global-set-key (kbd "C-c b") 'helm-backup)
-(add-hook 'after-save-hook 'helm-backup-versioning))
+  (use-package helm-backup
+    :disabled t
+    :config
+    (global-set-key (kbd "C-c b") 'helm-backup)
+    (add-hook 'after-save-hook 'helm-backup-versioning))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package helm-descbinds
-:config
-(helm-descbinds-mode))
+  (use-package helm-descbinds
+    :config
+    (helm-descbinds-mode))
 #+END_SRC
 
 ** Autocompletion
@@ -1272,12 +1274,12 @@ don't want or don't have that much space.
 Set up =company-mode= for autocompletion.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package company
-:diminish
-company-mode
-:config
-(global-company-mode 1)
-(setq company-global-modes '(not message-mode latex-mode markdown-mode)))
+  (use-package company
+    :diminish
+    company-mode
+    :config
+    (global-company-mode 1)
+    (setq company-global-modes '(not message-mode latex-mode markdown-mode)))
 #+END_SRC
 
 ** Yasnippet
@@ -1285,67 +1287,67 @@ company-mode
 Yasnippet is a handy framework for storing little bits of code/text that you reuse a lot
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package yasnippet
-:diminish
-yas-global-mode
-yas-minor-mode
-:config
-(yas-global-mode 1)
-(setq yas-wrap-around-region t))
+  (use-package yasnippet
+    :diminish
+    yas-global-mode
+    yas-minor-mode
+    :config
+    (yas-global-mode 1)
+    (setq yas-wrap-around-region t))
 #+END_SRC
 
 ** Various niceties
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-after
-(setq display-time-day-and-date t)
+  (setq display-time-day-and-date t)
 (setq display-time-string-forms
-'((format "%s:%s  "
-24-hours minutes)
-(if display-time-day-and-date
-(format "%s %s %s" dayname monthname day) "")))
+      '((format "%s:%s  "
+                24-hours minutes)
+        (if display-time-day-and-date
+            (format "%s %s %s" dayname monthname day) "")))
 (setq display-time-interval 30)
 (display-time-mode 1)
 
 (setq enable-recursive-minibuffers t)
 
-(use-package all-the-icons)
+  (use-package all-the-icons)
 
-(use-package vterm)
+  (use-package vterm)
 #+END_SRC
 
 These are some convenience functions for my own use
 
 #+BEGIN_SRC emacs-lisp :noweb-ref pandoc
-
+  
 (defmacro clean-buffer (form)
-`(save-excursion
-(goto-char (point-min))
-,form))
+  `(save-excursion
+     (goto-char (point-min))
+     ,form))
 
 (defun unsmart-quotes ()
-(interactive)
-(clean-buffer (replace-regexp "[‘’“”]" "'")))
+  (interactive)
+  (clean-buffer (replace-regexp "[‘’“”]" "'")))
 
 (defun clean-pandoc-output ()
-(interactive)
-(unsmart-quotes)
-(clean-buffer (replace-string "\\\\fshyp" "/"))
-(clean-buffer (replace-string "\\\\dash" " -- "))
-(clean-buffer (replace-regexp "\\\\hyp" "-"))
-(clean-buffer (replace-string "…" "..."))
-(clean-buffer (replace-regexp "\\\\iem?" "i.e."))
-(clean-buffer (replace-regexp "\\\\egm?" "e.g."))
-(clean-buffer (replace-regexp "\\\\cfm?" "cf."))
-(clean-buffer (replace-regexp "\\\\ipa{\\([^\}]+\\)}" "\\1"))
-(clean-buffer (replace-regexp "\\\\phonint{\\(.+\\)}" "⟦\\1⟧"))
-(clean-buffer (replace-regexp "\\\\featurestring{\\([^\}]+\\)}" "〈\\1〉"))
-(clean-buffer (replace-regexp "\\\\fea{\\([^\}]+\\)}{\\([^\}]+\\)}" "\\1[\\2]"))
-(clean-buffer (replace-regexp "\\\\mbox{\\([^\}]+\\)}" "\\1"))
-(clean-buffer (replace-regexp "\$?\\\\pm\$?" "±"))
-(clean-buffer (replace-regexp "\\\\[zba]\\." ""))
-(clean-buffer (replace-regexp "\\\\tw[pe]{\\([^\}]+\\)}{\\([^\}]+\\)}{\\([^\}]+\\)}" "\\1  \*\\2\*  '\\3'\n"))
-(clean-buffer (replace-regexp "\\\\mb[ip]\{\\([^\}]+\\)}" "\\1\n"))
-(clean-buffer (replace-regexp "\\\\rt" "×")))
+  (interactive)
+  (unsmart-quotes)
+  (clean-buffer (replace-string "\\\\fshyp" "/"))
+  (clean-buffer (replace-string "\\\\dash" " -- "))
+  (clean-buffer (replace-regexp "\\\\hyp" "-"))
+  (clean-buffer (replace-string "…" "..."))
+  (clean-buffer (replace-regexp "\\\\iem?" "i.e."))
+  (clean-buffer (replace-regexp "\\\\egm?" "e.g."))
+  (clean-buffer (replace-regexp "\\\\cfm?" "cf."))
+  (clean-buffer (replace-regexp "\\\\ipa{\\([^\}]+\\)}" "\\1"))
+  (clean-buffer (replace-regexp "\\\\phonint{\\(.+\\)}" "⟦\\1⟧"))
+  (clean-buffer (replace-regexp "\\\\featurestring{\\([^\}]+\\)}" "〈\\1〉"))
+  (clean-buffer (replace-regexp "\\\\fea{\\([^\}]+\\)}{\\([^\}]+\\)}" "\\1[\\2]"))
+  (clean-buffer (replace-regexp "\\\\mbox{\\([^\}]+\\)}" "\\1"))
+  (clean-buffer (replace-regexp "\$?\\\\pm\$?" "±"))
+  (clean-buffer (replace-regexp "\\\\[zba]\\." ""))
+  (clean-buffer (replace-regexp "\\\\tw[pe]{\\([^\}]+\\)}{\\([^\}]+\\)}{\\([^\}]+\\)}" "\\1  \*\\2\*  '\\3'\n"))
+  (clean-buffer (replace-regexp "\\\\mb[ip]\{\\([^\}]+\\)}" "\\1\n"))
+  (clean-buffer (replace-regexp "\\\\rt" "×")))
 #+END_SRC
 
 ** Calendar integration
@@ -1355,50 +1357,50 @@ and copies it to a remote server, where it gets picked up by the phone
 calendar app.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package org-caldav
-:config
-(setq org-caldav-url private/org-caldav-private-url
-org-caldav-calendar-id private/org-caldav-private-id
-org-caldav-inbox private/org-caldav-inbox
-org-caldav-files private/org-caldav-files
-org-icalendar-timezone "UTC"
-org-caldav-uuid-extension ".ics"
-org-caldav-calendars  `((:calendar-id ,private/org-caldav-private-id
-:url ,private/org-caldav-private-url))))
+  (use-package org-caldav
+    :config
+    (setq org-caldav-url private/org-caldav-private-url
+          org-caldav-calendar-id private/org-caldav-private-id
+          org-caldav-inbox private/org-caldav-inbox
+          org-caldav-files private/org-caldav-files
+          org-icalendar-timezone "UTC"
+          org-caldav-uuid-extension ".ics"
+          org-caldav-calendars  `((:calendar-id ,private/org-caldav-private-id
+                                                :url ,private/org-caldav-private-url))))
 
 
 
 (defun sync-calendar ()
-(interactive)
-(let ((org-icalendar-combined-agenda-file private/combined-agenda-file))
-(org-icalendar-combine-agenda-files)
-(shell-command (format "rsync -avzz %s %s" 
-org-icalendar-combined-agenda-file private/calendar-destination)))
-(org-caldav-sync)
-(with-current-buffer (get-file-buffer org-caldav-inbox)
-(save-buffer))
-(with-current-buffer (get-file-buffer main-agenda-file)
-(save-buffer)))
+  (interactive)
+  (let ((org-icalendar-combined-agenda-file private/combined-agenda-file))
+    (org-icalendar-combine-agenda-files)
+    (shell-command (format "rsync -avzz %s %s" 
+                           org-icalendar-combined-agenda-file private/calendar-destination)))
+  (org-caldav-sync)
+  (with-current-buffer (get-file-buffer org-caldav-inbox)
+    (save-buffer))
+  (with-current-buffer (get-file-buffer main-agenda-file)
+    (save-buffer)))
 
 (use-package calfw
-:config (use-package calfw-org))
+  :config (use-package calfw-org))
 
 
 (use-package excorporate
-:disabled t
-:config
-;; allow opening the exchange calendar with 'e' from calendar 
-(evil-define-key 'motion calendar-mode-map "e" #'exco-calendar-show-day)
-(setq-default
-;; configure email address and office 365 exchange server adddress for exchange web services
-excorporate-configuration (quote ("piosad@exseed.ed.ac.uk" . "https://outlook.office365.com/EWS/Exchange.asmx"))
-org-agenda-include-diary t)
-(excorporate)
-(excorporate-diary-enable))
+  :disabled t
+  :config
+  ;; allow opening the exchange calendar with 'e' from calendar 
+  (evil-define-key 'motion calendar-mode-map "e" #'exco-calendar-show-day)
+  (setq-default
+   ;; configure email address and office 365 exchange server adddress for exchange web services
+   excorporate-configuration (quote ("piosad@exseed.ed.ac.uk" . "https://outlook.office365.com/EWS/Exchange.asmx"))
+   org-agenda-include-diary t)
+  (excorporate)
+  (excorporate-diary-enable))
 ;; (defun ab/agenda-update-diary ()
-;;   "call excorporate to update the diary for today"
+  ;;   "call excorporate to update the diary for today"
 ;;   (exco-diary-diary-advice (calendar-current-date) (calendar-current-date) #'message "diary updated"))
-;; (add-hook 'org-agenda-cleanup-fancy-diary-hook 'ab/agenda-update-diary))
+  ;; (add-hook 'org-agenda-cleanup-fancy-diary-hook 'ab/agenda-update-diary))
 #+END_SRC
 
 ** Email
@@ -1407,20 +1409,20 @@ org-agenda-include-diary t)
 This is just a convenience function to choose a signature at random from four versions
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
-
+  
 (defun make-random-signature ()
-(interactive)
-(let ((sigs (list
-"Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad"
+  (interactive)
+  (let ((sigs (list
+               "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad"
 
-"Pavel Iosad\nRoinn a' Chànanachais agus na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
+               "Pavel Iosad\nRoinn a' Chànanachais agus na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
 
-"Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
+               "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
 
-"Pavel Iosad\nRoinn na Teangeolaíochta agus na Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
+               "Pavel Iosad\nRoinn na Teangeolaíochta agus na Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
 
-"Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
-(nth (random (length sigs)) sigs)))
+               "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
+    (nth (random (length sigs)) sigs)))
 
 (setq dugs-signature "Pavel Iosad\nDirector of Undergraduate Studies\nSchool of Philosophy, Psychology and Language Sciences")
 #+END_SRC
@@ -1430,19 +1432,19 @@ This is just a convenience function to choose a signature at random from four ve
 Keep the Drafts folder clean
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
-(defun draft-auto-save-buffer-name-handler (operation &rest args)
-"for `make-auto-save-file-name' set '.' in front of the file name; do nothing for other operations"  
-(if
-(and buffer-file-name (eq operation 'make-auto-save-file-name))
-(concat (file-name-directory buffer-file-name)
-"."
-(file-name-nondirectory buffer-file-name))
-(let ((inhibit-file-name-handlers
-(cons 'draft-auto-save-buffer-name-handler
-(and (eq inhibit-file-name-operation operation)
-inhibit-file-name-handlers)))
-(inhibit-file-name-operation operation))
-(apply operation args))))
+  (defun draft-auto-save-buffer-name-handler (operation &rest args)
+    "for `make-auto-save-file-name' set '.' in front of the file name; do nothing for other operations"  
+    (if
+        (and buffer-file-name (eq operation 'make-auto-save-file-name))
+        (concat (file-name-directory buffer-file-name)
+                "."
+                (file-name-nondirectory buffer-file-name))
+      (let ((inhibit-file-name-handlers
+             (cons 'draft-auto-save-buffer-name-handler
+                   (and (eq inhibit-file-name-operation operation)
+                        inhibit-file-name-handlers)))
+            (inhibit-file-name-operation operation))
+        (apply operation args))))
 
 (add-to-list 'file-name-handler-alist '("Drafts/cur/" . draft-auto-save-buffer-name-handler))
 #+END_SRC
@@ -1452,196 +1454,215 @@ inhibit-file-name-handlers)))
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
-(use-package mu4e
-:commands (mu4e compose-mail)
-:load-path  "/usr/share/emacs/site-lisp/mu4e/"
-:bind ("<f5>" . mu4e)
-:init
+  (use-package mu4e
+    :commands (mu4e compose-mail)
+    :load-path  "/usr/share/emacs/site-lisp/mu4e/"
+    :bind ("<f5>" . mu4e)
+    :hook
+    (mu4e-headers-mode . buffer-face-mode)
+    :init
 
-(use-package mu4e-contrib)
+    (use-package mu4e-contrib)
 
-(setq mu4e-update-interval 300
-mu4e-change-filenames-when-moving t
-mu4e-attachment-dir  "~/Downloads"
-mu4e-view-show-images t
-mu4e-get-mail-command "true"
-mail-user-agent 'mu4e-user-agent
-mu4e-compose-complete-addresses t
-mu4e-compose-complete-only-after "2012-09-15"
-mu4e-headers-include-related nil
-mu4e-index-cleanup t
-mu4e-index-lazy-check nil
-mu4e-headers-date-format "%d-%m-%Y"
-message-kill-buffer-on-exit t
-mu4e-view-use-gnus t
-mu4e-compose-dont-reply-to-self t
-mu4e-compose-keep-self-cc nil
-smtpmail-queue-dir "~/mail/queue/cur")
+    (setq mu4e-update-interval 300
+          mu4e-change-filenames-when-moving t
+          mu4e-attachment-dir  "~/Downloads"
+          mu4e-view-show-images t
+          mu4e-get-mail-command "true"
+          mail-user-agent 'mu4e-user-agent
+          mu4e-compose-complete-addresses t
+          mu4e-compose-complete-only-after "2012-09-15"
+          mu4e-headers-include-related nil
+          mu4e-hide-index-messages t
+          mu4e-use-fancy-chars t
+          mu4e-headers-seen-mark      '("S" . "✔")
+          mu4e-headers-unread-mark    '("u" . "●")
+          mu4e-headers-new-mark       '("N" . "○")
+          mu4e-headers-replied-mark   '("R" . "←")
+          mu4e-headers-passed-mark    '("P" . "→")
+          mu4e-headers-flagged-mark   '("F" . "⚑")
+          mu4e-headers-draft-mark     '("D" . "⚒")
+          mu4e-headers-encrypted-mark '("x" . "e")
+          mu4e-headers-signed-mark    '("s" . "s")
+          mu4e-headers-trashed-mark   '("T" . "×")
+          mu4e-headers-attach-mark    '("a" . "⚓")
+          mu4e-headers-visible-flags  '(draft flagged passed replied unread)
+          mu4e-headers-default-prefix     '("|" . "│")
+          mu4e-headers-has-child-prefix   '("+" . "└")
+          mu4e-headers-first-child-prefix '("\\" . "└")
+          mu4e-index-cleanup t
+          mu4e-index-lazy-check nil
+          mu4e-headers-date-format "%d-%m-%Y"
+          message-kill-buffer-on-exit t
+          mu4e-view-use-gnus t
+          mu4e-compose-dont-reply-to-self t
+          mu4e-compose-keep-self-cc nil
+          smtpmail-queue-dir "~/mail/queue/cur")
 
-(define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
+    (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
 
-(defvar ignore-email t)
-(defun ignore-email-toggle ()
-(interactive)
-(setq ignore-email (not ignore-email)))
+    (defvar ignore-email t)
+    (defun ignore-email-toggle ()
+      (interactive)
+      (setq ignore-email (not ignore-email)))
 
-(defun my-mu4e-update-hook ()
-"Only check email automatically on weekdays"
-(setq mu4e-get-mail-command
-(if ignore-email
-"true"
-(if (member (nth 6 (decode-time)) '(6 0))
-"true"
-"mbsync -a"))))
-(add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
+    (defun my-mu4e-update-hook ()
+      "Only check email automatically on weekdays"
+      (setq mu4e-get-mail-command
+            (if ignore-email
+                "true"
+              (if (member (nth 6 (decode-time)) '(6 0))
+                  "true"
+                "mbsync -a"))))
+    (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
 
-(use-package helm-mu
-:bind ("C-c C-x m" . helm-mu-contacts)
-("<f6>" . helm-mu)
-:config
-(setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
-:bind
-(:map mu4e-main-mode-map
-("s" . helm-mu))
-(:map mu4e-headers-mode-map
-("s" . helm-mu))
-(:map mu4e-view-mode-map
-("s" . helm-mu)))
+    (use-package helm-mu
+      :bind ("C-c C-x m" . helm-mu-contacts)
+      ("<f6>" . helm-mu)
+      :config
+      (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
+      :bind
+      (:map mu4e-main-mode-map
+            ("s" . helm-mu))
+      (:map mu4e-headers-mode-map
+            ("s" . helm-mu))
+      (:map mu4e-view-mode-map
+            ("s" . helm-mu)))
 
-(setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive or flag:unread maildir:/dugs/INBOX or flag:unread maildir:/dugs/Archive")
+    (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive or flag:unread maildir:/dugs/INBOX or flag:unread maildir:/dugs/Archive")
 
-(add-to-list 'mu4e-bookmarks
-'("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+    (add-to-list 'mu4e-bookmarks
+                 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
 
-(add-to-list 'mu4e-bookmarks
-'("flag:flagged" "Flagged messages" ?f))
+    (add-to-list 'mu4e-bookmarks
+                 '("flag:flagged" "Flagged messages" ?f))
 
-(add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
-(add-to-list 'mu4e-view-actions
-'("ViewInBrowser" . mu4e-action-view-in-browser) t)
+    (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
+    (add-to-list 'mu4e-view-actions
+                 '("ViewInBrowser" . mu4e-action-view-in-browser) t)
 
-(setq mu4e-contexts
-`(,(make-mu4e-context
-:name "Work"
-:enter-func (lambda () (mu4e-message "Entering main work context"))
-:leave-func (lambda () (mu4e-message "Leaving main work context"))
-:match-func (lambda (msg)
-(when msg
-(mu4e-message-contact-field-matches msg :to "iosad")))
-:vars'((user-full-name . "Pavel Iosad")
-(user-mail-address . "pavel.iosad@ed.ac.uk")
-(mu4e-compose-reply-to-address . nil)
-(mu4e-compose-signature . (make-random-signature))
-(mu4e-drafts-folder . "/work/Drafts")
-(mu4e-sent-folder . "/work/Sent")
-(mu4e-trash-folder . "/work/Trash")
-(mu4e-refile-folder . "/work/Archive")
-(mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
-(:maildir "/work/Archive" :key ?a)
-(:maildir "/work/Sent" :key ?s)
-(:maildir "/work/Trash" :key ?t)))
-(message-sendmail-extra-arguments . nil)))
-,(make-mu4e-context
-:name "DUGS"
-:enter-func (lambda () (mu4e-message "Entering DUGS context"))
-:leave-func (lambda () (mu4e-message "Leaving DUGS context"))
-:match-func (lambda (msg)
-(when msg
-(mu4e-message-contact-field-matches msg :to '("ppls.ug.director"))))
-:vars `((user-mail-address . "PPLS.UG.Director@ed.ac.uk")
-(user-full-name . "PPLS Undergraduate Director")
-(mu4e-refile-folder . "/dugs/Archive")
-(mu4e-drafts-folder . "/dugs/Drafts")
-(mu4e-sent-folder . "/dugs/Sent Items")
-(mu4e-trash-folder . "/dugs/Trash")
-(mu4e-compose-signature . ,dugs-signature)
-(mu4e-maildir-shortcuts . ((:maildir "/dugs/INBOX" :key ?i)
-(:maildir "/dugs/Archive" :key ?a)
-(:maildir "/dugs/Sent Items"  :key ?s)
-(:maildir "/dugs/Trash"  :key ?t)))
-(message-sendmail-extra-arguments . ("-a" "dugs"))))
-,(make-mu4e-context
-:name "Personal"
-:enter-func (lambda () (mu4e-message "Entering personal context"))
-:leave-func (lambda () (mu4e-message "Leaving personal context"))
-:match-func (lambda (msg)
-(when msg
-(mu4e-message-contact-field-matches msg :to "anghyflawn")))
-:vars '((user-full-name . "Pavel Iosad")
-(user-mail-address . "pavel@anghyflawn.net")
-(mu4e-compose-reply-to-address . nil)
-(mu4e-compose-signature . "Pavel Iosad")
-(mu4e-drafts-folder . "/work/Drafts")
-(mu4e-sent-folder . "/work/Sent")
-(mu4e-trash-folder . "/work/Trash")
-(mu4e-refile-folder . "/work/Archive")
-(mu4e-maildir-shortcuts . '((:maildir "/work/Inbox" :key ?i)
-(:maildir "/work/Archive" :key ?a)
-(:maildir "/work/Sent" :key ?s)
-(:maildir "/work/Trash" :key ?t)))
-(message-sendmail-extra-arguments . ("-a" "personal")))))
-mu4e-context-policy 'pick-first
-mu4e-compose-context-policy 'ask)
+    (setq mu4e-contexts
+          `(,(make-mu4e-context
+              :name "Work"
+              :enter-func (lambda () (mu4e-message "Entering main work context"))
+              :leave-func (lambda () (mu4e-message "Leaving main work context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches msg :to "iosad")))
+              :vars'((user-full-name . "Pavel Iosad")
+                     (user-mail-address . "pavel.iosad@ed.ac.uk")
+                     (mu4e-compose-reply-to-address . nil)
+                     (mu4e-compose-signature . (make-random-signature))
+                     (mu4e-drafts-folder . "/work/Drafts")
+                     (mu4e-sent-folder . "/work/Sent")
+                     (mu4e-trash-folder . "/work/Trash")
+                     (mu4e-refile-folder . "/work/Archive")
+                     (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
+                                                (:maildir "/work/Archive" :key ?a)
+                                                (:maildir "/work/Sent" :key ?s)
+                                                (:maildir "/work/Trash" :key ?t)))
+                     (message-sendmail-extra-arguments . nil)))
+            ,(make-mu4e-context
+              :name "DUGS"
+              :enter-func (lambda () (mu4e-message "Entering DUGS context"))
+              :leave-func (lambda () (mu4e-message "Leaving DUGS context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches msg :to '("ppls.ug.director"))))
+              :vars `((user-mail-address . "PPLS.UG.Director@ed.ac.uk")
+                      (user-full-name . "PPLS Undergraduate Director")
+                      (mu4e-refile-folder . "/dugs/Archive")
+                      (mu4e-drafts-folder . "/dugs/Drafts")
+                      (mu4e-sent-folder . "/dugs/Sent Items")
+                      (mu4e-trash-folder . "/dugs/Trash")
+                      (mu4e-compose-signature . ,dugs-signature)
+                      (mu4e-maildir-shortcuts . ((:maildir "/dugs/INBOX" :key ?i)
+                                                 (:maildir "/dugs/Archive" :key ?a)
+                                                 (:maildir "/dugs/Sent Items"  :key ?s)
+                                                 (:maildir "/dugs/Trash"  :key ?t)))
+                      (message-sendmail-extra-arguments . ("-a" "dugs"))))
+            ,(make-mu4e-context
+              :name "Personal"
+              :enter-func (lambda () (mu4e-message "Entering personal context"))
+              :leave-func (lambda () (mu4e-message "Leaving personal context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches msg :to "anghyflawn")))
+              :vars '((user-full-name . "Pavel Iosad")
+                      (user-mail-address . "pavel@anghyflawn.net")
+                      (mu4e-compose-reply-to-address . nil)
+                      (mu4e-compose-signature . "Pavel Iosad")
+                      (mu4e-drafts-folder . "/work/Drafts")
+                      (mu4e-sent-folder . "/work/Sent")
+                      (mu4e-trash-folder . "/work/Trash")
+                      (mu4e-refile-folder . "/work/Archive")
+                      (mu4e-maildir-shortcuts . '((:maildir "/work/Inbox" :key ?i)
+                                                  (:maildir "/work/Archive" :key ?a)
+                                                  (:maildir "/work/Sent" :key ?s)
+                                                  (:maildir "/work/Trash" :key ?t)))
+                      (message-sendmail-extra-arguments . ("-a" "personal")))))
+          mu4e-context-policy 'pick-first
+          mu4e-compose-context-policy 'ask)
 
-(defun my-mu4e-context-switch ()
-"Interactively update the context"
-(interactive)
-(mu4e-context-switch)
-(save-excursion
-(message-goto-from)
-(kill-whole-line)
-(insert (mu4e~draft-header "From" (or (mu4e~draft-from-construct) "")))
-(message-goto-signature)
-(previous-line)
-(kill-region (point) (point-max))
-(let ((message-signature mu4e-compose-signature))
-(message-insert-signature))))
+    (defun my-mu4e-context-switch ()
+      "Interactively update the context"
+      (interactive)
+      (mu4e-context-switch)
+      (save-excursion
+        (message-goto-from)
+        (kill-whole-line)
+        (insert (mu4e~draft-header "From" (or (mu4e~draft-from-construct) "")))
+        (message-goto-signature)
+        (previous-line)
+        (kill-region (point) (point-max))
+        (let ((message-signature mu4e-compose-signature))
+          (message-insert-signature))))
 
 
-(add-hook 'mu4e-compose-mode-hook
-(defun my-compose-mode-hook ()
-(setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
-("Work" ,(make-random-signature))
-("DUGS" ,dugs-signature)))
-(auto-fill-mode)
-(set-fill-column 72)
-(typopunct-mode)
-(flyspell-mode)
-(local-set-key (kbd "C-c C-x C-;") 'my-mu4e-context-switch)))
+    (add-hook 'mu4e-compose-mode-hook
+              (defun my-compose-mode-hook ()
+                (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
+                                                ("Work" ,(make-random-signature))
+                                                ("DUGS" ,dugs-signature)))
+                (auto-fill-mode)
+                (set-fill-column 72)
+                (typopunct-mode)
+                (flyspell-mode)
+                (local-set-key (kbd "C-c C-x C-;") 'my-mu4e-context-switch)))
 
-(setq message-send-mail-function 'message-send-mail-with-sendmail
-sendmail-program "/usr/bin/msmtp")
+    (setq message-send-mail-function 'message-send-mail-with-sendmail
+          sendmail-program "/usr/bin/msmtp")
 
-(use-package org-mu4e
-:config
-(setq org-mu4e-link-query-in-headers-mode nil
-org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
-("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
+    (use-package org-mu4e
+      :config
+      (setq org-mu4e-link-query-in-headers-mode nil
+            org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
+                                    ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
 
-(require 'mu4e-alert)
-(mu4e-alert-enable-notifications)
-(mu4e-alert-enable-mode-line-display)
-(mu4e-alert-set-default-style 'libnotify)
-(setq mu4e-alert-interesting-mail-query unread-query)
-(global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails)
+    (require 'mu4e-alert)
+    (mu4e-alert-enable-notifications)
+    (mu4e-alert-enable-mode-line-display)
+    (mu4e-alert-set-default-style 'libnotify)
+    (setq mu4e-alert-interesting-mail-query unread-query)
+    (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails)
 
-(require 'mu4e-icalendar)
-(mu4e-icalendar-setup))
+    (require 'mu4e-icalendar)
+    (mu4e-icalendar-setup))
 
 (use-package mu4e-views
-:after mu4e
-:defer nil
-:bind (:map mu4e-headers-mode-map
-("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
-("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
-("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
-("f" . mu4e-views-toggle-auto-view-selected-message)) ;; toggle opening messages automatically when moving in the headers view
-:config
-(setq mu4e-views-completion-method 'helm) ;; use ivy for completion
-(setq mu4e-views-default-view-method "gnus") ;; make xwidgets default
-(mu4e-views-mu4e-use-view-msg-method "gnus") ;; select the default
-(setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
-(setq mu4e-views-auto-view-selected-message nil)) 
+  :after mu4e
+  :defer nil
+  :bind (:map mu4e-headers-mode-map
+              ("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
+              ("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
+              ("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
+              ("f" . mu4e-views-toggle-auto-view-selected-message)) ;; toggle opening messages automatically when moving in the headers view
+  :config
+  (setq mu4e-views-completion-method 'helm) ;; use ivy for completion
+  (setq mu4e-views-default-view-method "gnus") ;; make xwidgets default
+  (mu4e-views-mu4e-use-view-msg-method "gnus") ;; select the default
+  (setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
+  (setq mu4e-views-auto-view-selected-message nil)) 
 #+END_SRC
 
 *** Mail check
@@ -1649,13 +1670,13 @@ org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks
 Check mail if the timer breaks down
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
-(setq mail-timer (run-with-timer 0 600 'mu4e-update-mail-and-index t))
+  (setq mail-timer (run-with-timer 0 600 'mu4e-update-mail-and-index t))
 #+END_SRC
 
 ** Broswer
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(setq browse-url-browser-function 'helm-browse-url-firefox)
+  (setq browse-url-browser-function 'helm-browse-url-firefox)
 #+END_SRC
 
 ** Search
@@ -1663,11 +1684,11 @@ Check mail if the timer breaks down
 =Swiper= is nice for searching longer files
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package swiper
-:commands (swiper swiper-query-replace)
-:bind
-("C-s" . swiper-helm)
-("C-%" . swiper-query-replace))
+  (use-package swiper
+    :commands (swiper swiper-query-replace)
+    :bind
+    ("C-s" . swiper-helm)
+    ("C-%" . swiper-query-replace))
 #+END_SRC
 
 ** PDF tools
@@ -1675,23 +1696,23 @@ Check mail if the timer breaks down
 Much better than DocView
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package pdf-tools
-:magic ("%PDF" . pdf-view-mode)
-:config
-(pdf-tools-install :no-query)
-(setq pdf-view-resize-factor 1.1)
-(define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+  (use-package pdf-tools
+    :magic ("%PDF" . pdf-view-mode)
+    :config
+    (pdf-tools-install :no-query)
+    (setq pdf-view-resize-factor 1.1)
+    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 #+END_SRC
 ** Dired
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package dired-narrow
-:bind (:map dired-mode-map
-("/" . dired-narrow)))
+  (use-package dired-narrow
+    :bind (:map dired-mode-map
+                ("/" . dired-narrow)))
 
 (use-package dired-open
-:bind (:map dired-mode-map
-("K" . dired-open-xdg)))
+  :bind (:map dired-mode-map
+              ("K" . dired-open-xdg)))
 #+END_SRC
 
 ** Helpful
@@ -1699,184 +1720,184 @@ Much better than DocView
 A drop-in replacement for Emacs' help buffers
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package helpful
-:bind
-(("C-h f" . helpful-callable)
-("C-h v" . helpful-variable)
-("C-h k" . helpful-key)
-("C-c F" . helpful-function)
-("C-c C" . helpful-command)))
+  (use-package helpful
+    :bind
+    (("C-h f" . helpful-callable)
+     ("C-h v" . helpful-variable)
+     ("C-h k" . helpful-key)
+     ("C-c F" . helpful-function)
+     ("C-c C" . helpful-command)))
 #+END_SRC
 
 ** Anki-editor
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package anki-editor
-:disabled t
-:config
-(add-hook 'anki-editor-mode-hook
-'(lambda ()
-(use-local-map (copy-key-map org-mode-map))
-(local-set-key (kbd "M-RET") 'anki-editor-insert-note))))
+  (use-package anki-editor
+    :disabled t
+    :config
+    (add-hook 'anki-editor-mode-hook
+              '(lambda ()
+                 (use-local-map (copy-key-map org-mode-map))
+                 (local-set-key (kbd "M-RET") 'anki-editor-insert-note))))
 #+END_SRC
 
 ** Tabs
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package centaur-tabs
-:config
-(centaur-tabs-mode t)
-(centaur-tabs-headline-match)
-(setq centaur-tabs-style "chamfer"
-centaur-tabs-set-icons t
-centaur-tabs-set-bar 'over
-centaur-tabs-set-modified-marker t
-centaur-tabs-gray-out-icons 'buffer)
-(defun centaur-tabs-buffer-groups ()
-"`centaur-tabs-buffer-groups' control buffers' group rules.
+  (use-package centaur-tabs
+    :config
+    (centaur-tabs-mode t)
+    (centaur-tabs-headline-match)
+    (setq centaur-tabs-style "chamfer"
+          centaur-tabs-set-icons t
+          centaur-tabs-set-bar 'over
+          centaur-tabs-set-modified-marker t
+          centaur-tabs-gray-out-icons 'buffer)
+    (defun centaur-tabs-buffer-groups ()
+      "`centaur-tabs-buffer-groups' control buffers' group rules.
 
 Group centaur-tabs with mode if buffer is derived from `eshell-mode' `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
 All buffer name start with * will group to \"Emacs\".
 Other buffer group by `centaur-tabs-get-group-name' with project name."
-(list
-(cond
-((or (string-match-p "mu4e" (buffer-name))
-(derived-mode-p 'message-mode))
-"Email")
-((or (string-equal "*" (substring (buffer-name) 0 1))
-(string-match-p "synctex" (buffer-name))
-(memq major-mode '(magit-process-mode
-magit-status-mode
-magit-diff-mode
-magit-log-mode
-magit-file-mode
-magit-blob-mode
-magit-blame-mode)))
-"Emacs")
-((derived-mode-p 'prog-mode)
-"Editing")
-((derived-mode-p 'dired-mode)
-"Dired")
-((memq major-mode '(helpful-mode
-help-mode))
-"Help")
-((memq major-mode '(org-mode
-org-agenda-clockreport-mode
-org-src-mode
-org-agenda-mode
-org-beamer-mode
-org-indent-mode
-org-bullets-mode
-org-cdlatex-mode
-org-agenda-log-mode
-diary-mode))
-"OrgMode")
-((memq major-mode '(pdf-view-mode))
-"PDF")
-(t
-(centaur-tabs-get-group-name (current-buffer))))))
+      (list
+       (cond
+        ((or (string-match-p "mu4e" (buffer-name))
+             (derived-mode-p 'message-mode))
+         "Email")
+        ((or (string-equal "*" (substring (buffer-name) 0 1))
+             (string-match-p "synctex" (buffer-name))
+             (memq major-mode '(magit-process-mode
+                                magit-status-mode
+                                magit-diff-mode
+                                magit-log-mode
+                                magit-file-mode
+                                magit-blob-mode
+                                magit-blame-mode)))
+         "Emacs")
+        ((derived-mode-p 'prog-mode)
+         "Editing")
+        ((derived-mode-p 'dired-mode)
+         "Dired")
+        ((memq major-mode '(helpful-mode
+                            help-mode))
+         "Help")
+        ((memq major-mode '(org-mode
+                            org-agenda-clockreport-mode
+                            org-src-mode
+                            org-agenda-mode
+                            org-beamer-mode
+                          org-indent-mode
+                            org-bullets-mode
+                            org-cdlatex-mode
+                            org-agenda-log-mode
+                            diary-mode))
+         "OrgMode")
+        ((memq major-mode '(pdf-view-mode))
+         "PDF")
+        (t
+         (centaur-tabs-get-group-name (current-buffer))))))
 
-(defun centaur-tabs-hide-tab (x)
-(let ((name (format "%s" x)))
-(or
-(string-prefix-p "*epc" name)
-(string-prefix-p "*helm" name)
-(string-prefix-p "*Helm" name)
-(string-prefix-p "*Compile-Log*" name)
-(string-match-p "synctex" name)
-(string-suffix-p "output*" name)
-(string-suffix-p ".log" name)
-(and (string-prefix-p "magit" name)
-(not (file-name-extension name))))))
+    (defun centaur-tabs-hide-tab (x)
+      (let ((name (format "%s" x)))
+        (or
+         (string-prefix-p "*epc" name)
+         (string-prefix-p "*helm" name)
+         (string-prefix-p "*Helm" name)
+         (string-prefix-p "*Compile-Log*" name)
+         (string-match-p "synctex" name)
+         (string-suffix-p "output*" name)
+         (string-suffix-p ".log" name)
+         (and (string-prefix-p "magit" name)
+              (not (file-name-extension name))))))
 
-:hook
-(dashboard-mode . centaur-tabs-local-mode)
-(org-agenda-mode . centaur-tabs-local-mode)
-(helpful-mode . centaur-tabs-local-mode)
-(lsp-ui-doc-mode . centaur-tabs-local-mode)
-:bind
-("C-<prior>" . centaur-tabs-backward)
-("C-<next>" . centaur-tabs-forward)
-("C-c T p" . centaur-tabs-group-by-projectile-project)
-("C-c T g" . centaur-tabs-group-buffer-groups)
-(:map evil-normal-state-map
-("g t" . centaur-tabs-forward)
-("g T" . centaur-tabs-backward)))
+    :hook
+    (dashboard-mode . centaur-tabs-local-mode)
+    (org-agenda-mode . centaur-tabs-local-mode)
+    (helpful-mode . centaur-tabs-local-mode)
+    (lsp-ui-doc-mode . centaur-tabs-local-mode)
+    :bind
+    ("C-<prior>" . centaur-tabs-backward)
+    ("C-<next>" . centaur-tabs-forward)
+    ("C-c T p" . centaur-tabs-group-by-projectile-project)
+    ("C-c T g" . centaur-tabs-group-buffer-groups)
+    (:map evil-normal-state-map
+          ("g t" . centaur-tabs-forward)
+          ("g T" . centaur-tabs-backward)))
 #+END_SRC
 
 ** Treemacs
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package treemacs
-:ensure t
-:defer t
-:config
-(progn
-(setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
-treemacs-deferred-git-apply-delay      0.5
-treemacs-directory-name-transformer    #'identity
-treemacs-display-in-side-window        t
-treemacs-eldoc-display                 t
-treemacs-file-event-delay              5000
-treemacs-file-follow-delay             0.2
-treemacs-file-name-transformer         #'identity
-treemacs-follow-after-init             t
-treemacs-git-command-pipe              ""
-treemacs-goto-tag-strategy             'refetch-index
-treemacs-indentation                   2
-treemacs-indentation-string            " "
-treemacs-is-never-other-window         nil
-treemacs-max-git-entries               5000
-treemacs-missing-project-action        'ask
-treemacs-no-png-images                 nil
-treemacs-no-delete-other-windows       t
-treemacs-project-follow-cleanup        nil
-treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
-treemacs-position                      'left
-treemacs-recenter-distance             0.1
-treemacs-recenter-after-file-follow    nil
-treemacs-recenter-after-tag-follow     nil
-treemacs-recenter-after-project-jump   'always
-treemacs-recenter-after-project-expand 'on-distance
-treemacs-show-cursor                   nil
-treemacs-show-hidden-files             t
-treemacs-silent-filewatch              nil
-treemacs-silent-refresh                nil
-treemacs-sorting                       'alphabetic-asc
-treemacs-space-between-root-nodes      t
-treemacs-tag-follow-cleanup            t
-treemacs-tag-follow-delay              1.5
-treemacs-width                         35)
+  (use-package treemacs
+    :ensure t
+    :defer t
+    :config
+    (progn
+      (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
+            treemacs-deferred-git-apply-delay      0.5
+            treemacs-directory-name-transformer    #'identity
+            treemacs-display-in-side-window        t
+            treemacs-eldoc-display                 t
+            treemacs-file-event-delay              5000
+            treemacs-file-follow-delay             0.2
+            treemacs-file-name-transformer         #'identity
+            treemacs-follow-after-init             t
+            treemacs-git-command-pipe              ""
+            treemacs-goto-tag-strategy             'refetch-index
+          treemacs-indentation                   2
+          treemacs-indentation-string            " "
+            treemacs-is-never-other-window         nil
+            treemacs-max-git-entries               5000
+            treemacs-missing-project-action        'ask
+            treemacs-no-png-images                 nil
+            treemacs-no-delete-other-windows       t
+            treemacs-project-follow-cleanup        nil
+            treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+            treemacs-position                      'left
+            treemacs-recenter-distance             0.1
+            treemacs-recenter-after-file-follow    nil
+            treemacs-recenter-after-tag-follow     nil
+            treemacs-recenter-after-project-jump   'always
+            treemacs-recenter-after-project-expand 'on-distance
+            treemacs-show-cursor                   nil
+            treemacs-show-hidden-files             t
+            treemacs-silent-filewatch              nil
+            treemacs-silent-refresh                nil
+            treemacs-sorting                       'alphabetic-asc
+            treemacs-space-between-root-nodes      t
+            treemacs-tag-follow-cleanup            t
+            treemacs-tag-follow-delay              1.5
+            treemacs-width                         35)
 
-;; The default width and height of the icons is 22 pixels. If you are
-;; using a Hi-DPI display, uncomment this to double the icon size.
-;; (treemacs-resize-icons 44)
+      ;; The default width and height of the icons is 22 pixels. If you are
+      ;; using a Hi-DPI display, uncomment this to double the icon size.
+      ;; (treemacs-resize-icons 44)
 
-(treemacs-follow-mode t)
-(treemacs-filewatch-mode t)
-(treemacs-fringe-indicator-mode t)
-(pcase (cons (not (null (executable-find "git")))
-(not (null treemacs-python-executable)))
-(`(t . t)
-(treemacs-git-mode 'deferred))
-(`(t . _)
-(treemacs-git-mode 'simple))))
-:bind
-(:map global-map
-("M-0"       . treemacs-select-window)
-("C-x t 1"   . treemacs-delete-other-windows)
-("C-x t t"   . treemacs)
-("C-x t B"   . treemacs-bookmark)
-("C-x t C-t" . treemacs-find-file)
-("C-x t M-t" . treemacs-find-tag)))
+      (treemacs-follow-mode t)
+      (treemacs-filewatch-mode t)
+      (treemacs-fringe-indicator-mode t)
+      (pcase (cons (not (null (executable-find "git")))
+                   (not (null treemacs-python-executable)))
+        (`(t . t)
+         (treemacs-git-mode 'deferred))
+        (`(t . _)
+         (treemacs-git-mode 'simple))))
+    :bind
+    (:map global-map
+          ("M-0"       . treemacs-select-window)
+          ("C-x t 1"   . treemacs-delete-other-windows)
+          ("C-x t t"   . treemacs)
+          ("C-x t B"   . treemacs-bookmark)
+          ("C-x t C-t" . treemacs-find-file)
+          ("C-x t M-t" . treemacs-find-tag)))
 
 (use-package treemacs-evil
-:after treemacs evil
-:ensure t)
+  :after treemacs evil
+  :ensure t)
 
 (use-package treemacs-magit
-:after treemacs magit
-:ensure t)
+  :after treemacs magit
+  :ensure t)
 #+END_SRC
 
 ** Reaper
@@ -1884,78 +1905,78 @@ treemacs-width                         35)
 Time tracking
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package reaper
-:bind ("C-c h" . reaper)
-:config
-(setq reaper-api-key private/reaper-api-key
-reaper-account-id private/reaper-account-id))
+  (use-package reaper
+    :bind ("C-c h" . reaper)
+    :config
+    (setq reaper-api-key private/reaper-api-key
+          reaper-account-id private/reaper-account-id))
 #+END_SRC
 
 ** Projectile
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils 
-(use-package projectile
-:bind-keymap ("C-c p" . projectile-command-map)
-:diminish projectile-mode
-:config
-(projectile-mode +1)
-(setq projectile-project-search-path private/projectile-project-search-path))
+  (use-package projectile
+    :bind-keymap ("C-c p" . projectile-command-map)
+    :diminish projectile-mode
+    :config
+    (projectile-mode +1)
+    (setq projectile-project-search-path private/projectile-project-search-path))
 
 (use-package helm-projectile
-:config
-(setq projectile-completion-system 'helm)
-(helm-projectile-on))
+  :config
+  (setq projectile-completion-system 'helm)
+  (helm-projectile-on))
 #+END_SRC
 
 ** Org-roam and related
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
-(use-package org-roam
-:hook
-(after-init . org-roam-mode)
-:custom
-(org-roam-directory private/org-roam-directory)
-:config
-(bind-keys :map org-roam-mode-map
-("C-c n l" . org-roam)
-("C-c n f" . org-roam-find-file)
-("C-c n g" . org-roam-graph))
-(bind-keys :map org-mode-map
-("C-c n i" . org-roam-insert)
-("C-c n I" . org-roam-insert-immediate))
-(require 'org-roam-protocol)
-(diminish 'org-roam-mode))
+  (use-package org-roam
+    :hook
+    (after-init . org-roam-mode)
+    :custom
+    (org-roam-directory private/org-roam-directory)
+    :config
+    (bind-keys :map org-roam-mode-map
+               ("C-c n l" . org-roam)
+               ("C-c n f" . org-roam-find-file)
+               ("C-c n g" . org-roam-graph))
+    (bind-keys :map org-mode-map
+               ("C-c n i" . org-roam-insert)
+               ("C-c n I" . org-roam-insert-immediate))
+    (require 'org-roam-protocol)
+    (diminish 'org-roam-mode))
 
 (use-package org-roam-bibtex
-:hook (org-roam-mode . org-roam-bibtex-mode)
-:config
-;; Remove the C-c ) binding, which conflicts with RefTeX
-(eval-after-load "org-roam-bibtex"
-'(define-key org-roam-bibtex-mode-map (kbd "C-c )") nil))
-(bind-keys :map org-mode-map
-("C-c n a" . orb-note-actions)
-:map org-roam-bibtex-mode-map
-("C-c n a" . orb-note-actions)
-("C-c n i" . orb-insert)
-("C-c n C-f" . orb-find-non-ref-file)
-("C-c n i" . orb-insert-non-ref))
-:diminish org-roam-bibtex-mode)
+  :hook (org-roam-mode . org-roam-bibtex-mode)
+  :config
+  ;; Remove the C-c ) binding, which conflicts with RefTeX
+  (eval-after-load "org-roam-bibtex"
+    '(define-key org-roam-bibtex-mode-map (kbd "C-c )") nil))
+  (bind-keys :map org-mode-map
+             ("C-c n a" . orb-note-actions)
+             :map org-roam-bibtex-mode-map
+             ("C-c n a" . orb-note-actions)
+             ("C-c n i" . orb-insert)
+             ("C-c n C-f" . orb-find-non-ref-file)
+             ("C-c n i" . orb-insert-non-ref))
+  :diminish org-roam-bibtex-mode)
 
 (use-package company-org-roam
-:config
-(push 'company-org-roam company-backends))
+  :config
+  (push 'company-org-roam company-backends))
 
-(use-package org-roam-server)
+  (use-package org-roam-server)
 
 (use-package deft
-:after org
-:bind
-("C-c n d" . deft)
-:custom
-(deft-recursive t)
-(deft-use-filter-string-for-filename t)
-(deft-default-extension "org")
-(deft-directory private/org-roam-directory))
+  :after org
+  :bind
+  ("C-c n d" . deft)
+  :custom
+  (deft-recursive t)
+  (deft-use-filter-string-for-filename t)
+  (deft-default-extension "org")
+  (deft-directory private/org-roam-directory))
 #+END_SRC
 
 ** Subed
@@ -1963,33 +1984,33 @@ reaper-account-id private/reaper-account-id))
 Subtitle editing, because that is apparently my life now
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package subed
-:load-path "~/.emacs.d/etc/subed/"
-:mode
-("\\.srt\\'" . subed-mode)
-:config
-(add-hook 'subed-mode-hook
-(defun my-subed-mode-hook ()
-(setq-local fill-column 40)
-(subed-disable-sync-point-to-player)
-(turn-on-auto-fill)
-(typopunct-mode)))
-:bind (:map subed-mode-map
-("C-SPC" . subed-mpv-toggle-pause)))
+  (use-package subed
+    :load-path "~/.emacs.d/etc/subed/"
+    :mode
+    ("\\.srt\\'" . subed-mode)
+    :config
+    (add-hook 'subed-mode-hook
+              (defun my-subed-mode-hook ()
+                (setq-local fill-column 40)
+                (subed-disable-sync-point-to-player)
+                (turn-on-auto-fill)
+                (typopunct-mode)))
+    :bind (:map subed-mode-map
+                ("C-SPC" . subed-mpv-toggle-pause)))
 #+END_SRC
 
 ** Spotify
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(use-package spotify
-:load-path "~/.emacs.d/spotify.el/"
-:bind-keymap ("C-c s" . spotify-command-map)
-:config
-(setq
-spotify-oauth2-client-secret private/spotify-client-secret
-spotify-oauth2-client-id private/spotify-client-id)
-(defhydra hydra-spotify (:hint nil)
-"
+  (use-package spotify
+    :load-path "~/.emacs.d/spotify.el/"
+    :bind-keymap ("C-c s" . spotify-command-map)
+    :config
+    (setq
+     spotify-oauth2-client-secret private/spotify-client-secret
+     spotify-oauth2-client-id private/spotify-client-id)
+    (defhydra hydra-spotify (:hint nil)
+      "
 ^Search^                  ^Control^               ^Manage^
 ^^^^^^^^-----------------------------------------------------------------
 _t_: Track               _SPC_: Play/Pause        _+_: Volume up
@@ -1998,22 +2019,22 @@ _f_: Featured Playlists  _p_  : Previous Track    _x_: Mute
 _u_: User Playlists      _r_  : Repeat            _d_: Device
 ^^                       _s_  : Shuffle           _q_: Quit
 "
-("t" spotify-track-search :exit t)
-("m" spotify-my-playlists :exit t)
-("f" spotify-featured-playlists :exit t)
-("u" spotify-user-playlists :exit t)
-("SPC" spotify-toggle-play :exit nil)
-("n" spotify-next-track :exit nil)
-("p" spotify-previous-track :exit nil)
-("r" spotify-toggle-repeat :exit nil)
-("s" spotify-toggle-shuffle :exit nil)
-("+" spotify-volume-up :exit nil)
-("-" spotify-volume-down :exit nil)
-("x" spotify-volume-mute-unmute :exit nil)
-("d" spotify-select-device :exit nil)
-("q" quit-window "quit" :color blue))
+      ("t" spotify-track-search :exit t)
+      ("m" spotify-my-playlists :exit t)
+      ("f" spotify-featured-playlists :exit t)
+      ("u" spotify-user-playlists :exit t)
+      ("SPC" spotify-toggle-play :exit nil)
+      ("n" spotify-next-track :exit nil)
+      ("p" spotify-previous-track :exit nil)
+      ("r" spotify-toggle-repeat :exit nil)
+      ("s" spotify-toggle-shuffle :exit nil)
+      ("+" spotify-volume-up :exit nil)
+      ("-" spotify-volume-down :exit nil)
+      ("x" spotify-volume-mute-unmute :exit nil)
+      ("d" spotify-select-device :exit nil)
+      ("q" quit-window "quit" :color blue))
 
-(bind-key "a" #'hydra-spotify/body spotify-command-map))
+    (bind-key "a" #'hydra-spotify/body spotify-command-map))
 #+END_SRC
 
 * Configuration Layout
@@ -2028,35 +2049,38 @@ the ~noweb-ref~ arguments in the ~src~ blocks throughout this document.
 
   ;;; Commentary:
 
-  ;; Do not modify this file by hand.  It was automatically generated
-  ;; from `emacs.org` in the same directory.  See that file for more
-  ;; information.
+;; Do not modify this file by hand.  It was automatically generated
+;; from `emacs.org` in the same directory.  See that file for more
+;; information.
 
   ;;; Code:
 
-  ;; Configuration group: init-before
-  <<init-before>>
+;; Configuration group: init-before
+<<init-before>>
 
-  ;; Configuration group: appearance
-  <<appearance>>
+;; Configuration group: appearance
+<<appearance>>
 
-  ;; Configuration group: evil
-  <<evil>>
+;; Configuration group: evil
+<<evil>>
 
-  ;; Configuration group: editing
-  <<editing>>
+;; Configuration group: editing
+<<editing>>
 
-  ;; Configuration group: pandoc
-  <<pandoc>>
+;; Configuration group: pandoc
+<<pandoc>>
 
-  ;; Configuration group: org
-  <<org>>
+;; Configuration group:
+<<mail>>
 
-  ;; Configuration group: utils
-  <<utils>>
+;; Configuration group: org
+<<org>>
 
-  ;; Configuration group: init-after
-  <<init-after>>
+;; Configuration group: utils
+<<utils>>
 
-  ;; emacs.el ends here
+;; Configuration group: init-after
+<<init-after>>
+
+;; emacs.el ends here
 #+END_SRC
