@@ -854,7 +854,7 @@ The following sets up Org-mode itself
             ("" "eqparbox" nil)
             ("" "cleveref" nil)
             ("activate={true, nocompatibility}, tracking" "microtype" nil ("pdflatex" "lualatex"))
-            ("english, german" "selnolig" nil ("luatex"))))
+            ("english, german" "selnolig" nil ("lualatex"))))
 
     (setq-default org-latex-compiler "lualatex"
                   org-latex-bib-compiler "biber"
