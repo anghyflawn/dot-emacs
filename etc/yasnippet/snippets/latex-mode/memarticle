@@ -12,7 +12,7 @@
 \usepackage[main=british${1:,otherlanguages}]{babel}
 \usepackage[autostyle]{csquotes}
 \usepackage[backend=biber,
-        style=langsci-unified,
+        style=unified,
         mincrossrefs=50,
         maxcitenames=3,
         maxbibnames=50,

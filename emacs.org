@@ -827,19 +827,73 @@ The following sets up Org-mode itself
           org-agenda-skip-scheduled-if-deadline-is-shown t
           org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
           org-icalendar-alarm-time 15
-          org-latex-bib-compiler "biber"
           org-columns-default-format "%30ITEM %TODO %3PRIORITY %DEADLINE %20LOCATION"
           org-src-fontify-natively t)
 
-    (add-hook 'org-mode-hook
-              (defun my-org-mode-hook ()
-                (local-set-key (kbd "C-c '") 'org-edit-src-code)))
+    ;; The following sets up my LaTeX export preferences
 
-    (use-package org-crypt
-      :config
-      (org-crypt-use-before-save-magic)
-      (setq org-tags-exclude-from-inheritance '("crypt")
-            org-crypt-key nil)))
+    (add-to-list 'org-latex-classes
+                 '("memoir-article" "\\documentclass[12pt, article, oneside, a4paper]{memoir}\n
+  [DEFAULT-PACKAGES]\n
+  [PACKAGES]\n
+  \\DeclareLabeldate{\\field{date}\\field{eventdate}\\field{origdate}\\field{urldate}\\field{pubstate}\\literal{nodate}}\n
+  \\renewbibmacro*{addendum+pubstate}{\\printfield{addendum}\\iffieldequalstr{labeldatesource}{pubstate}{}{\\newunit\\newblock\\printfield{pubstate}}}\n
+  \\NewBibliographyString{reprintedin}
+
+  \\DefineBibliographyStrings{english}{phdthesis = {PhD dissertation},reprintedin = {Reprinted in}}
+
+  \\defaultfontfeatures{Ligatures=TeX, Numbers=OldStyle}
+  \\isopage[12]
+  \\setsecnumdepth{subsubsection}
+  \\setcounter{tocdepth}{3}
+  \\counterwithout{section}{chapter}
+  \\setlength\\bibitemsep{0pt}
+
+  \\widowpenalty=10000
+  \\clubpenalty=10000
+
+  \\lingset{interpartskip=0pt}
+  [EXTRA]
+  \\checkandfixthelayout"
+                   ("\\section{%s}" . "\\section*{%s}")
+                   ("\\subsection{%s}" . "\\subsection*{%s}")
+                   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                   ("\\paragraph{%s}" . "\\paragraph*{%s}")))
+
+    (setq org-latex-packages-alist
+          '(("" "luatextra" t ("lualatex"))
+            ("" "xltxtra" t ("xelatex"))
+            ("AUTO" "babel" nil ("pdflatex" "lualatex"))
+            ("AUTO" "polyglossia" nil ("xelatex"))
+            ("" "expex" nil)
+            ("" "booktabs" nil)
+            ("autostyle" "csquotes" nil)
+            ("backend=biber,style=unified,mincrossrefs=50,maxcitenames=3,maxbibnames=50,useprefix=true,autolang=hyphen,parentracker=true,doi=false" "biblatex" nil)
+            ("" "phonrule" nil)
+            ("" "longtable" nil)
+            ("" "hyphenat" nil)
+            ("" "eqparbox" nil)
+            ("" "cleveref" nil)
+            ("activate={true, nocompatibility}, tracking" "microtype" nil ("pdflatex" "lualatex"))
+            ("english, german" "selnolig" nil ("luatex"))))
+
+    (setq-default org-latex-compiler "lualatex"
+                  org-latex-bib-compiler "biber"
+                  org-latex-pdf-process
+                  '("%latex -interaction nonstopmode -output-directory%o %f"
+                    "%bib %b"
+                    "%latex -interaction nonstopmode -output-directory %o %f")
+                  org-export-with-toc nil))
+
+  (add-hook 'org-mode-hook
+            (defun my-org-mode-hook ()
+              (local-set-key (kbd "C-c '") 'org-edit-src-code)))
+
+  (use-package org-crypt
+    :config
+    (org-crypt-use-before-save-magic)
+    (setq org-tags-exclude-from-inheritance '("crypt")
+          org-crypt-key nil)))
 
   (use-package org-trello
     :disabled t
@@ -977,83 +1031,81 @@ that, given a DOI (or an http://dx.doi.org/ URL) gets a BibTeX entry
 and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(defun get-bibtex-from-doi (doi)
-"Get a BibTeX entry from the DOI"
-(interactive "MDOI: ")
-(let ((url-mime-accept-string "text/bibliography;style=bibtex")
-(clean-doi (replace-regexp-in-string "https?://.*doi.org/" "" doi)))
-(with-current-buffer (url-retrieve-synchronously (format "http://doi.org/%s" clean-doi))
-(switch-to-buffer (current-buffer))
-(setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
-(kill-buffer (current-buffer))))
-(insert (decode-coding-string bibtex-entry 'utf-8))
-(bibtex-fill-entry))
+  (defun get-bibtex-from-doi (doi)
+    "Get a BibTeX entry from the DOI"
+    (interactive "MDOI: ")
+    (let ((url-mime-accept-string "text/bibliography;style=bibtex")
+          (clean-doi (replace-regexp-in-string "https?://.*doi.org/" "" doi)))
+      (with-current-buffer (url-retrieve-synchronously (format "http://doi.org/%s" clean-doi))
+        (switch-to-buffer (current-buffer))
+        (setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
+        (kill-buffer (current-buffer))))
+    (insert (decode-coding-string bibtex-entry 'utf-8))
+    (bibtex-fill-entry))
 #+END_SRC
 
 *** RefTex and bibtex-mode
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-(use-package reftex
-:commands turn-on-reftex
-:config
-(setq reftex-use-external-file-finders t
-reftex-plug-into-AUCTeX t
-reftex-default-bibliography `(,private/bibliography-file)
-reftex-cite-prompt-optional-args nil
-reftex-cite-cleanup-optional-args t)
-(global-unset-key "\C-c /")
-(add-to-list 'reftex-bibliography-commands "addbibresource")
+  (use-package reftex
+    :commands turn-on-reftex
+    :config
+    (setq reftex-use-external-file-finders t
+          reftex-plug-into-AUCTeX t
+          reftex-default-bibliography `(,private/bibliography-file)
+          reftex-cite-prompt-optional-args nil
+          reftex-cite-cleanup-optional-args t)
+    (global-unset-key "\C-c /")
+    (add-to-list 'reftex-bibliography-commands "addbibresource")
 
-(let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
-(setq reftex-external-file-finders
-`(("tex" . ,(concat kpsewhich " -format=.tex %f"))
-("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
-
-
+    (let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
+      (setq reftex-external-file-finders
+            `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
+              ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
 
 
-(use-package bibtex
-:mode ("\\.bib" . bibtex-mode)
-:config
-(setq bibtex-align-at-equal-sign t
-bibtex-autokey-year-length 4
-bibtex-autokey-titleword-length nil
-bibtex-autokey-titlewords-stretch 0
-bibtex-autokey-titlewords 1
-bibtex-autokey-year-title-separator "")
+  (use-package bibtex
+    :mode ("\\.bib" . bibtex-mode)
+    :config
+    (setq bibtex-align-at-equal-sign t
+          bibtex-autokey-year-length 4
+          bibtex-autokey-titleword-length nil
+          bibtex-autokey-titlewords-stretch 0
+          bibtex-autokey-titlewords 1
+          bibtex-autokey-year-title-separator "")
 
-(add-hook 'bibtex-mode-hook
-(lambda ()
-(set-fill-column 120)))
+    (add-hook 'bibtex-mode-hook
+              (lambda ()
+                (set-fill-column 120)))
 
-(defun bibtex-autokey-parse-date ()
-"Get the year from the `date' field in biblatex format, else the `year' field"
-(let ((date-string (car (split-string (bibtex-autokey-get-field "date") "-"))))
-(if (string-equal date-string "")
-(bibtex-autokey-get-field "year")
-date-string)))
-(defun bibtex-autokey-get-year ()
-"Use the custom date parse function, and return year field
-contents as a string obeying `bibtex-autokey-year-length'."
-(let ((yearfield (bibtex-autokey-parse-date)))
-(substring yearfield (max 0 (- (length yearfield)
-bibtex-autokey-year-length))))))
+    (defun bibtex-autokey-parse-date ()
+      "Get the year from the `date' field in biblatex format, else the `year' field"
+      (let ((date-string (car (split-string (bibtex-autokey-get-field "date") "-"))))
+        (if (string-equal date-string "")
+            (bibtex-autokey-get-field "year")
+          date-string)))
+    (defun bibtex-autokey-get-year ()
+      "Use the custom date parse function, and return year field
+  contents as a string obeying `bibtex-autokey-year-length'."
+      (let ((yearfield (bibtex-autokey-parse-date)))
+        (substring yearfield (max 0 (- (length yearfield)
+                                       bibtex-autokey-year-length))))))
 
 
-
-(use-package bibtex-utils
-:config
-(setq bu-bibtex-fields-ignore-list '(url abstract)))
+  (use-package bibtex-utils
+    :config
+    (setq bu-bibtex-fields-ignore-list '(url abstract)))
 #+END_SRC
 
 *** Org-ref
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
-(use-package org-ref
-:after org-roam
-:config
-(setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
-org-ref-pdf-directory private/pdf-directory))
+  (use-package org-ref
+    :after org org-roam
+    :config
+    (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+          org-ref-pdf-directory private/pdf-directory
+          org-ref-default-ref-type "cref"))
 #+END_SRC
 
 
