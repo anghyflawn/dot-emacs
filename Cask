@@ -158,6 +158,7 @@
 (depends-on "polymode")
 (depends-on "pomidor")
 (depends-on "popup")
+(depends-on "popwin")
 (depends-on "powerline")
 (depends-on "prism")
 (depends-on "prodigy")
