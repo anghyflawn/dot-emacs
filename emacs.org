@@ -8,10 +8,7 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
   (eval-when-compile
-    (require 'use-package)
-    (require 'dash)
-    (require 's)
-    (require 'f))
+    (require 'use-package))
   (require 'diminish)
   (require 'bind-key)
 #+END_SRC
@@ -155,6 +152,14 @@ Update buffers if files have been changed on disk.
   (global-auto-revert-mode 1)
   (add-hook 'dired-mode-hook 'auto-revert-mode)
 #+END_SRC
+
+** Show file truenames
+
+Don't show symlinked filenames
+
+#+begin_src emacs-lisp :noweb-ref init
+  (setq find-file-visit-truename t)
+#+end_src
 * Appearance
 ** Dashboard
 
@@ -167,6 +172,39 @@ Update buffers if files have been changed on disk.
                             (projects . 5)
                             (agenda . 10))))
 #+END_SRC
+
+** Mode-line
+
+Some packages to fix the mode-line
+
+#+begin_src emacs-lisp :noweb-ref appearance
+  (use-package minions
+    :after doom-modeline
+    :config
+    (minions-mode 1))
+
+  (use-package doom-modeline
+    :init
+    (doom-modeline-mode 1)
+    :config
+    (setq doom-modeline-height 1)
+    (let ((mode-line-family "Merriweather"))
+      (set-face-attribute 'mode-line nil :family mode-line-family :height 110)
+      (set-face-attribute 'mode-line-inactive nil :family mode-line-family :height 110))
+    (setq doom-modeline-icon (display-graphic-p)
+          doom-modeline-major-mode-icon t
+          doom-modeline-major-mode-color-icon t
+          doom-modeline-unicode-fallback t
+          doom-modeline-enable-word-count t
+          doom-modeline-enable-word-count-modes '(markdown-mode org-mode latex-mode)
+          doom-modeline-buffer-encoding nil
+          doom-modeline-minor-modes t
+          doom-modeline-indent-info nil
+          doom-modeline-workspace-name t
+          doom-modeline-modal-icon t
+          doom-modeline-mu4e t))
+#+end_src
+
 ** Unneeded chrome
 
 We don't need scroll bars or tool bars
@@ -833,29 +871,30 @@ The following sets up Org-mode itself
 
     ;; The following sets up my LaTeX export preferences
 
-    (add-to-list 'org-latex-classes
-                 '("memoir-article" (f-read-text (expand-file-name "etc/ox-latex-preamble.txt" user-emacs-directory))
-                   ("\\section{%s}" . "\\section*{%s}")
-                   ("\\subsection{%s}" . "\\subsection*{%s}")
-                   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                   ("\\paragraph{%s}" . "\\paragraph*{%s}")))
+    (with-eval-after-load 'ox-latex
+      (add-to-list 'org-latex-classes
+                   '("memoir-article" (f-read-text (expand-file-name "etc/ox-latex-preamble.txt" user-emacs-directory))
+                     ("\\section{%s}" . "\\section*{%s}")
+                     ("\\subsection{%s}" . "\\subsection*{%s}")
+                     ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                     ("\\paragraph{%s}" . "\\paragraph*{%s}")))
 
-    (setq org-latex-packages-alist
-          '(("" "luatextra" t ("lualatex"))
-            ("" "xltxtra" t ("xelatex"))
-            ("AUTO" "babel" nil ("pdflatex" "lualatex"))
-            ("AUTO" "polyglossia" nil ("xelatex"))
-            ("" "expex" t)
-            ("" "booktabs" nil)
-            ("autostyle" "csquotes" nil)
-            ("backend=biber,style=unified,mincrossrefs=50,maxcitenames=3,maxbibnames=50,useprefix=true,autolang=hyphen,parentracker=true,doi=false" "biblatex" nil)
-            ("" "phonrule" nil)
-            ("" "longtable" nil)
-            ("" "hyphenat" nil)
-            ("" "eqparbox" nil)
-            ("" "cleveref" nil)
-            ("activate={true, nocompatibility}, tracking" "microtype" nil ("pdflatex" "lualatex"))
-            ("english, german" "selnolig" nil ("lualatex"))))
+      (setq org-latex-packages-alist
+            '(("" "luatextra" t ("lualatex"))
+              ("" "xltxtra" t ("xelatex"))
+              ("AUTO" "babel" nil ("pdflatex" "lualatex"))
+              ("AUTO" "polyglossia" nil ("xelatex"))
+              ("" "expex" t)
+              ("" "booktabs" nil)
+              ("autostyle" "csquotes" nil)
+              ("backend=biber,style=unified,mincrossrefs=50,maxcitenames=3,maxbibnames=50,useprefix=true,autolang=hyphen,parentracker=true,doi=false" "biblatex" nil)
+              ("" "phonrule" nil)
+              ("" "longtable" nil)
+              ("" "hyphenat" nil)
+              ("" "eqparbox" nil)
+              ("" "cleveref" nil)
+              ("activate={true, nocompatibility}, tracking" "microtype" nil ("pdflatex" "lualatex"))
+              ("english, german" "selnolig" nil ("lualatex")))))
 
     (setq-default org-latex-compiler "lualatex"
                   org-latex-bib-compiler "biber"
@@ -1081,7 +1120,7 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org-ref
-    :after org org-roam
+    :after org
     :config
     (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
           org-ref-pdf-directory private/pdf-directory
@@ -1351,7 +1390,7 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
           (if display-time-day-and-date
               (format "%s %s %s" dayname monthname day) "")))
   (setq display-time-interval 30)
-  (display-time-mode 1)
+  (display-time-mode -1)
 
   (setq enable-recursive-minibuffers t)
 
@@ -1687,7 +1726,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
     (require 'mu4e-alert)
     (mu4e-alert-enable-notifications)
-    (mu4e-alert-enable-mode-line-display)
+    ;; (mu4e-alert-enable-mode-line-display)
     (mu4e-alert-set-default-style 'libnotify)
     (setq mu4e-alert-interesting-mail-query unread-query)
     (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails)
@@ -1791,6 +1830,7 @@ A drop-in replacement for Emacs' help buffers
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package centaur-tabs
+    :disabled t
     :config
     (centaur-tabs-mode t)
     (centaur-tabs-headline-match)
