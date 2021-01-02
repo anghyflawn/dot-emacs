@@ -773,6 +773,7 @@ Hippie-expand is a nice autocompletion engine
                 (add-to-list 'TeX-view-program-selection
                              '(output-pdf "PDF Tools"))
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)))
+    :config
     (bind-keys :map TeX-mode-map
                ("C-x n @" . LaTeX-narrow-to-subtree)
                ("C-c f" . insert-feature)
@@ -844,7 +845,7 @@ The following sets up Org-mode itself
             ("" "xltxtra" t ("xelatex"))
             ("AUTO" "babel" nil ("pdflatex" "lualatex"))
             ("AUTO" "polyglossia" nil ("xelatex"))
-            ("" "expex" nil)
+            ("" "expex" t)
             ("" "booktabs" nil)
             ("autostyle" "csquotes" nil)
             ("backend=biber,style=unified,mincrossrefs=50,maxcitenames=3,maxbibnames=50,useprefix=true,autolang=hyphen,parentracker=true,doi=false" "biblatex" nil)
@@ -872,7 +873,7 @@ The following sets up Org-mode itself
     :config
     (org-crypt-use-before-save-magic)
     (setq org-tags-exclude-from-inheritance '("crypt")
-          org-crypt-key nil)))
+          org-crypt-key nil))
 
   (use-package org-trello
     :disabled t
