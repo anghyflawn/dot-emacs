@@ -347,6 +347,7 @@ Makes it clearer which buffer is active
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
   (use-package dimmer
+    :custom (dimmer-fraction 0.4)
     :config
     (dimmer-mode 1)
     (setq dimmer-exclusion-regexp "helm"))
@@ -358,7 +359,7 @@ Sensible window layouts. These currently don't seem to work well for me.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package zoom
-    :disabled nil
+    :disabled t
     :config
     (defun zoom-size-callback ()
       (cond ((> (frame-pixel-width) 1280) '(90 . 0.75))
