@@ -2,32 +2,12 @@
 #+AUTHOR: Pavel Iosad
 
 * Configuration
-** use-package
 
-We use [[http://github.com/jwiegley/use-package][use-package]] to manage packages. Thus we start off by installing it.
+** Scaffolding for use-package keywords
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
   (use-package diminish)
   (use-package bind-key)
-#+END_SRC
-
-** Pallet
-
-We also need to actually make sure Pallet is in use.
-
-#+BEGIN_SRC emacs-lisp :noweb-ref init-before
-;; (pallet-mode -1)
-#+END_SRC
-
-** Keep packages up to date
-
-#+BEGIN_SRC emacs-lisp :noweb-ref init-before
-  (use-package auto-package-update
-    :disabled t
-    :config
-    (setq auto-package-update-delete-old-versions t
-          auto-package-update-hide-results t)
-    (auto-package-update-maybe))
 #+END_SRC
 
 ** Pinentry
@@ -44,8 +24,7 @@ This sets up Emacs for GPG pinentry
 ** Keep =~/.emacs.d= clean
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-  (use-package no-littering
-    :straight t)
+  (use-package no-littering)
 #+END_SRC
 
 * Initialization
