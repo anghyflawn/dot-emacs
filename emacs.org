@@ -370,6 +370,9 @@ Sensible window layouts. These currently don't seem to work well for me.
     :config
     ;; (setq display-buffer-base-action '(display-buffer-below-selected))
     (edwina-mode 1))
+
+  (use-package golden
+    :straight (:repo "https://git.sr.ht/~wklew/golden"))
 #+END_SRC
 
 * General editing
