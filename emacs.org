@@ -2161,7 +2161,8 @@ Manage annoying pop-up buffers
     :bind-keymap ("C-c M-p" . popwin:keymap)
     :config
     (popwin-mode 1)
-    (push "*Pandoc output*" popwin:special-display-config))
+    (push " *Pandoc output*" popwin:special-display-config)
+    (push " *Pandoc log*" popwin:special-display-config))
 #+end_src
 
 * Configuration Layout
