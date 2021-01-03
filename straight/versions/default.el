@@ -81,6 +81,7 @@
  ("mu4e-views" . "55e5467a25d424b2c10b5392e68b370164efa230")
  ("no-littering" . "96ed5b8ecad8bcdcd212aacd9957276be3cf128e")
  ("oauth2" . "70cc50b2f9d5857985c58d9d2121f39efa58a587")
+ ("olivetti" . "b76a020aedb57a6a7d0ae61cde13434f5c802a44")
  ("org" . "291993888d7b6776d42a86facd26c8bc0f72e475")
  ("org-ref" . "83181b37d2909a2bbe5c101baaae0cc422d9510b")
  ("org-roam" . "15d864a500d90c9dc2e16d888e93343528ec3941")

@@ -704,6 +704,12 @@ Hippie-expand is a nice autocompletion engine
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
 (global-set-key (kbd "M-/") 'hippie-expand)
 #+END_SRC
+
+Narrower margins to focus when writing
+
+#+begin_src emacs-lisp :noweb-ref editing
+(use-package olivetti)
+#+end_src
 ** Smartparens
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
@@ -756,75 +762,77 @@ Hippie-expand is a nice autocompletion engine
 ** LaTeX
    
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-    (use-package tex-site
-      :straight auctex
-      :mode ("\\.tex\\'" . LaTeX-mode)
-      :commands (LaTeX-mode latex-mode plain-tex-mode)
-      :init
-      (defun insert-feature (arg feature value)
-        "This just saves some typing, feel free to comment
-                         out."
-        (interactive "P\nMFeature: \nMValue: ")
-        (insert (format
-                 (if arg
-                     "\\mbox{\\ensuremath{%s}%s}"
-                   "\\mbox{[\\ensuremath{%s}%s]}")
-                 value feature)))
-      (setq-default my-alternative-input-method "ipa-x-sampa")
+  (use-package tex-site
+    :straight auctex
+    :mode ("\\.tex\\'" . LaTeX-mode)
+    :commands (LaTeX-mode latex-mode plain-tex-mode)
+    :init
+    (defun insert-feature (arg feature value)
+      "This just saves some typing, feel free to comment
+                       out."
+      (interactive "P\nMFeature: \nMValue: ")
+      (insert (format
+               (if arg
+                   "\\mbox{\\ensuremath{%s}%s}"
+                 "\\mbox{[\\ensuremath{%s}%s]}")
+               value feature)))
+    (setq-default my-alternative-input-method "ipa-x-sampa")
 
-      (defun LaTeX-narrow-to-subtree ()
-        "Make text outside current section invisible."
-        (interactive)
-        (save-excursion
-          (widen)
-          (outline-mark-subtree)
-          (narrow-to-region (point) (mark))
-          (setq deactivate-mark t)))
+    (defun LaTeX-narrow-to-subtree ()
+      "Make text outside current section invisible."
+      (interactive)
+      (save-excursion
+        (widen)
+        (outline-mark-subtree)
+        (narrow-to-region (point) (mark))
+        (setq deactivate-mark t)))
 
 
-      (add-hook 'LaTeX-mode-hook
-                (defun my-LaTeX-mode-hook ()
-                  (setq font-latex-match-function-keywords '(("ipa" "{")
-                                                             ("twe" "{{{")
-                                                             ("mbi" "{{")
-                                                             ("x" "[{{")
-                                                             ("xr" "[{{") 
-                                                             ("ox" "[{{{")
-                                                             ("featr" "{")
-                                                             "ex" "pex" "pex~" "xe" "a")
-                        font-latex-match-biblatex-keywords '(("posscitet" "[[{"))
-                        TeX-parse-self t
-                        TeX-auto-save t
-                        TeX-electric-sub-and-superscript t
-                        LaTeX-csquotes-close-quote "}"
-                        LaTeX-csquotes-open-quote "\\enquote{"
-                        TeX-outline-extra '(("\\\\printbibliography" 2))
-                        TeX-source-correlate t
-                        TeX-engine 'luatex) 
-                  (flyspell-mode 1)
-                  (TeX-fold-mode 1)
-                  ;; This activates the X-SAMPA layout, making
-                  ;; it accessible via C-\
-                  (set-input-method my-alternative-input-method)
-                  (toggle-input-method)
-                  (outline-minor-mode 1)
-                  (turn-on-reftex)
-                  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-                  (TeX-source-correlate-mode 1)
-                  (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                  (add-to-list 'TeX-view-program-selection
-                               '(output-pdf "PDF Tools"))
-                  (bind-keys :map TeX-mode-map
-                             ("C-x n @" . LaTeX-narrow-to-subtree)
-                             ("C-c f" . insert-feature)
-                             ("C-c }" . LaTeX-close-environment))
-                  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
+    (add-hook 'LaTeX-mode-hook
+              (defun my-LaTeX-mode-hook ()
+                (setq font-latex-match-function-keywords '(("ipa" "{")
+                                                           ("twe" "{{{")
+                                                           ("mbi" "{{")
+                                                           ("x" "[{{")
+                                                           ("xr" "[{{") 
+                                                           ("ox" "[{{{")
+                                                           ("featr" "{")
+                                                           "ex" "pex" "pex~" "xe" "a")
+                      font-latex-match-biblatex-keywords '(("posscitet" "[[{"))
+                      TeX-parse-self t
+                      TeX-auto-save t
+                      TeX-electric-sub-and-superscript t
+                      LaTeX-csquotes-close-quote "}"
+                      LaTeX-csquotes-open-quote "\\enquote{"
+                      TeX-outline-extra '(("\\\\printbibliography" 2))
+                      TeX-source-correlate t
+                      TeX-engine 'luatex) 
+                (flyspell-mode 1)
+                (TeX-fold-mode 1)
+                ;; This activates the X-SAMPA layout, making
+                ;; it accessible via C-\
+                (set-input-method my-alternative-input-method)
+                (toggle-input-method)
+                (outline-minor-mode 1)
+                (turn-on-reftex)
+                (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                (TeX-source-correlate-mode 1)
+                (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                (add-to-list 'TeX-view-program-selection
+                             '(output-pdf "PDF Tools"))
+                (bind-keys :map TeX-mode-map
+                           ("C-x n @" . LaTeX-narrow-to-subtree)
+                           ("C-c f" . insert-feature)
+                           ("C-c }" . LaTeX-close-environment))
+                (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
-    (use-package auctex-latexmk
-      :after auctex
-      :config
-      (auctex-latexmk-setup)
-      (setq auctex-latexmk-inherit-TeX-PDF-mode t))
+  (use-package auctex-latexmk
+    :after auctex
+    :config
+    (add-hook 'LaTeX-mode-hook
+              (defun my-LaTeXMk-setup ()
+                (auctex-latexmk-setup)
+                (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
 
 #+END_SRC
 
