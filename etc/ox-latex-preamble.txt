@@ -10,7 +10,7 @@
 \DefineBibliographyStrings{english}{phdthesis = {PhD dissertation},reprintedin = {Reprinted in}}
 
 \defaultfontfeatures{Ligatures=TeX, Numbers=OldStyle}
-isopage[12]
+\isopage[12]
 \setsecnumdepth{subsubsection}
 \setcounter{tocdepth}{3}
 \counterwithout{section}{chapter}
