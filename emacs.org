@@ -234,9 +234,6 @@ This sets the colours of the background and fonts.
 ** Fonts
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-  (setq default-frame-alist '((font . "Iosevka SS05 Light-12")))
-  (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
-  (setq buffer-face-mode-face '(:family "Iosevka Fixed SS05"))
 #+END_SRC
 
 ** Misc
@@ -705,10 +702,17 @@ Hippie-expand is a nice autocompletion engine
 (global-set-key (kbd "M-/") 'hippie-expand)
 #+END_SRC
 
+*** Writing environment improvements
+
 Narrower margins to focus when writing
 
 #+begin_src emacs-lisp :noweb-ref editing
-(use-package olivetti)
+  (use-package olivetti
+    :config
+    (add-hook 'olivetti-mode-hook
+              (defun my-olivetti-mode-hook ()
+                (if olivetti-mode (variable-pitch-mode 1)
+                  (variable-pitch-mode -1))))
 #+end_src
 ** Smartparens
 
@@ -937,6 +941,9 @@ The following sets up Org-mode itself
                        (let ((filename (buffer-file-name (current-buffer))))
                          (when (and filename (string= "trello" (file-name-extension filename)))
                            (org-trello-mode))))))
+
+  (use-package org-bullets
+    :hook (org-mode . org-bullets-mode))
 #+END_SRC
   
 ** Markdown and pandoc
