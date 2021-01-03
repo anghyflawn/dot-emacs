@@ -7,10 +7,8 @@
 We use [[http://github.com/jwiegley/use-package][use-package]] to manage packages. Thus we start off by installing it.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-  (eval-when-compile
-    (require 'use-package))
-  (require 'diminish)
-  (require 'bind-key)
+  (use-package diminish)
+  (use-package bind-key)
 #+END_SRC
 
 ** Pallet
@@ -18,13 +16,14 @@ We use [[http://github.com/jwiegley/use-package][use-package]] to manage package
 We also need to actually make sure Pallet is in use.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(pallet-mode)
+;; (pallet-mode -1)
 #+END_SRC
 
 ** Keep packages up to date
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
   (use-package auto-package-update
+    :disabled t
     :config
     (setq auto-package-update-delete-old-versions t
           auto-package-update-hide-results t)
@@ -45,7 +44,8 @@ This sets up Emacs for GPG pinentry
 ** Keep =~/.emacs.d= clean
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-(use-package no-littering)
+  (use-package no-littering
+    :straight t)
 #+END_SRC
 
 * Initialization
@@ -69,22 +69,24 @@ Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs
 ** System  specifics
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-  (setq x-alt-keysym 'meta)
-  (setq delete-by-moving-to-trash t)
-  (exec-path-from-shell-initialize)
+      (setq x-alt-keysym 'meta)
+      (setq delete-by-moving-to-trash t)
+      (use-package exec-path-from-shell
+	:config
+	(exec-path-from-shell-initialize))
 
-  (pcase system-type
-    ('darwin
-     (setq trash-directory "~/.Trash/")
-     ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
-     (when (executable-find "gls")
-       (setq insert-directory-program "gls"))
-     (global-set-key (kbd "M-3")  ;; My Mac had # on Alt-3
-                     (lambda () 
-                       (interactive) 
-                       (insert "#"))) )
-    ('gnu/linux
-     (setq trash-directory "~/.local/share/Trash/files/")))
+      (pcase system-type
+	('darwin
+	 (setq trash-directory "~/.Trash/")
+	 ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
+	 (when (executable-find "gls")
+	   (setq insert-directory-program "gls"))
+	 (global-set-key (kbd "M-3")  ;; My Mac had # on Alt-3
+			 (lambda () 
+			   (interactive) 
+			   (insert "#"))) )
+	('gnu/linux
+	 (setq trash-directory "~/.local/share/Trash/files/")))
 #+END_SRC
 
 ** Temporary files
@@ -165,12 +167,15 @@ Don't show symlinked filenames
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
   (use-package dashboard
+    :after projectile org
     :config
     (dashboard-setup-startup-hook)
     (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))
-          dashboard-items '((recents . 5)
-                            (projects . 5)
-                            (agenda . 10))))
+	  dashboard-items '((recents . 5)
+			    (projects . 5)
+			    (agenda . 10))
+	  dashboard-set-heading-icons t
+	  dashboard-set-file-icons t))
 #+END_SRC
 
 ** Mode-line
@@ -187,11 +192,11 @@ Some packages to fix the mode-line
     :init
     (doom-modeline-mode 1)
     :config
-    (setq doom-modeline-height 1)
-    (let ((mode-line-family "Merriweather"))
-      (set-face-attribute 'mode-line nil :family mode-line-family :height 110)
-      (set-face-attribute 'mode-line-inactive nil :family mode-line-family :height 110))
-    (setq doom-modeline-icon (display-graphic-p)
+    (custom-set-faces
+     '(mode-line ((t (:family "Merriweather" :height 0.9))))
+     '(mode-line-inactive ((t (:family "Merriweather" :height 0.9)))))
+    (setq doom-modeline-height 1
+          doom-modeline-icon (display-graphic-p)
           doom-modeline-major-mode-icon t
           doom-modeline-major-mode-color-icon t
           doom-modeline-unicode-fallback t
@@ -203,7 +208,7 @@ Some packages to fix the mode-line
           doom-modeline-workspace-name t
           doom-modeline-modal-icon t
           doom-modeline-mu4e t))
-#+end_src
+    #+end_src
 
 ** Unneeded chrome
 
@@ -355,8 +360,11 @@ Makes it clearer which buffer is active
   (use-package dimmer
     :custom (dimmer-fraction 0.4)
     :config
-    (dimmer-mode 1)
-    (setq dimmer-exclusion-regexp "helm"))
+    (dimmer-configure-which-key)
+    (dimmer-configure-helm)
+    (dimmer-configure-hydra)
+    (dimmer-configure-magit)
+    (dimmer-mode 1))
 #+END_SRC
 
 ** Zoom windows
@@ -484,6 +492,8 @@ Magit provides featureful Git integration.
     (abridge-diff-mode 1))
 
   (use-package git-timemachine)
+
+  (use-package git-auto-commit-mode)
 #+END_SRC
 
 ** Programming modes
@@ -553,7 +563,7 @@ Elpy is a bunch of nice Python utilities.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package ess-site
-    :ensure ess
+    :straight ess
     :mode ("\\.R\\'" . ess-r-mode)
     :config
     (use-package ess-smart-underscore)
@@ -613,15 +623,21 @@ This is the recommended solution for Rmarkdown files.
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package polymode           ; ESS with polymode
     :mode (("\\.[Rr]md" . poly-markdown+r-mode)
-           ("\\.[Rr]nw" . poly-noweb+r-mode))
+	   ("\\.[Rr]nw" . poly-noweb+r-mode))
     :config
-    (require 'poly-R)               ; Load necessary modes
-    (require 'poly-markdown)
-    (require 'poly-noweb)
     (setq-default 
      pm-weaver "knitR-ESS"
      polymode-weaver-output-file-format "%s"
      polymode-exporter-output-file-format "%s"))
+
+  (use-package poly-R
+    :after polymode ess-site)
+
+  (use-package poly-markdown
+    :after polymode markdown-mode)
+
+  (use-package poly-noweb
+    :after polymode)
 #+END_SRC
 
 *** Stan
@@ -711,7 +727,7 @@ Hippie-expand is a nice autocompletion engine
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package smartparens-config
-    :ensure smartparens
+    :straight smartparens
     :diminish smartparens-mode
     :config
     (show-smartparens-global-mode t)
@@ -759,76 +775,75 @@ Hippie-expand is a nice autocompletion engine
 ** LaTeX
    
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-  (use-package auctex 
-    :ensure t
-    :mode ("\\.tex\\'" . LaTeX-mode)
-    :commands (LaTeX-mode latex-mode plain-tex-mode)
-    :init
-    (defun insert-feature (arg feature value)
-      "This just saves some typing, feel free to comment
-                       out."
-      (interactive "P\nMFeature: \nMValue: ")
-      (insert (format
-               (if arg
-                   "\\mbox{\\ensuremath{%s}%s}"
-                 "\\mbox{[\\ensuremath{%s}%s]}")
-               value feature)))
-    (setq-default my-alternative-input-method "ipa-x-sampa")
+    (use-package tex-site
+      :straight auctex
+      :mode ("\\.tex\\'" . LaTeX-mode)
+      :commands (LaTeX-mode latex-mode plain-tex-mode)
+      :init
+      (defun insert-feature (arg feature value)
+        "This just saves some typing, feel free to comment
+                         out."
+        (interactive "P\nMFeature: \nMValue: ")
+        (insert (format
+                 (if arg
+                     "\\mbox{\\ensuremath{%s}%s}"
+                   "\\mbox{[\\ensuremath{%s}%s]}")
+                 value feature)))
+      (setq-default my-alternative-input-method "ipa-x-sampa")
 
-    (defun LaTeX-narrow-to-subtree ()
-      "Make text outside current section invisible."
-      (interactive)
-      (save-excursion
-        (widen)
-        (outline-mark-subtree)
-        (narrow-to-region (point) (mark))
-        (setq deactivate-mark t)))
+      (defun LaTeX-narrow-to-subtree ()
+        "Make text outside current section invisible."
+        (interactive)
+        (save-excursion
+          (widen)
+          (outline-mark-subtree)
+          (narrow-to-region (point) (mark))
+          (setq deactivate-mark t)))
 
 
-    (add-hook 'LaTeX-mode-hook
-              (defun my-LaTeX-mode-hook ()
-                (setq font-latex-match-function-keywords '(("ipa" "{")
-                                                           ("twe" "{{{")
-                                                           ("mbi" "{{")
-                                                           ("x" "[{{")
-                                                           ("xr" "[{{") 
-                                                           ("ox" "[{{{")
-                                                           ("featr" "{")
-                                                           "ex" "pex" "pex~" "xe" "a")
-                      font-latex-match-biblatex-keywords '(("posscitet" "[[{"))
-                      TeX-parse-self t
-                      TeX-auto-save t
-                      TeX-electric-sub-and-superscript t
-                      LaTeX-csquotes-close-quote "}"
-                      LaTeX-csquotes-open-quote "\\enquote{"
-                      TeX-outline-extra '(("\\\\printbibliography" 2))
-                      TeX-source-correlate t
-                      TeX-engine 'luatex) 
-                (flyspell-mode 1)
-                (TeX-fold-mode 1)
-                ;; This activates the X-SAMPA layout, making
-                ;; it accessible via C-\
-                (set-input-method my-alternative-input-method)
-                (toggle-input-method)
-                (outline-minor-mode 1)
-                (turn-on-reftex)
-                (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
-                (TeX-source-correlate-mode 1)
-                (local-set-key (kbd "C-c ]") 'helm-bibtex)
-                (add-to-list 'TeX-view-program-selection
-                             '(output-pdf "PDF Tools"))
-                (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)))
-    :config
-    (bind-keys :map TeX-mode-map
-               ("C-x n @" . LaTeX-narrow-to-subtree)
-               ("C-c f" . insert-feature)
-               ("C-c }" . LaTeX-close-environment)))
+      (add-hook 'LaTeX-mode-hook
+                (defun my-LaTeX-mode-hook ()
+                  (setq font-latex-match-function-keywords '(("ipa" "{")
+                                                             ("twe" "{{{")
+                                                             ("mbi" "{{")
+                                                             ("x" "[{{")
+                                                             ("xr" "[{{") 
+                                                             ("ox" "[{{{")
+                                                             ("featr" "{")
+                                                             "ex" "pex" "pex~" "xe" "a")
+                        font-latex-match-biblatex-keywords '(("posscitet" "[[{"))
+                        TeX-parse-self t
+                        TeX-auto-save t
+                        TeX-electric-sub-and-superscript t
+                        LaTeX-csquotes-close-quote "}"
+                        LaTeX-csquotes-open-quote "\\enquote{"
+                        TeX-outline-extra '(("\\\\printbibliography" 2))
+                        TeX-source-correlate t
+                        TeX-engine 'luatex) 
+                  (flyspell-mode 1)
+                  (TeX-fold-mode 1)
+                  ;; This activates the X-SAMPA layout, making
+                  ;; it accessible via C-\
+                  (set-input-method my-alternative-input-method)
+                  (toggle-input-method)
+                  (outline-minor-mode 1)
+                  (turn-on-reftex)
+                  (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
+                  (TeX-source-correlate-mode 1)
+                  (local-set-key (kbd "C-c ]") 'helm-bibtex)
+                  (add-to-list 'TeX-view-program-selection
+                               '(output-pdf "PDF Tools"))
+                  (bind-keys :map TeX-mode-map
+                             ("C-x n @" . LaTeX-narrow-to-subtree)
+                             ("C-c f" . insert-feature)
+                             ("C-c }" . LaTeX-close-environment))
+                  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
-  (use-package auctex-latexmk
-    :after auctex
-    :config
-    (auctex-latexmk-setup)
-    (setq auctex-latexmk-inherit-TeX-PDF-mode t))
+    (use-package auctex-latexmk
+      :after auctex
+      :config
+      (auctex-latexmk-setup)
+      (setq auctex-latexmk-inherit-TeX-PDF-mode t))
 
 #+END_SRC
 
@@ -852,6 +867,7 @@ The following sets up Org-mode itself
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org
+    :straight org-plus-contrib
     :diminish org-indent-mode
     :bind
     ("C-c l" . org-store-link)
@@ -916,6 +932,7 @@ The following sets up Org-mode itself
               (local-set-key (kbd "C-c '") 'org-edit-src-code)))
 
   (use-package org-crypt
+    :straight nil
     :config
     (org-crypt-use-before-save-magic)
     (setq org-tags-exclude-from-inheritance '("crypt")
@@ -1250,6 +1267,7 @@ Search-based navigation
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package lilypond-mode
+    :straight nil
     :mode ("\\.ly$" . LilyPond-mode))
 #+END_SRC
 
@@ -1301,8 +1319,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
      ("C-x C-f" . helm-find-files)
      ("C-x C-h" . helm-for-files)
      ("C-s" . helm-occur)
-     ("C-x C-d" . helm-browse-project)
-     ("C-c u" . helm-org-in-buffer-headings))
+     ("C-x C-d" . helm-browse-project))
     :commands (helm-buffers-list
                helm-colors
                helm-find-files
@@ -1312,14 +1329,13 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
                helm-help
                helm-show-kill-ring
                helm-org-keywords
-               helm-org-in-buffer-headings
                helm-M-x
                helm-occur)
     :diminish
     helm-mode
     :config
     (helm-mode)
-    (use-package helm-config)
+    (require 'helm-config)
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z") 'helm-select-action)
@@ -1340,6 +1356,9 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
 
   (use-package helm-dictionary
     :after helm)
+
+  (use-package helm-org
+    :bind ("C-c u" . helm-org-in-buffer-headings))
 #+END_SRC
 
 Helm-backup is a handy tool which puts all your saed files under Git
@@ -1546,215 +1565,216 @@ Keep the Drafts folder clean
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
-  (use-package mu4e
-    :commands (mu4e compose-mail)
-    :load-path  "/usr/share/emacs/site-lisp/mu4e/"
-    :bind ("<f5>" . mu4e)
-    :hook
-    (mu4e-headers-mode . buffer-face-mode)
-    :init
+    (use-package mu4e
+      :commands (mu4e compose-mail)
+      :load-path  "/usr/share/emacs/site-lisp/mu4e/"
+      :bind ("<f5>" . mu4e)
+      :hook
+      (mu4e-headers-mode . buffer-face-mode)
+      :init
 
-    (use-package mu4e-contrib)
+      (require 'mu4e-contrib)
 
-    (setq mu4e-update-interval 300
-          mu4e-change-filenames-when-moving t
-          mu4e-attachment-dir  "~/Downloads"
-          mu4e-view-show-images t
-          mu4e-get-mail-command "true"
-          mail-user-agent 'mu4e-user-agent
-          mu4e-compose-complete-addresses t
-          mu4e-compose-complete-only-after "2012-09-15"
-          mu4e-headers-include-related nil
-          mu4e-hide-index-messages t
-          mu4e-use-fancy-chars t
-          mu4e-headers-seen-mark      '("S" . "✔")
-          mu4e-headers-unread-mark    '("u" . "●")
-          mu4e-headers-new-mark       '("N" . "○")
-          mu4e-headers-replied-mark   '("R" . "←")
-          mu4e-headers-passed-mark    '("P" . "→")
-          mu4e-headers-flagged-mark   '("F" . "⚑")
-          mu4e-headers-draft-mark     '("D" . "⚒")
-          mu4e-headers-encrypted-mark '("x" . "e")
-          mu4e-headers-signed-mark    '("s" . "s")
-          mu4e-headers-trashed-mark   '("T" . "×")
-          mu4e-headers-attach-mark    '("a" . "⚓")
-          mu4e-headers-visible-flags  '(draft flagged passed replied unread)
-          mu4e-headers-default-prefix     '("|" . "│")
-          mu4e-headers-has-child-prefix   '("+" . "└")
-          mu4e-headers-first-child-prefix '("\\" . "└")
-          mu4e-index-cleanup t
-          mu4e-index-lazy-check nil
-          mu4e-headers-date-format "%d-%m-%Y"
-          message-kill-buffer-on-exit t
-          mu4e-view-use-gnus t
-          mu4e-compose-dont-reply-to-self t
-          mu4e-compose-keep-self-cc nil
-          smtpmail-queue-dir "~/mail/queue/cur")
+      (setq mu4e-update-interval 300
+            mu4e-change-filenames-when-moving t
+            mu4e-attachment-dir  "~/Downloads"
+            mu4e-view-show-images t
+            mu4e-get-mail-command "true"
+            mail-user-agent 'mu4e-user-agent
+            mu4e-compose-complete-addresses t
+            mu4e-compose-complete-only-after "2012-09-15"
+            mu4e-headers-include-related nil
+            mu4e-hide-index-messages t
+            mu4e-use-fancy-chars t
+            mu4e-headers-seen-mark      '("S" . "✔")
+            mu4e-headers-unread-mark    '("u" . "●")
+            mu4e-headers-new-mark       '("N" . "○")
+            mu4e-headers-replied-mark   '("R" . "←")
+            mu4e-headers-passed-mark    '("P" . "→")
+            mu4e-headers-flagged-mark   '("F" . "⚑")
+            mu4e-headers-draft-mark     '("D" . "⚒")
+            mu4e-headers-encrypted-mark '("x" . "e")
+            mu4e-headers-signed-mark    '("s" . "s")
+            mu4e-headers-trashed-mark   '("T" . "×")
+            mu4e-headers-attach-mark    '("a" . "⚓")
+            mu4e-headers-visible-flags  '(draft flagged passed replied unread)
+            mu4e-headers-default-prefix     '("|" . "│")
+            mu4e-headers-has-child-prefix   '("+" . "└")
+            mu4e-headers-first-child-prefix '("\\" . "└")
+            mu4e-index-cleanup t
+            mu4e-index-lazy-check nil
+            mu4e-headers-date-format "%d-%m-%Y"
+            message-kill-buffer-on-exit t
+            mu4e-view-use-gnus t
+            mu4e-compose-dont-reply-to-self t
+            mu4e-compose-keep-self-cc nil
+            smtpmail-queue-dir "~/mail/queue/cur")
 
-    (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
+      (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
 
-    (defvar ignore-email t)
-    (defun ignore-email-toggle ()
-      (interactive)
-      (setq ignore-email (not ignore-email)))
+      (defvar ignore-email t)
+      (defun ignore-email-toggle ()
+        (interactive)
+        (setq ignore-email (not ignore-email)))
 
-    (defun my-mu4e-update-hook ()
-      "Only check email automatically on weekdays"
-      (setq mu4e-get-mail-command
-            (if ignore-email
-                "true"
-              (if (member (nth 6 (decode-time)) '(6 0))
+      (defun my-mu4e-update-hook ()
+        "Only check email automatically on weekdays"
+        (setq mu4e-get-mail-command
+              (if ignore-email
                   "true"
-                "mbsync -a"))))
-    (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
+                (if (member (nth 6 (decode-time)) '(6 0))
+                    "true"
+                  "mbsync -a"))))
+      (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
 
-    (use-package helm-mu
-      :bind ("C-c C-x m" . helm-mu-contacts)
-      ("<f6>" . helm-mu)
-      :config
-      (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
-      :bind
-      (:map mu4e-main-mode-map
-            ("s" . helm-mu))
-      (:map mu4e-headers-mode-map
-            ("s" . helm-mu))
-      (:map mu4e-view-mode-map
-            ("s" . helm-mu)))
+      (use-package helm-mu
+        :bind ("C-c C-x m" . helm-mu-contacts)
+        ("<f6>" . helm-mu)
+        :config
+        (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
+        :bind
+        (:map mu4e-main-mode-map
+              ("s" . helm-mu))
+        (:map mu4e-headers-mode-map
+              ("s" . helm-mu))
+        (:map mu4e-view-mode-map
+              ("s" . helm-mu)))
 
-    (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive or flag:unread maildir:/dugs/INBOX or flag:unread maildir:/dugs/Archive")
+      (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive or flag:unread maildir:/dugs/INBOX or flag:unread maildir:/dugs/Archive")
 
-    (add-to-list 'mu4e-bookmarks
-                 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+      (add-to-list 'mu4e-bookmarks
+                   '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
 
-    (add-to-list 'mu4e-bookmarks
-                 '("flag:flagged" "Flagged messages" ?f))
+      (add-to-list 'mu4e-bookmarks
+                   '("flag:flagged" "Flagged messages" ?f))
 
-    (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
-    (add-to-list 'mu4e-view-actions
-                 '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+      (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
+      (add-to-list 'mu4e-view-actions
+                   '("ViewInBrowser" . mu4e-action-view-in-browser) t)
 
-    (setq mu4e-contexts
-          `(,(make-mu4e-context
-              :name "Work"
-              :enter-func (lambda () (mu4e-message "Entering main work context"))
-              :leave-func (lambda () (mu4e-message "Leaving main work context"))
-              :match-func (lambda (msg)
-                            (when msg
-                              (mu4e-message-contact-field-matches msg :to "iosad")))
-              :vars'((user-full-name . "Pavel Iosad")
-                     (user-mail-address . "pavel.iosad@ed.ac.uk")
-                     (mu4e-compose-reply-to-address . nil)
-                     (mu4e-compose-signature . (make-random-signature))
-                     (mu4e-drafts-folder . "/work/Drafts")
-                     (mu4e-sent-folder . "/work/Sent")
-                     (mu4e-trash-folder . "/work/Trash")
-                     (mu4e-refile-folder . "/work/Archive")
-                     (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
-                                                (:maildir "/work/Archive" :key ?a)
-                                                (:maildir "/work/Sent" :key ?s)
-                                                (:maildir "/work/Trash" :key ?t)))
-                     (message-sendmail-extra-arguments . nil)))
-            ,(make-mu4e-context
-              :name "DUGS"
-              :enter-func (lambda () (mu4e-message "Entering DUGS context"))
-              :leave-func (lambda () (mu4e-message "Leaving DUGS context"))
-              :match-func (lambda (msg)
-                            (when msg
-                              (mu4e-message-contact-field-matches msg :to '("ppls.ug.director"))))
-              :vars `((user-mail-address . "PPLS.UG.Director@ed.ac.uk")
-                      (user-full-name . "PPLS Undergraduate Director")
-                      (mu4e-refile-folder . "/dugs/Archive")
-                      (mu4e-drafts-folder . "/dugs/Drafts")
-                      (mu4e-sent-folder . "/dugs/Sent Items")
-                      (mu4e-trash-folder . "/dugs/Trash")
-                      (mu4e-compose-signature . ,dugs-signature)
-                      (mu4e-maildir-shortcuts . ((:maildir "/dugs/INBOX" :key ?i)
-                                                 (:maildir "/dugs/Archive" :key ?a)
-                                                 (:maildir "/dugs/Sent Items"  :key ?s)
-                                                 (:maildir "/dugs/Trash"  :key ?t)))
-                      (message-sendmail-extra-arguments . ("-a" "dugs"))))
-            ,(make-mu4e-context
-              :name "Personal"
-              :enter-func (lambda () (mu4e-message "Entering personal context"))
-              :leave-func (lambda () (mu4e-message "Leaving personal context"))
-              :match-func (lambda (msg)
-                            (when msg
-                              (mu4e-message-contact-field-matches msg :to "anghyflawn")))
-              :vars '((user-full-name . "Pavel Iosad")
-                      (user-mail-address . "pavel@anghyflawn.net")
-                      (mu4e-compose-reply-to-address . nil)
-                      (mu4e-compose-signature . "Pavel Iosad")
-                      (mu4e-drafts-folder . "/work/Drafts")
-                      (mu4e-sent-folder . "/work/Sent")
-                      (mu4e-trash-folder . "/work/Trash")
-                      (mu4e-refile-folder . "/work/Archive")
-                      (mu4e-maildir-shortcuts . '((:maildir "/work/Inbox" :key ?i)
+      (setq mu4e-contexts
+            `(,(make-mu4e-context
+                :name "Work"
+                :enter-func (lambda () (mu4e-message "Entering main work context"))
+                :leave-func (lambda () (mu4e-message "Leaving main work context"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (mu4e-message-contact-field-matches msg :to "iosad")))
+                :vars'((user-full-name . "Pavel Iosad")
+                       (user-mail-address . "pavel.iosad@ed.ac.uk")
+                       (mu4e-compose-reply-to-address . nil)
+                       (mu4e-compose-signature . (make-random-signature))
+                       (mu4e-drafts-folder . "/work/Drafts")
+                       (mu4e-sent-folder . "/work/Sent")
+                       (mu4e-trash-folder . "/work/Trash")
+                       (mu4e-refile-folder . "/work/Archive")
+                       (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
                                                   (:maildir "/work/Archive" :key ?a)
                                                   (:maildir "/work/Sent" :key ?s)
                                                   (:maildir "/work/Trash" :key ?t)))
-                      (message-sendmail-extra-arguments . ("-a" "personal")))))
-          mu4e-context-policy 'pick-first
-          mu4e-compose-context-policy 'ask)
+                       (message-sendmail-extra-arguments . nil)))
+              ,(make-mu4e-context
+                :name "DUGS"
+                :enter-func (lambda () (mu4e-message "Entering DUGS context"))
+                :leave-func (lambda () (mu4e-message "Leaving DUGS context"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (mu4e-message-contact-field-matches msg :to '("ppls.ug.director"))))
+                :vars `((user-mail-address . "PPLS.UG.Director@ed.ac.uk")
+                        (user-full-name . "PPLS Undergraduate Director")
+                        (mu4e-refile-folder . "/dugs/Archive")
+                        (mu4e-drafts-folder . "/dugs/Drafts")
+                        (mu4e-sent-folder . "/dugs/Sent Items")
+                        (mu4e-trash-folder . "/dugs/Trash")
+                        (mu4e-compose-signature . ,dugs-signature)
+                        (mu4e-maildir-shortcuts . ((:maildir "/dugs/INBOX" :key ?i)
+                                                   (:maildir "/dugs/Archive" :key ?a)
+                                                   (:maildir "/dugs/Sent Items"  :key ?s)
+                                                   (:maildir "/dugs/Trash"  :key ?t)))
+                        (message-sendmail-extra-arguments . ("-a" "dugs"))))
+              ,(make-mu4e-context
+                :name "Personal"
+                :enter-func (lambda () (mu4e-message "Entering personal context"))
+                :leave-func (lambda () (mu4e-message "Leaving personal context"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (mu4e-message-contact-field-matches msg :to "anghyflawn")))
+                :vars '((user-full-name . "Pavel Iosad")
+                        (user-mail-address . "pavel@anghyflawn.net")
+                        (mu4e-compose-reply-to-address . nil)
+                        (mu4e-compose-signature . "Pavel Iosad")
+                        (mu4e-drafts-folder . "/work/Drafts")
+                        (mu4e-sent-folder . "/work/Sent")
+                        (mu4e-trash-folder . "/work/Trash")
+                        (mu4e-refile-folder . "/work/Archive")
+                        (mu4e-maildir-shortcuts . '((:maildir "/work/Inbox" :key ?i)
+                                                    (:maildir "/work/Archive" :key ?a)
+                                                    (:maildir "/work/Sent" :key ?s)
+                                                    (:maildir "/work/Trash" :key ?t)))
+                        (message-sendmail-extra-arguments . ("-a" "personal")))))
+            mu4e-context-policy 'pick-first
+            mu4e-compose-context-policy 'ask)
 
-    (defun my-mu4e-context-switch ()
-      "Interactively update the context"
-      (interactive)
-      (mu4e-context-switch)
-      (save-excursion
-        (message-goto-from)
-        (kill-whole-line)
-        (insert (mu4e~draft-header "From" (or (mu4e~draft-from-construct) "")))
-        (message-goto-signature)
-        (previous-line)
-        (kill-region (point) (point-max))
-        (let ((message-signature mu4e-compose-signature))
-          (message-insert-signature))))
+      (defun my-mu4e-context-switch ()
+        "Interactively update the context"
+        (interactive)
+        (mu4e-context-switch)
+        (save-excursion
+          (message-goto-from)
+          (kill-whole-line)
+          (insert (mu4e~draft-header "From" (or (mu4e~draft-from-construct) "")))
+          (message-goto-signature)
+          (previous-line)
+          (kill-region (point) (point-max))
+          (let ((message-signature mu4e-compose-signature))
+            (message-insert-signature))))
 
 
-    (add-hook 'mu4e-compose-mode-hook
-              (defun my-compose-mode-hook ()
-                (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
-                                                ("Work" ,(make-random-signature))
-                                                ("DUGS" ,dugs-signature)))
-                (auto-fill-mode)
-                (set-fill-column 72)
-                (typopunct-mode)
-                (flyspell-mode)
-                (local-set-key (kbd "C-c C-x C-;") 'my-mu4e-context-switch)))
+      (add-hook 'mu4e-compose-mode-hook
+                (defun my-compose-mode-hook ()
+                  (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
+                                                  ("Work" ,(make-random-signature))
+                                                  ("DUGS" ,dugs-signature)))
+                  (auto-fill-mode)
+                  (set-fill-column 72)
+                  (typopunct-mode)
+                  (flyspell-mode)
+                  (local-set-key (kbd "C-c C-x C-;") 'my-mu4e-context-switch)))
 
-    (setq message-send-mail-function 'message-send-mail-with-sendmail
-          sendmail-program "/usr/bin/msmtp")
+      (setq message-send-mail-function 'message-send-mail-with-sendmail
+            sendmail-program "/usr/bin/msmtp")
 
-    (use-package org-mu4e
+      (use-package org-mu4e
+        :straight nil
+        :config
+        (setq org-mu4e-link-query-in-headers-mode nil
+              org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
+                                      ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
+
+      (use-package mu4e-alert
+        :straight (:host github :repo "iqbalansari/mu4e-alert"))
+      (mu4e-alert-enable-notifications)
+      (mu4e-alert-set-default-style 'libnotify)
+      (setq mu4e-alert-interesting-mail-query unread-query)
+      (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails)
+
+      (require 'mu4e-icalendar)
+      (mu4e-icalendar-setup))
+
+    (use-package mu4e-views
+      :after mu4e
+      :defer nil
+      :bind (:map mu4e-headers-mode-map
+                  ("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
+                  ("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
+                  ("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
+                  ("f" . mu4e-views-toggle-auto-view-selected-message)) ;; toggle opening messages automatically when moving in the headers view
       :config
-      (setq org-mu4e-link-query-in-headers-mode nil
-            org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
-                                    ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
-
-    (require 'mu4e-alert)
-    (mu4e-alert-enable-notifications)
-    ;; (mu4e-alert-enable-mode-line-display)
-    (mu4e-alert-set-default-style 'libnotify)
-    (setq mu4e-alert-interesting-mail-query unread-query)
-    (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails)
-
-    (require 'mu4e-icalendar)
-    (mu4e-icalendar-setup))
-
-  (use-package mu4e-views
-    :after mu4e
-    :defer nil
-    :bind (:map mu4e-headers-mode-map
-                ("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
-                ("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
-                ("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
-                ("f" . mu4e-views-toggle-auto-view-selected-message)) ;; toggle opening messages automatically when moving in the headers view
-    :config
-    (setq mu4e-views-completion-method 'helm) ;; use ivy for completion
-    (setq mu4e-views-default-view-method "gnus") ;; make xwidgets default
-    (mu4e-views-mu4e-use-view-msg-method "gnus") ;; select the default
-    (setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
-    (setq mu4e-views-auto-view-selected-message nil)) 
+      (setq mu4e-views-completion-method 'helm) ;; use ivy for completion
+      (setq mu4e-views-default-view-method "gnus") ;; make xwidgets default
+      (mu4e-views-mu4e-use-view-msg-method "gnus") ;; select the default
+      (setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
+      (setq mu4e-views-auto-view-selected-message nil)) 
 #+END_SRC
 
 *** Mail check
@@ -1776,8 +1796,7 @@ Check mail if the timer breaks down
 =Swiper= is nice for searching longer files
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-  (use-package swiper
-    :commands (swiper swiper-query-replace)
+  (use-package swiper-helm
     :bind
     ("C-s" . swiper-helm)
     ("C-%" . swiper-query-replace))
@@ -1922,7 +1941,6 @@ A drop-in replacement for Emacs' help buffers
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package treemacs
-    :ensure t
     :defer t
     :config
     (progn
@@ -1985,12 +2003,10 @@ A drop-in replacement for Emacs' help buffers
           ("C-x t M-t" . treemacs-find-tag)))
 
   (use-package treemacs-evil
-    :after treemacs evil
-    :ensure t)
+    :after treemacs evil)
 
   (use-package treemacs-magit
-    :after treemacs magit
-    :ensure t)
+    :after treemacs magit)
 #+END_SRC
 
 ** Reaper
@@ -2079,7 +2095,7 @@ Subtitle editing, because that is apparently my life now
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package subed
-    :load-path "~/.emacs.d/etc/subed/"
+    :straight (:host github :repo "rndusr/subed")
     :mode
     ("\\.srt\\'" . subed-mode)
     :config
@@ -2096,8 +2112,11 @@ Subtitle editing, because that is apparently my life now
 ** Spotify
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
+  (use-package oauth2)
+
   (use-package spotify
-    :load-path "~/.emacs.d/spotify.el/"
+    :straight (:host github :repo "danielfm/spotify.el")
+    :after oauth2
     :bind-keymap ("C-c s" . spotify-command-map)
     :config
     (setq
@@ -2137,7 +2156,6 @@ Manage annoying pop-up buffers
 
 #+begin_src emacs-lisp :noweb-ref utils
   (use-package popwin
-    :ensure t
     :bind-keymap ("C-c M-p" . popwin:keymap)
     :config
     (popwin-mode 1)

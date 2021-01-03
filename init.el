@@ -9,21 +9,26 @@
 
 ;; Cask manages our package dependencies
 
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-(require 'cask "/usr/share/emacs/site-lisp/cask/cask.el")
-(cask-initialize)
-
-;; Pallet allows us to use Cask in tandem with package.el
-(require 'pallet)
-
-;; Load encryption
-
-(require 'org-crypt)
-(org-crypt-use-before-save-magic)
-(setq org-tags-exclude-from-inheritance '("crypt")
-      org-crypt-key nil)
+(straight-use-package 'use-package)
+(setq straight-use-package-by-default t)
 
 ;; Now load-up org-mode
+
+(use-package org
+  :straight org-plus-contrib)
 
 (require 'ob-tangle)
 
