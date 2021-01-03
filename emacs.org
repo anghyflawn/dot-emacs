@@ -191,13 +191,15 @@ Some packages to fix the mode-line
 
 ** Unneeded chrome
 
-We don't need scroll bars or tool bars
+We don't need scroll bars or tool bars, or indeed menus
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
   (when (fboundp 'tool-bar-mode) 
     (tool-bar-mode -1))
   (when (fboundp 'scroll-bar-mode) 
     (scroll-bar-mode -1))
+  (when (fboundp 'menu-bar-mode)
+    (menu-bar-mode -1))
 #+END_SRC
 
 Diminish some modes that are always on and which serve no purpose in the mode-line
