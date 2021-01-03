@@ -234,6 +234,11 @@ This sets the colours of the background and fonts.
 ** Fonts
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
+  (setq default-frame-alist '((font . "Iosevka SS05 Light-12")))
+  (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
+  (setq buffer-face-mode-face '(:family "Iosevka Fixed SS05"))
+  (custom-set-faces
+   '(variable-pitch ((t (:family "Noto Serif" :height 130)))))
 #+END_SRC
 
 ** Misc
@@ -712,7 +717,7 @@ Narrower margins to focus when writing
     (add-hook 'olivetti-mode-hook
               (defun my-olivetti-mode-hook ()
                 (if olivetti-mode (variable-pitch-mode 1)
-                  (variable-pitch-mode -1))))
+                  (variable-pitch-mode -1)))))
 #+end_src
 ** Smartparens
 
@@ -959,6 +964,7 @@ This bit loads markdown-mode and sets up various customizations.
   (use-package markdown-mode
     :mode ("\\.\\(m\\(ark\\)?down\\|md\\)$" . markdown-mode)
     :config
+    (setq markdown-footnote-location 'immediately)
     (add-hook 'markdown-mode-hook
               (defun my-markdown-mode-hook ()
                 (flyspell-mode)
