@@ -234,6 +234,12 @@ This sets the colours of the background and fonts.
     (select-frame frame)
     (load-theme my-theme t))
 
+  (use-package doom-themes
+    :config
+    (setq doom-themes-treemacs-theme "doom-colors")
+    (doom-themes-treemacs-config)
+    (doom-themes-org-config))
+
   (if (daemonp)
       (add-hook 'after-make-frame-functions #'load-my-theme)
     (load-theme my-theme t))
