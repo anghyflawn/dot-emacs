@@ -1617,7 +1617,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
     (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
 
-    (defvar ignore-email t)
+    (defvar ignore-email nil)
     (defun ignore-email-toggle ()
       (interactive)
       (setq ignore-email (not ignore-email)))
