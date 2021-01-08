@@ -2101,7 +2101,7 @@ Subtitle editing, because that is apparently my life now
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package subed
-    :straight (:host github :repo "rndusr/subed")
+    :straight (:host github :repo "rndusr/subed" :files ("subed/*.el"))
     :mode
     ("\\.srt\\'" . subed-mode)
     :config
