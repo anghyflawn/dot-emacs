@@ -1766,21 +1766,6 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
     (require 'mu4e-icalendar)
     (mu4e-icalendar-setup))
-
-  (use-package mu4e-views
-    :after mu4e
-    :defer nil
-    :bind (:map mu4e-headers-mode-map
-                ("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
-                ("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
-                ("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
-                ("f" . mu4e-views-toggle-auto-view-selected-message)) ;; toggle opening messages automatically when moving in the headers view
-    :config
-    (setq mu4e-views-completion-method 'helm) ;; use ivy for completion
-    (setq mu4e-views-default-view-method "gnus") ;; make xwidgets default
-    (mu4e-views-mu4e-use-view-msg-method "gnus") ;; select the default
-    (setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
-    (setq mu4e-views-auto-view-selected-message nil)) 
 #+END_SRC
 
 *** Mail check
@@ -2099,7 +2084,13 @@ Time tracking
 
 Subtitle editing, because that is apparently my life now
 
-#+BEGIN_SRC emacs-lisp :noweb-ref utils
+#+BEGIN_SRC emacs-lisp :noweb-ref final-packages
+  (unless (boundp 'subed--init-alist)
+    (defvar subed--init-alist '(("srt" . subed-srt--init)
+                                ("vtt" . subed-vtt--init))
+      "Alist that maps file extensions to format-specific init functions."))
+  ;; trying to pre-empt some loading order problem that I don't understand
+
   (use-package subed
     :straight (:host github :repo "rndusr/subed" :files ("subed/*.el"))
     :mode
@@ -2202,7 +2193,7 @@ the ~noweb-ref~ arguments in the ~src~ blocks throughout this document.
   ;; Configuration group: pandoc
   <<pandoc>>
 
-  ;; Configuration group:
+  ;; Configuration group: mail
   <<mail>>
 
   ;; Configuration group: org
@@ -2213,6 +2204,10 @@ the ~noweb-ref~ arguments in the ~src~ blocks throughout this document.
 
   ;; Configuration group: init-after
   <<init-after>>
+
+  ;; Configuration group: final-packages (things that seem to break so
+  ;; load them last to pre-empt debug)
+  <<final-packages>>
 
   ;; emacs.el ends here
 #+END_SRC
