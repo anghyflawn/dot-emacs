@@ -165,7 +165,8 @@ Some packages to fix the mode-line
   (use-package minions
     :after doom-modeline
     :config
-    (minions-mode 1))
+    (minions-mode 1)
+    (setq minions-direct '(wc-goal-mode)))
 
   (use-package doom-modeline
     :init
@@ -1211,7 +1212,11 @@ and inserts it at point.
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0))
 #+END_SRC
 
+*** Word count goals
 
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package wc-goal-mode)
+#+end_src
 ** Evil
 
 Evil is a mode that makes vi(m) like keybindings
@@ -2161,6 +2166,7 @@ Manage annoying pop-up buffers
     (push " *Pandoc output*" popwin:special-display-config)
     (push " *Pandoc log*" popwin:special-display-config))
 #+end_src
+
 
 * Configuration Layout
 
