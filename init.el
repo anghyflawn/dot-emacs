@@ -25,6 +25,11 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
+(use-package exwm
+  :config
+  (require 'exwm-config)
+  (exwm-config-example))
+
 ;; Now load-up org-mode
 
 (use-package org
