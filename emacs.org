@@ -1215,7 +1215,9 @@ and inserts it at point.
 *** Word count goals
 
 #+begin_src emacs-lisp :noweb-ref utils
-  (use-package wc-goal-mode)
+  (use-package wc-goal-mode
+    :config
+    (setq wc-goal-modeline-format "WCΔ[%w/%gw]"))
 #+end_src
 ** Evil
 
