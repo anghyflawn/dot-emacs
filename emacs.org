@@ -735,13 +735,14 @@ Narrower margins to focus when writing
 Easily save sentences elsewhere for reuse
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package palimpsest-mode
-    :straight (:host github :repo "danielsz/Palimpsest")
-    :hook (text-mode . palimpsest-mode)
-    :custom
-    ((palimpsest-send-bottom "C-c C-x C-r")
-     (palimpsest-send-top "C-c C-x C-s")
-     (palimpsest-trash-key "C-c C-x C-q")))
+    (use-package palimpsest-mode
+      :straight (:host github :repo "danielsz/Palimpsest")
+
+      :custom
+      ((palimpsest-send-bottom "C-c C-x C-r")
+       (palimpsest-send-top "C-c C-x C-s")
+       (palimpsest-trash-key "C-c C-x C-q"))
+      :hook (text-mode . palimpsest-mode)
 #+end_src
 
 *** Imenu-list
