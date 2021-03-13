@@ -26,6 +26,7 @@
 (setq straight-use-package-by-default t)
 
 (use-package exwm
+  :disabled t
   :config
   (require 'exwm-config)
   (exwm-config-example))

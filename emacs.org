@@ -173,8 +173,8 @@ Some packages to fix the mode-line
     (doom-modeline-mode 1)
     :config
     (custom-set-faces
-     '(mode-line ((t (:family "Merriweather" :height 0.9))))
-     '(mode-line-inactive ((t (:family "Merriweather" :height 0.9)))))
+     '(mode-line ((t (:family "Aldine 401 BT" :height 1.0))))
+     '(mode-line-inactive ((t (:family "Aldine 401 BT" :height 1.0)))))
     (setq doom-modeline-height 1
           doom-modeline-icon (display-graphic-p)
           doom-modeline-major-mode-icon t
@@ -239,8 +239,8 @@ This sets the colours of the background and fonts.
   (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
   (setq buffer-face-mode-face '(:family "Iosevka Fixed SS05"))
   (custom-set-faces
-   '(default ((t (:family "Iosevka SS05" :weight light :height 150))))
-   '(variable-pitch ((t (:family "Noto Serif" :height 150)))))
+   '(default ((t (:family "Iosevka SS05" :weight light :height 165))))
+   '(variable-pitch ((t (:family "Noto Serif" :height 165)))))
 #+END_SRC
 
 ** Misc
@@ -749,7 +749,7 @@ Easily save sentences elsewhere for reuse
 
 Sidebar contents
 
-#+begin_src emacs-lisp :nowe-ref editing
+#+begin_src emacs-lisp :noweb-ref editing
   (use-package imenu-list
     :bind ("C-c C-'" . imenu-list-smart-toggle)
     :config
@@ -1843,7 +1843,8 @@ Much better than DocView
     :config
     (pdf-tools-install :no-query)
     (setq pdf-view-resize-factor 1.1)
-    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+    (add-hook 'pdf-view-mode-hook 'pdf-view-midnight-minor-mode))
 #+END_SRC
 ** Dired
 
@@ -2065,7 +2066,10 @@ Time tracking
   (use-package helm-projectile
     :config
     (setq projectile-completion-system 'helm)
-    (helm-projectile-on))
+    (helm-projectile-on)
+    (defvar helm-source-file-not-found
+      (helm-build-dummy-source "Create file" :action 'find-file))
+    (add-to-list 'helm-projectile-sources-list helm-source-file-not-found t))
 #+END_SRC
 
 ** Org-roam and related
