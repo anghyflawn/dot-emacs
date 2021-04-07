@@ -237,10 +237,11 @@ This sets the colours of the background and fonts.
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
   ;; (setq default-frame-alist '((font . "Iosevka SS05-15")))
   (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
+  (set-fontset-font "fontset-default" 'hebrew "Noto Sans Hebrew")
   (setq buffer-face-mode-face '(:family "Iosevka Fixed SS05"))
   (custom-set-faces
    '(default ((t (:family "Iosevka SS05" :weight light :height 165))))
-   '(variable-pitch ((t (:family "Noto Serif" :height 165)))))
+   '(variable-pitch ((t (:family "Noto Serif" :height 180)))))
 #+END_SRC
 
 ** Misc
@@ -872,7 +873,7 @@ Sidebar contents
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
   (use-package auctex-latexmk
-    :after auctex
+    :after tex-site
     :config
     (add-hook 'LaTeX-mode-hook
               (defun my-LaTeXMk-setup ()
@@ -1843,8 +1844,7 @@ Much better than DocView
     :config
     (pdf-tools-install :no-query)
     (setq pdf-view-resize-factor 1.1)
-    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
-    (add-hook 'pdf-view-mode-hook 'pdf-view-midnight-minor-mode))
+    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 #+END_SRC
 ** Dired
 

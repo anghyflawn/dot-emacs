@@ -36,6 +36,7 @@
 (use-package org
   :straight org-plus-contrib)
 
+(require 'org-id)
 (require 'ob-tangle)
 
 ;; Now actually load the .org file with the configuration
