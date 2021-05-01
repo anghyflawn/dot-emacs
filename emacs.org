@@ -42,7 +42,8 @@ Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
   (setq auth-sources
-        '((:source "~/.emacs.d/secrets/authinfo.gpg")))
+        '((:source "~/.emacs.d/secrets/authinfo.gpg")
+          (:source "~/.netrc.gpg")))
 #+END_SRC
 
 ** System  specifics
@@ -241,7 +242,7 @@ This sets the colours of the background and fonts.
   (setq buffer-face-mode-face '(:family "Iosevka Fixed SS05"))
   (custom-set-faces
    '(default ((t (:family "Iosevka SS05" :weight light :height 165))))
-   '(variable-pitch ((t (:family "Noto Serif" :height 180)))))
+   '(variable-pitch ((t (:family "PT Serif" :height 180 :weight medium)))))
 #+END_SRC
 
 ** Misc
@@ -461,7 +462,10 @@ Magit provides featureful Git integration.
   (use-package magit
     :commands (magit-status magit-diff magit-log magit-blame-mode)
     :bind ("C-x g" . magit-status)
-    :init (setq magit-last-seen-setup-instructions "1.4.0"))
+    :init (setq magit-last-seen-setup-instructions "1.4.0")
+    :config
+    (add-hook 'magit-process-find-password-functions
+              'magit-process-password-auth-source))
 
   (use-package magithub
     :after magit
@@ -556,7 +560,7 @@ Elpy is a bunch of nice Python utilities.
     :mode ("\\.R\\'" . ess-r-mode)
     :config
     (use-package ess-smart-underscore)
-    (use-package ess-R-data-view)
+
     (use-package ess-rutils)  
 
     (setq ess-eval-visibly 'nowait
@@ -603,6 +607,14 @@ Elpy is a bunch of nice Python utilities.
     :init   (setq ess-smart-equals-extra-ops '(brace paren))
     :after  (:any ess-r-mode inferior-ess-r-mode ess-r-transcript-mode)
     :config (ess-smart-equals-activate))
+
+  (use-package ess-view-data
+    :after ess-site
+    :bind
+    (:map ess-r-mode-map
+          ("C-c _" . ess-view-data-print))
+    (:map inferior-ess-r-mode-map
+          ("C-c _" . ess-view-data-print)))
 #+END_SRC
 
 **** Polymode
@@ -611,8 +623,8 @@ This is the recommended solution for Rmarkdown files.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package polymode           ; ESS with polymode
-    :mode (("\\.[Rr]md" . poly-markdown+r-mode)
-	   ("\\.[Rr]nw" . poly-noweb+r-mode))
+    :mode (("\\.[Rr]md\\'" . poly-markdown+r-mode)
+	   ("\\.[Rr]nw\\'" . poly-noweb+r-mode))
     :config
     (setq-default 
      pm-weaver "knitR-ESS"
@@ -726,6 +738,7 @@ Narrower margins to focus when writing
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package olivetti
     :config
+    (setq-default olivetti-body-width 80)
     (add-hook 'olivetti-mode-hook
               (defun my-olivetti-mode-hook ()
                 (if olivetti-mode (variable-pitch-mode 1)
@@ -1010,6 +1023,9 @@ This bit loads markdown-mode and sets up various customizations.
                 (typopunct-mode)
                 (outline-minor-mode)
                 (yas-minor-mode))))
+
+  (use-package edit-indirect-region-latex
+    :after markdown-mode)
 #+END_SRC
 
 Now we set up pandoc-mode and add some utility functions
@@ -1405,6 +1421,9 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
 
   (use-package helm-org
     :bind ("C-c u" . helm-org-in-buffer-headings))
+
+  (use-package helm-themes
+    :after helm)
 #+END_SRC
 
 Helm-backup is a handy tool which puts all your saed files under Git
