@@ -1,9 +1,10 @@
 ;; -*- mode: emacs-lisp -*-
 
 ;; pandoc-mode global settings file
-;; saved on 2018.07.25 15:11
+;; saved on 2021.05.03 11:49
 
-((html-q-tags)
+((citeproc . t)
+ (html-q-tags)
  (no-tex-ligatures)
  (old-dashes)
  (atx-headers)

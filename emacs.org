@@ -236,13 +236,14 @@ This sets the colours of the background and fonts.
 ** Fonts
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
-  ;; (setq default-frame-alist '((font . "Iosevka SS05-15")))
   (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
   (set-fontset-font "fontset-default" 'hebrew "Noto Sans Hebrew")
-  (setq buffer-face-mode-face '(:family "Iosevka Fixed SS05"))
-  (custom-set-faces
-   '(default ((t (:family "Iosevka SS05" :weight light :height 165))))
-   '(variable-pitch ((t (:family "PT Serif" :height 180 :weight medium)))))
+  (setq buffer-face-mode-face '(:family "Iosevka Fixed SS09"))
+  (set-face-attribute 'default nil :family "Iosevka SS09" :weight 'light :height 165)
+  (set-face-attribute 'variable-pitch nil :family "PT Serif" :height 180 :weight 'medium)
+  ;; (custom-set-faces
+  ;;  '(default ((t (:family "Iosevka SS09" :weight light :height 165))))
+  ;;  '(variable-pitch ((t (:family "PT Serif" :height 180 :weight medium)))))
 #+END_SRC
 
 ** Misc
@@ -434,6 +435,11 @@ Even so, ~ansi-term~ doesn't obey:
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "nb") nil utf-8))
+    (add-to-list 'ispell-dictionary-alist
+                 '("cymraeg"
+                   "[[:alpha:]]"
+                   "[^[:alpha:]]"
+                   "[']" t ("-C" "-d" "cy") nil utf-8))
 
     (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
 #+END_SRC
@@ -609,7 +615,6 @@ Elpy is a bunch of nice Python utilities.
     :config (ess-smart-equals-activate))
 
   (use-package ess-view-data
-    :after ess-site
     :bind
     (:map ess-r-mode-map
           ("C-c _" . ess-view-data-print))
@@ -690,6 +695,14 @@ Language server protocol setup
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package yaml-mode)
 #+end_src
+
+*** Lua mode
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package lua-mode
+    :mode "\\.lua\\'")
+#+end_src
+
 ** Keyboard layout
 
 Tell Emacs that I have a UK keyboard.
@@ -1586,21 +1599,21 @@ This is just a convenience function to choose a signature at random from four ve
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
 
-(defun make-random-signature ()
-(interactive)
-(let ((sigs (list
-"Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad"
+  (defun make-random-signature ()
+  (interactive)
+  (let ((sigs (list
+  "Pavel Iosad\nLinguistics and English Language\nThe University of Edinburgh\nDugald Stewart Building\n3 Charles Street\nEdinburgh EH8 9AD\nScotland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad"
 
-"Pavel Iosad\nRoinn a' Chànanachais agus na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
+  "Pavel Iosad\nRoinn a' Chànanachais agus na Beurla\nOilthigh Dhùn Èideann\nTogalach Dhùghaill Stiùbhairt\n3 Sràid Theàrlaich\nDùn Èideann EH8 9AD\nAlba\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nIs e buidheann carthannais a tha ann an Oilthigh Dhùn Èideann,\nclàraichte ann an Albainn, le àireamh clàraidh SC005336.\n"
 
-"Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
+  "Pavel Iosad\nAdran Ieithyddiaeth ac Iaith Saesneg\nPrifysgol Caeredin\nAdeilad Dugald Stewart\n3 Stryd Siarl\nCaeredin EH8 9AD\nYr Alban\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nMae Prifysgol Caeredin yn elusen gofrestredig yn yr Alban,\ngyda rhif cofrestru SC005336.\n"
 
-"Pavel Iosad\nRoinn na Teangeolaíochta agus na Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
+  "Pavel Iosad\nRoinn na Teangeolaíochta agus na Béarla\nOllscoil Dhún Éideann\nÁras Dhúghaill Stíobhaird\n3 Sráid Shéarlais\nDún Éideann EH8 9AD\nAlbain\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nIs carthanas í Ollscoil Dhún Éideann, cláraithe in Albain,\nle cláruimhir SC005336.\n"
 
-"Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\nhttps://keybase.io/piosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
-(nth (random (length sigs)) sigs)))
+  "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
+  (nth (random (length sigs)) sigs)))
 
-(setq dugs-signature "Pavel Iosad\nDirector of Undergraduate Studies\nSchool of Philosophy, Psychology and Language Sciences")
+  (setq dugs-signature "Pavel Iosad\nDirector of Undergraduate Studies\nSchool of Philosophy, Psychology and Language Sciences")
 #+END_SRC
 
 *** Drafts folder
@@ -2060,9 +2073,9 @@ A drop-in replacement for Emacs' help buffers
     :after treemacs magit)
 #+END_SRC
 
-** Reaper
+** Time tracking
 
-Time tracking
+*** Reaper
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package reaper
@@ -2072,6 +2085,14 @@ Time tracking
           reaper-account-id private/reaper-account-id))
 #+END_SRC
 
+
+*** ActivityWatch
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package activity-watch-mode
+    :config
+    (global-activity-watch-mode))
+#+end_src
 ** Projectile
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils 
@@ -2172,11 +2193,12 @@ Subtitle editing, because that is apparently my life now
 ** Spotify
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-    (use-package mingus
-      :config
-      (evil-set-initial-state 'mingus-mode 'emacs)
-      (evil-set-initial-state 'mingus-browser-mode 'emacs)
-      (evil-set-initial-state 'mingus-playlist-mode 'emacs))
+  (use-package mingus
+    :disabled t
+    :config
+    (evil-set-initial-state 'mingus-mode 'emacs)
+    (evil-set-initial-state 'mingus-browser-mode 'emacs)
+    (evil-set-initial-state 'mingus-playlist-mode 'emacs))
 #+END_SRC
 
 ** Popwin
@@ -2192,6 +2214,16 @@ Manage annoying pop-up buffers
     (push " *Pandoc log*" popwin:special-display-config))
 #+end_src
 
+** Pomidor
+
+Pomodoro for Emacs
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package pomidor
+    :bind ("<f9>" . pomidor)
+    :config
+    (evil-set-initial-state 'pomidor-mode 'emacs))
+#+end_src
 
 * Configuration Layout
 
