@@ -31,3 +31,4 @@ elpa/*
 /excorporate/
 /straight
 !/straight/versions/
+/pomidor-session.json

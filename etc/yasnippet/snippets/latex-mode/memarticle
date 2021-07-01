@@ -90,6 +90,9 @@
 
 \lingset{interpartskip=0pt}
 
+\usepackage{luavlna}
+\singlechars{russian}{АаВвКкИиСсОоУу}
+
 % Newcommands
 \DeclareTextFontCommand{\ipa}{\ipafont}
 \newcommand{\ie}{i.\,e.\xspace}
