@@ -1027,7 +1027,10 @@ This bit loads markdown-mode and sets up various customizations.
   (use-package markdown-mode
     :mode ("\\.\\(m\\(ark\\)?down\\|md\\)$" . markdown-mode)
     :config
-    (setq markdown-footnote-location 'immediately)
+    (setq markdown-footnote-location 'immediately
+          markdown-enable-math t
+          markdown-hide-urls t
+          markdown-fontify-code-blocks-natively t)
     (add-hook 'markdown-mode-hook
               (defun my-markdown-mode-hook ()
                 (flyspell-mode)
@@ -1142,6 +1145,14 @@ that, given a DOI (or an http://dx.doi.org/ URL) gets a BibTeX entry
 and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
+  (defun bibtex->biblatex (entry)
+    (replace-regexp-in-string "year[[:blank:]]*="
+                              "date ="
+                              (replace-regexp-in-string "journal[[:blank:]]*="
+                                                        "journaltitle ="
+                                                        entry)))
+
+
   (defun get-bibtex-from-doi (doi)
     "Get a BibTeX entry from the DOI"
     (interactive "MDOI: ")
@@ -1151,7 +1162,7 @@ and inserts it at point.
         (switch-to-buffer (current-buffer))
         (setq bibtex-entry (buffer-substring (string-match "@" (buffer-string)) (point-max)))
         (kill-buffer (current-buffer))))
-    (insert (decode-coding-string bibtex-entry 'utf-8))
+    (insert (bibtex->biblatex (decode-coding-string bibtex-entry 'utf-8)))
     (bibtex-fill-entry))
 #+END_SRC
 
@@ -1254,13 +1265,15 @@ and inserts it at point.
 Evil is a mode that makes vi(m) like keybindings
 
 #+BEGIN_SRC emacs-lisp :noweb-ref evil 
+  (use-package undo-fu)
+
+
   (use-package evil
-    :diminish undo-tree-mode
     :init
     (setq evil-want-C-i-jump nil)
     :config
     (evil-mode 1)
-    (setq evil-undo-system 'undo-redo)
+    (setq evil-undo-system 'undo-fu)
     (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
     (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
@@ -1612,8 +1625,6 @@ This is just a convenience function to choose a signature at random from four ve
 
   "Pavel Iosad\nInstitutt for språkvitskap og engelsk språk\nUniversitetet i Edinburgh\nDugald Stewarts hus\n3 Charles Street\nEdinburgh EH8 9AD\nSkottland\n\nhttp://www.ed.ac.uk/profile/pavel-iosad\n\nUniversitetet i Edinburgh er ein ideell organisasjon registrert i\nSkottland, med registrasjonsnr SC005336.\n")))
   (nth (random (length sigs)) sigs)))
-
-  (setq dugs-signature "Pavel Iosad\nDirector of Undergraduate Studies\nSchool of Philosophy, Psychology and Language Sciences")
 #+END_SRC
 
 *** Drafts folder
@@ -1718,7 +1729,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       (:map mu4e-view-mode-map
             ("s" . helm-mu)))
 
-    (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive or flag:unread maildir:/dugs/INBOX or flag:unread maildir:/dugs/Archive")
+    (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive")
 
     (add-to-list 'mu4e-bookmarks
                  '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
@@ -1751,25 +1762,6 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                                                 (:maildir "/work/Sent" :key ?s)
                                                 (:maildir "/work/Trash" :key ?t)))
                      (message-sendmail-extra-arguments . nil)))
-            ,(make-mu4e-context
-              :name "DUGS"
-              :enter-func (lambda () (mu4e-message "Entering DUGS context"))
-              :leave-func (lambda () (mu4e-message "Leaving DUGS context"))
-              :match-func (lambda (msg)
-                            (when msg
-                              (mu4e-message-contact-field-matches msg :to '("ppls.ug.director"))))
-              :vars `((user-mail-address . "PPLS.UG.Director@ed.ac.uk")
-                      (user-full-name . "PPLS Undergraduate Director")
-                      (mu4e-refile-folder . "/dugs/Archive")
-                      (mu4e-drafts-folder . "/dugs/Drafts")
-                      (mu4e-sent-folder . "/dugs/Sent Items")
-                      (mu4e-trash-folder . "/dugs/Trash")
-                      (mu4e-compose-signature . ,dugs-signature)
-                      (mu4e-maildir-shortcuts . ((:maildir "/dugs/INBOX" :key ?i)
-                                                 (:maildir "/dugs/Archive" :key ?a)
-                                                 (:maildir "/dugs/Sent Items"  :key ?s)
-                                                 (:maildir "/dugs/Trash"  :key ?t)))
-                      (message-sendmail-extra-arguments . ("-a" "dugs"))))
             ,(make-mu4e-context
               :name "Personal"
               :enter-func (lambda () (mu4e-message "Entering personal context"))
@@ -1811,8 +1803,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     (add-hook 'mu4e-compose-mode-hook
               (defun my-compose-mode-hook ()
                 (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
-                                                ("Work" ,(make-random-signature))
-                                                ("DUGS" ,dugs-signature)))
+                                                ("Work" ,(make-random-signature))))
                 (auto-fill-mode)
                 (set-fill-column 72)
                 (typopunct-mode)
