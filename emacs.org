@@ -908,7 +908,7 @@ Sidebar contents
 
 #+END_SRC
 
-** Org-mode
+** COMMENT Org-mode
 
 Org-mode is very good for all sort of working with plain text, as
 this file testifies. I use it as my calendar application, so most
@@ -928,8 +928,6 @@ The following sets up Org-mode itself
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org
-    :straight org-plus-contrib
-    :diminish org-indent-mode
     :bind
     ("C-c l" . org-store-link)
     ("C-c a" . org-agenda)
@@ -953,9 +951,9 @@ The following sets up Org-mode itself
           org-icalendar-alarm-time 15
           org-columns-default-format "%30ITEM %TODO %3PRIORITY %DEADLINE %20LOCATION"
           org-src-fontify-natively t)
-
+  
     ;; The following sets up my LaTeX export preferences
-
+  
     (with-eval-after-load 'ox-latex
       (add-to-list 'org-latex-classes
                    '("memoir-article" (f-read-text (expand-file-name "etc/ox-latex-preamble.txt" user-emacs-directory))
@@ -963,7 +961,7 @@ The following sets up Org-mode itself
                      ("\\subsection{%s}" . "\\subsection*{%s}")
                      ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
                      ("\\paragraph{%s}" . "\\paragraph*{%s}")))
-
+  
       (setq org-latex-packages-alist
             '(("" "luatextra" t ("lualatex"))
               ("" "xltxtra" t ("xelatex"))
@@ -980,7 +978,7 @@ The following sets up Org-mode itself
               ("" "cleveref" nil)
               ("activate={true, nocompatibility}, tracking" "microtype" nil ("pdflatex" "lualatex"))
               ("english, german" "selnolig" nil ("lualatex")))))
-
+  
     (setq-default org-latex-compiler "lualatex"
                   org-latex-bib-compiler "biber"
                   org-latex-pdf-process
@@ -988,18 +986,18 @@ The following sets up Org-mode itself
                     "%bib %b"
                     "%latex -interaction nonstopmode -output-directory %o %f")
                   org-export-with-toc nil))
-
+  
   (add-hook 'org-mode-hook
             (defun my-org-mode-hook ()
               (local-set-key (kbd "C-c '") 'org-edit-src-code)))
-
+  
   (use-package org-crypt
     :straight nil
     :config
     (org-crypt-use-before-save-magic)
     (setq org-tags-exclude-from-inheritance '("crypt")
           org-crypt-key nil))
-
+  
   (use-package org-trello
     :disabled t
     :after org
@@ -1010,10 +1008,10 @@ The following sets up Org-mode itself
                        (let ((filename (buffer-file-name (current-buffer))))
                          (when (and filename (string= "trello" (file-name-extension filename)))
                            (org-trello-mode))))))
-
+  
   (use-package org-bullets
     :hook (org-mode . org-bullets-mode))
-
+  
   (use-package org-protocol
     :straight nil
     :config
@@ -1022,7 +1020,7 @@ The following sets up Org-mode itself
              "* %^{Title}\nSource: %u, %c\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n\n%?")
             ("L" "Protocol Link" entry (file+headline ,(concat org-directory "protocol-notes.org") "Inbox")
              "* %? [[%:link][%:description]] \nCaptured On: %U"))))
-
+  
   (use-package org-download
     :after org
     :config
@@ -1033,7 +1031,7 @@ The following sets up Org-mode itself
           (("s-Y" . org-download-screenshot)
            ("s-y" . org-download-yank)
            ("s-V" . org-download-clipboard))))
-
+  
 #+END_SRC
   
 ** Markdown and pandoc

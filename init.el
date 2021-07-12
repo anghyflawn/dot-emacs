@@ -33,8 +33,8 @@
 
 ;; Now load-up org-mode
 
-(use-package org
-  :straight org-plus-contrib)
+(use-package org)
+(use-package org-contrib)
 
 (require 'org-id)
 (require 'ob-tangle)
