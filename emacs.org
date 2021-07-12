@@ -943,7 +943,8 @@ The following sets up Org-mode itself
           org-startup-indented t
           org-src-fontify-natively t
           org-icalendar-timezone "Europe/London"
-          org-refile-targets '((org-agenda-files . (:maxlevel . 5)))
+          org-refile-targets '((org-agenda-files . (:maxlevel . 5))
+                               (private/org-project-files . (:maxlevel . 5)))
           org-icalendar-use-deadline '(todo-due)
           org-agenda-window-setup 'current-window
           org-agenda-span 'week
@@ -1012,6 +1013,27 @@ The following sets up Org-mode itself
 
   (use-package org-bullets
     :hook (org-mode . org-bullets-mode))
+
+  (use-package org-protocol
+    :straight nil
+    :config
+    (setq org-capture-templates
+          `(("p" "Protocol" entry (file+headline ,(concat org-directory "protocol-notes.org") "Inbox")
+             "* %^{Title}\nSource: %u, %c\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n\n%?")
+            ("L" "Protocol Link" entry (file+headline ,(concat org-directory "protocol-notes.org") "Inbox")
+             "* %? [[%:link][%:description]] \nCaptured On: %U"))))
+
+  (use-package org-download
+    :after org
+    :config
+    (setq org-download-screenshot-method "spectacle -br -o %s"
+          org-download-method 'attach)
+    :bind
+    (:map org-mode-map
+          (("s-Y" . org-download-screenshot)
+           ("s-y" . org-download-yank)
+           ("s-V" . org-download-clipboard))))
+
 #+END_SRC
   
 ** Markdown and pandoc
@@ -1027,10 +1049,10 @@ This bit loads markdown-mode and sets up various customizations.
   (use-package markdown-mode
     :mode ("\\.\\(m\\(ark\\)?down\\|md\\)$" . markdown-mode)
     :config
-    (setq markdown-footnote-location 'immediately
-          markdown-enable-math t
-          markdown-hide-urls t
-          markdown-fontify-code-blocks-natively t)
+    (setq-default markdown-footnote-location 'immediately
+                  markdown-enable-math t
+                  markdown-hide-urls t
+                  markdown-fontify-code-blocks-natively t)
     (add-hook 'markdown-mode-hook
               (defun my-markdown-mode-hook ()
                 (flyspell-mode)
@@ -1559,14 +1581,13 @@ calendar app.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package org-caldav
-    :disabled t
     :config
     (setq org-caldav-url private/org-caldav-private-url
           org-caldav-calendar-id private/org-caldav-private-id
           org-caldav-inbox private/org-caldav-inbox
           org-caldav-files private/org-caldav-files
-          org-icalendar-timezone "UTC"
-          org-caldav-uuid-extension ".ics"
+          org-icalendar-timezone "Europe/London"
+          org-caldav-uuid-extension ".EML"
           org-caldav-calendars  `((:calendar-id ,private/org-caldav-private-id
                                                 :url ,private/org-caldav-private-url))))
 
@@ -1587,22 +1608,6 @@ calendar app.
   (use-package calfw
     :config (use-package calfw-org))
 
-
-  (use-package excorporate
-    :disabled t
-    :config
-    ;; allow opening the exchange calendar with 'e' from calendar 
-    (evil-define-key 'motion calendar-mode-map "e" #'exco-calendar-show-day)
-    (setq-default
-     ;; configure email address and office 365 exchange server adddress for exchange web services
-     excorporate-configuration (quote ("piosad@exseed.ed.ac.uk" . "https://outlook.office365.com/EWS/Exchange.asmx"))
-     org-agenda-include-diary t)
-    (excorporate)
-    (excorporate-diary-enable))
-  ;; (defun ab/agenda-update-diary ()
-  ;;   "call excorporate to update the diary for today"
-  ;;   (exco-diary-diary-advice (calendar-current-date) (calendar-current-date) #'message "diary updated"))
-  ;; (add-hook 'org-agenda-cleanup-fancy-diary-hook 'ab/agenda-update-diary))
 #+END_SRC
 
 ** Email
@@ -1701,7 +1706,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
     (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
 
-    (defvar ignore-email nil)
+    (defvar ignore-email t)
     (defun ignore-email-toggle ()
       (interactive)
       (setq ignore-email (not ignore-email)))
@@ -2103,7 +2108,10 @@ A drop-in replacement for Emacs' help buffers
     (add-to-list 'helm-projectile-sources-list helm-source-file-not-found t))
 #+END_SRC
 
-** Org-roam and related
+** Org-roam and related                                             :ATTACH:
+:PROPERTIES:
+:ID:       1bc1c517-5c4b-4404-850b-3ad591fa327e
+:END:
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org-roam
@@ -2142,7 +2150,32 @@ A drop-in replacement for Emacs' help buffers
     :config
     (push 'company-org-roam company-backends))
 
-  (use-package org-roam-server)
+  (use-package org-roam-server
+    :init
+    (unless (server-running-p)
+      (server-start))
+    :config
+    (setq org-roam-server-host "127.0.0.1"
+          org-roam-server-port 34896
+          org-roam-server-authenticate nil
+          org-roam-server-export-inline-images t
+          org-roam-server-serve-files nil
+          org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
+          org-roam-server-network-poll t
+          org-roam-server-network-arrows nil
+          org-roam-server-network-label-truncate t
+          org-roam-server-network-label-truncate-length 60
+          org-roam-server-network-label-wrap-length 20)
+
+    (defun org-roam-server-browse ()
+      (interactive)
+      (browse-url (format "http://%s:%s" org-roam-server-host org-roam-server-port)))
+
+    (bind-keys :map org-roam-mode-map
+               ("C-c n s" . org-roam-server-browse))
+
+    :hook
+    (org-roam-mode . org-roam-server-mode))
 
   (use-package deft
     :after org
