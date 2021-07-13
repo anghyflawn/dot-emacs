@@ -908,7 +908,7 @@ Sidebar contents
 
 #+END_SRC
 
-** COMMENT Org-mode
+** Org-mode
 
 Org-mode is very good for all sort of working with plain text, as
 this file testifies. I use it as my calendar application, so most
@@ -2106,10 +2106,7 @@ A drop-in replacement for Emacs' help buffers
     (add-to-list 'helm-projectile-sources-list helm-source-file-not-found t))
 #+END_SRC
 
-** Org-roam and related                                             :ATTACH:
-:PROPERTIES:
-:ID:       1bc1c517-5c4b-4404-850b-3ad591fa327e
-:END:
+** Org-roam and related
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org-roam
@@ -2128,7 +2125,7 @@ A drop-in replacement for Emacs' help buffers
                ("C-c n I" . org-roam-insert-immediate))
     (require 'org-roam-protocol)
     (diminish 'org-roam-mode))
-
+  
   (use-package org-roam-bibtex
     :hook (org-roam-mode . org-roam-bibtex-mode)
     :config
@@ -2143,11 +2140,11 @@ A drop-in replacement for Emacs' help buffers
                ("C-c n C-f" . orb-find-non-ref-file)
                ("C-c n i" . orb-insert-non-ref))
     :diminish org-roam-bibtex-mode)
-
+  
   (use-package company-org-roam
     :config
     (push 'company-org-roam company-backends))
-
+  
   (use-package org-roam-server
     :init
     (unless (server-running-p)
@@ -2164,17 +2161,19 @@ A drop-in replacement for Emacs' help buffers
           org-roam-server-network-label-truncate t
           org-roam-server-network-label-truncate-length 60
           org-roam-server-network-label-wrap-length 20)
-
+  
     (defun org-roam-server-browse ()
       (interactive)
       (browse-url (format "http://%s:%s" org-roam-server-host org-roam-server-port)))
-
+  
     (bind-keys :map org-roam-mode-map
                ("C-c n s" . org-roam-server-browse))
-
+  
+    (set-process-query-on-exit-flag (get-process "httpd") nil)
+    
     :hook
     (org-roam-mode . org-roam-server-mode))
-
+  
   (use-package deft
     :after org
     :bind
