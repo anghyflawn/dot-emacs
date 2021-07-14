@@ -2149,6 +2149,9 @@ A drop-in replacement for Emacs' help buffers
     :init
     (unless (server-running-p)
       (server-start))
+    (add-hook 'org-roam-server-mode-hook
+              (lambda ()
+                (set-process-query-on-exit-flag (get-process "httpd") nil)))
     :config
     (setq org-roam-server-host "127.0.0.1"
           org-roam-server-port 34896
@@ -2169,8 +2172,6 @@ A drop-in replacement for Emacs' help buffers
     (bind-keys :map org-roam-mode-map
                ("C-c n s" . org-roam-server-browse))
   
-    (set-process-query-on-exit-flag (get-process "httpd") nil)
-    
     :hook
     (org-roam-mode . org-roam-server-mode))
   
