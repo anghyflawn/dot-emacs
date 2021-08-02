@@ -237,7 +237,9 @@ This sets the colours of the background and fonts.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
   (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
+  (set-fontset-font "fontset-default" 'ethiopic "Noto Serif Ethiopic")
   (set-fontset-font "fontset-default" 'hebrew "Noto Sans Hebrew")
+  (set-fontset-font "fontset-default" 'syriac "Serto Batnan-22")
   (setq buffer-face-mode-face '(:family "Iosevka Fixed SS09"))
   (set-face-attribute 'default nil :family "Iosevka SS09" :weight 'light :height 165)
   (set-face-attribute 'variable-pitch nil :family "Literata" :height 160 :weight 'medium)
@@ -950,7 +952,9 @@ The following sets up Org-mode itself
           org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled
           org-icalendar-alarm-time 15
           org-columns-default-format "%30ITEM %TODO %3PRIORITY %DEADLINE %20LOCATION"
-          org-src-fontify-natively t)
+          org-src-fontify-natively t
+          org-clock-persist 'history)
+    (org-clock-persistence-insinuate)
   
     ;; The following sets up my LaTeX export preferences
   
@@ -990,6 +994,9 @@ The following sets up Org-mode itself
   (add-hook 'org-mode-hook
             (defun my-org-mode-hook ()
               (local-set-key (kbd "C-c '") 'org-edit-src-code)))
+  
+  (defun my-clock-files ()
+    (append org-agenda-files private/org-project-files))
   
   (use-package org-crypt
     :straight nil
@@ -1271,9 +1278,10 @@ and inserts it at point.
                 :filter-return 'reverse)
   
     (helm-delete-action-from-source "Insert formatted citation(s)" helm-source-bibtex)
-    (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3)
-
+    (helm-delete-action-from-source "Insert reference" helm-source-bibtex)
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
+
+    (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0)
   
     (use-package citeproc)
@@ -2160,7 +2168,9 @@ A drop-in replacement for Emacs' help buffers
     :config
     (push 'company-org-roam company-backends))
   
-  (use-package websocket)
+  (use-package websocket
+    :after org-roam)
+  
   (use-package org-roam-ui
     :straight
       (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
