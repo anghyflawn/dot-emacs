@@ -240,7 +240,7 @@ This sets the colours of the background and fonts.
   (set-fontset-font "fontset-default" 'hebrew "Noto Sans Hebrew")
   (setq buffer-face-mode-face '(:family "Iosevka Fixed SS09"))
   (set-face-attribute 'default nil :family "Iosevka SS09" :weight 'light :height 165)
-  (set-face-attribute 'variable-pitch nil :family "PT Serif" :height 180 :weight 'medium)
+  (set-face-attribute 'variable-pitch nil :family "Literata" :height 160 :weight 'medium)
   ;; (custom-set-faces
   ;;  '(default ((t (:family "Iosevka SS09" :weight light :height 165))))
   ;;  '(variable-pitch ((t (:family "PT Serif" :height 180 :weight medium)))))
@@ -1015,7 +1015,8 @@ The following sets up Org-mode itself
   (use-package org-protocol
     :straight nil
     :config
-    (setq org-capture-templates
+    (mapcar (lambda (x)
+              (add-to-list 'org-capture-templates x t))
           `(("p" "Protocol" entry (file+headline ,(concat org-directory "protocol-notes.org") "Inbox")
              "* %^{Title}\nSource: %u, %c\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n\n%?")
             ("L" "Protocol Link" entry (file+headline ,(concat org-directory "protocol-notes.org") "Inbox")
@@ -1269,13 +1270,16 @@ and inserts it at point.
     (advice-add 'bibtex-completion-candidates
                 :filter-return 'reverse)
   
+    (helm-delete-action-from-source "Insert formatted citation(s)" helm-source-bibtex)
+    (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3)
+
     (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0)
   
     (use-package citeproc)
     (defvar helm-bibtex-csl-style (expand-file-name "etc/csl/unified-style-linguistics.csl" user-emacs-directory))
     (defvar helm-bibtex-csl-locale-dir (expand-file-name "etc/csl/" user-emacs-directory))
-    
+  
     (defun helm-bibtex-insert-citeproc-reference (_candidate)
       (let* ((locale-getter (citeproc-locale-getter-from-dir helm-bibtex-csl-locale-dir))
              (item-getter (citeproc-itemgetter-from-bibtex helm-bibtex-bibliography))
@@ -1284,10 +1288,8 @@ and inserts it at point.
                               (citeproc-citation-create :cites `(((id . ,x)))))
                             (helm-marked-candidates))))
         (citeproc-append-citations cites proc)
-        (insert (car (citeproc-render-bib proc 'plain)))))
+        (insert (car (citeproc-render-bib proc 'plain))))))
   
-    (helm-delete-action-from-source "Insert reference" helm-source-bibtex)
-    (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3))
 #+END_SRC
 
 *** Word count goals
@@ -2134,7 +2136,8 @@ A drop-in replacement for Emacs' help buffers
            ("C-c n i" . org-roam-node-insert)
            ("C-c n c" . org-roam-capture))
     :init
-    (setq org-roam-directory private/org-roam-directory)
+    (setq org-roam-directory private/org-roam-directory
+          org-roam-v2-ack t)
     :config
     (org-roam-setup)
     (require 'org-roam-protocol))
@@ -2157,6 +2160,13 @@ A drop-in replacement for Emacs' help buffers
     :config
     (push 'company-org-roam company-backends))
   
+  (use-package websocket)
+  (use-package org-roam-ui
+    :straight
+      (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
+      :after org-roam
+      :hook (org-roam . org-roam-ui-mode))
+  
   (use-package org-roam-server
     :disabled t
     :init
@@ -2178,12 +2188,12 @@ A drop-in replacement for Emacs' help buffers
           org-roam-server-network-label-truncate-length 60
           org-roam-server-network-label-wrap-length 20)
   
-    (defun org-roam-server-browse ()
+    (defun org-roam-ui-browse ()
       (interactive)
-      (browse-url (format "http://%s:%s" org-roam-server-host org-roam-server-port)))
+      (browse-url "http://127.0.0.1:35901/"))
   
     (bind-keys :map org-roam-mode-map
-               ("C-c n s" . org-roam-server-browse))
+               ("C-c n s" . org-roam-ui-browse))
   
     :hook
     (org-roam-mode . org-roam-server-mode))
@@ -2195,6 +2205,7 @@ A drop-in replacement for Emacs' help buffers
     :custom
     (deft-recursive t)
     (deft-use-filter-string-for-filename t)
+    (deft-strip-summary-regexp ":PROPERTIES:\n\\(.+\n\\)+:END:\n")
     (deft-default-extension "org")
     (deft-directory private/org-roam-directory))
 #+END_SRC
@@ -2260,6 +2271,52 @@ Pomodoro for Emacs
     (evil-set-initial-state 'pomidor-mode 'emacs))
 #+end_src
 
+** Other customizations
+
+Copied from [[https://github.com/alphapapa/unpackaged.el][unpackaged.el]]
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (require 'hydra)
+  
+  (use-package smerge-mode
+    :config
+    (defhydra unpackaged/smerge-hydra
+      (:color pink :hint nil :post (smerge-auto-leave))
+      "
+  ^Move^       ^Keep^               ^Diff^                 ^Other^
+  ^^-----------^^-------------------^^---------------------^^-------
+  _n_ext       _b_ase               _<_: upper/base        _C_ombine
+  _p_rev       _u_pper              _=_: upper/lower       _r_esolve
+  ^^           _l_ower              _>_: base/lower        _k_ill current
+  ^^           _a_ll                _R_efine
+  ^^           _RET_: current       _E_diff
+  "
+      ("n" smerge-next)
+      ("p" smerge-prev)
+      ("b" smerge-keep-base)
+      ("u" smerge-keep-upper)
+      ("l" smerge-keep-lower)
+      ("a" smerge-keep-all)
+      ("RET" smerge-keep-current)
+      ("\C-m" smerge-keep-current)
+      ("<" smerge-diff-base-upper)
+      ("=" smerge-diff-upper-lower)
+      (">" smerge-diff-base-lower)
+      ("R" smerge-refine)
+      ("E" smerge-ediff)
+      ("C" smerge-combine-with-next)
+      ("r" smerge-resolve)
+      ("k" smerge-kill-current)
+      ("ZZ" (lambda ()
+              (interactive)
+              (save-buffer)
+              (bury-buffer))
+       "Save and bury buffer" :color blue)
+      ("q" nil "cancel" :color blue))
+    :hook (magit-diff-visit-file . (lambda ()
+                                     (when smerge-mode
+                                       (unpackaged/smerge-hydra/body)))))
+#+end_src
 * Configuration Layout
 
 Here we define the =emacs.el= file that gets generated by the source
