@@ -891,7 +891,6 @@ Sidebar contents
                 (turn-on-reftex)
                 (add-to-list 'LaTeX-font-list '(22 "\\ipa{" "}"))
                 (TeX-source-correlate-mode 1)
-                (local-set-key (kbd "C-c ]") 'helm-bibtex)
                 (add-to-list 'TeX-view-program-selection
                              '(output-pdf "PDF Tools"))
                 (bind-keys :map TeX-mode-map
@@ -936,6 +935,8 @@ The following sets up Org-mode itself
     ("C-c t" . org-capture)
     ("C-x C-a C-w" . find-main-agenda-file)
     :config
+    (eval-after-load "org"
+      '(define-key org-mode-map (kbd "C-c ]") nil))
     (setq org-log-done t
           org-use-property-inheritance t
           org-agenda-files private/org-files
@@ -953,7 +954,9 @@ The following sets up Org-mode itself
           org-icalendar-alarm-time 15
           org-columns-default-format "%30ITEM %TODO %3PRIORITY %DEADLINE %20LOCATION"
           org-src-fontify-natively t
-          org-clock-persist 'history)
+          org-clock-persist 'history
+          org-clock-idle-time 10
+          org-clock-x11idle-program-name "/usr/bin/xprintidle")
     (org-clock-persistence-insinuate)
   
     ;; The following sets up my LaTeX export preferences
@@ -996,7 +999,7 @@ The following sets up Org-mode itself
               (local-set-key (kbd "C-c '") 'org-edit-src-code)))
   
   (defun my-clock-files ()
-    (append org-agenda-files private/org-project-files))
+    (-distinct (append org-agenda-files private/org-project-files)))
   
   (use-package org-crypt
     :straight nil
@@ -1017,6 +1020,7 @@ The following sets up Org-mode itself
                            (org-trello-mode))))))
   
   (use-package org-bullets
+    :disabled t
     :hook (org-mode . org-bullets-mode))
   
   (use-package org-protocol
@@ -1247,15 +1251,22 @@ and inserts it at point.
     (setq bu-bibtex-fields-ignore-list '(url abstract)))
 #+END_SRC
 
-*** Org-ref
+*** Referencing 
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
-  (use-package org-ref
-    :after org
-    :config
-    (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
-          org-ref-pdf-directory private/pdf-directory
-          org-ref-default-ref-type "cref"))
+    (use-package org-ref
+      :disabled t
+      :after org
+      :config
+      (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+            org-ref-pdf-directory private/pdf-directory
+            org-ref-default-ref-type "cref"))
+    
+    (use-package citeproc)
+    (require 'org-cite)
+    (require 'oc-csl)
+    (setq org-cite-csl-locales-dir (expand-file-name "etc/csl/" user-emacs-directory)
+          org-cite-csl-styles-dir (expand-file-name "etc/csl/" user-emacs-directory))
 #+END_SRC
 
 
@@ -1277,14 +1288,14 @@ and inserts it at point.
     (advice-add 'bibtex-completion-candidates
                 :filter-return 'reverse)
   
-    (helm-delete-action-from-source "Insert formatted citation(s)" helm-source-bibtex)
-    (helm-delete-action-from-source "Insert reference" helm-source-bibtex)
-    (helm-delete-action-from-source "Insert citation" helm-source-bibtex)
-
-    (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3)
-    (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0)
+    (add-to-list 'bibtex-completion-format-citation-functions
+                 '(org-mode . bibtex-completion-format-citation-org-cite))
   
-    (use-package citeproc)
+    (dolist (action '("Insert citation" "Insert reference"))
+      (helm-delete-action-from-source action helm-source-bibtex))
+    (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0)
+    (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3)
+  
     (defvar helm-bibtex-csl-style (expand-file-name "etc/csl/unified-style-linguistics.csl" user-emacs-directory))
     (defvar helm-bibtex-csl-locale-dir (expand-file-name "etc/csl/" user-emacs-directory))
   
@@ -1312,26 +1323,23 @@ and inserts it at point.
 Evil is a mode that makes vi(m) like keybindings
 
 #+BEGIN_SRC emacs-lisp :noweb-ref evil 
-  (use-package undo-fu)
-
-
   (use-package evil
     :init
     (setq evil-want-C-i-jump nil)
     :config
     (evil-mode 1)
-    (setq evil-undo-system 'undo-fu)
+    (setq evil-undo-system 'undo-redo)
     (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
     (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
     (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
     (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
     (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
     (define-key evil-motion-state-map (kbd "<SPC>") 'evil-window-map)
-
+  
     (setq-default evil-cross-lines t
                   sentence-end-double-space nil
                   evil-default-state 'normal)
-
+  
     (cl-loop for (mode . state) in
              '((inferior-emacs-lisp-mode . emacs)
                (shell-mode . insert)
@@ -1359,17 +1367,17 @@ Evil is a mode that makes vi(m) like keybindings
                (git-timemachine-mode . emacs)
                (reftex-index-mode . emacs))
              do (evil-set-initial-state mode state)))
-
+  
   (use-package evil-surround
     :config (global-evil-surround-mode 1))
-
+  
   (use-package evil-exchange
     :config (evil-exchange-install))
-
+  
   (use-package evil-goggles
     :diminish evil-goggles-mode
     :config (evil-goggles-mode))
-
+  
   (use-package evil-snipe
     :config
     (evil-snipe-mode +1)
