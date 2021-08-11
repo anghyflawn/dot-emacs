@@ -1066,7 +1066,6 @@ This bit loads markdown-mode and sets up various customizations.
     (add-hook 'markdown-mode-hook
               (defun my-markdown-mode-hook ()
                 (flyspell-mode)
-                (orgtbl-mode 1)
                 (pandoc-mode)
                 (typopunct-mode)
                 (outline-minor-mode)
