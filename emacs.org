@@ -937,6 +937,7 @@ The following sets up Org-mode itself
     :config
     (eval-after-load "org"
       '(define-key org-mode-map (kbd "C-c ]") nil))
+    (require 'org-inlinetask)
     (setq org-log-done t
           org-use-property-inheritance t
           org-agenda-files private/org-files
