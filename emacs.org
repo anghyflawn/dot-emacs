@@ -1323,72 +1323,73 @@ and inserts it at point.
 Evil is a mode that makes vi(m) like keybindings
 
 #+BEGIN_SRC emacs-lisp :noweb-ref evil 
-  (use-package evil
-    :init
-    (setq evil-want-C-i-jump nil)
-    :config
-    (evil-mode 1)
-    (setq evil-undo-system 'undo-redo)
-    (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
-    (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
-    (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
-    (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
-    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-    (define-key evil-motion-state-map (kbd "<SPC>") 'evil-window-map)
-  
-    (setq-default evil-cross-lines t
-                  sentence-end-double-space nil
-                  evil-default-state 'normal)
-  
-    (cl-loop for (mode . state) in
-             '((inferior-emacs-lisp-mode . emacs)
-               (shell-mode . insert)
-               (git-commit-mode . insert)
-               (term-mode . emacs)
-               (dired-mode . emacs)
-               (wdired-mode . normal)
-               (inferior-ess-mode . emacs)
-               (help-mode . emacs)
-               (comint-mode . emacs)
-               (inferior-python-mode . emacs)
-               (eww-mode . emacs)
-               (undo-tree-visualizer . emacs)
-               (mu4e-view-mode . emacs)
-               (paradox-menu-mode . emacs)
-               (vterm-mode . emacs)
-               (flycheck-error-list-mode . emacs)
-               (reaper-mode . emacs)
-               (iESS-mode . emacs)
-               (cfw:details-mode . emacs)
-               (cfw:calendar-mode . emacs)
-               (dashboard-mode . emacs)
-               (helpful-mode . emacs)
-               (deft-mode . emacs)
-               (git-timemachine-mode . emacs)
-               (reftex-index-mode . emacs))
-             do (evil-set-initial-state mode state)))
-  
-  (use-package evil-surround
-    :config (global-evil-surround-mode 1))
-  
-  (use-package evil-exchange
-    :config (evil-exchange-install))
-  
-  (use-package evil-goggles
-    :diminish evil-goggles-mode
-    :config (evil-goggles-mode))
-  
-  (use-package evil-snipe
-    :config
-    (evil-snipe-mode +1)
-    (evil-snipe-override-mode +1)
-    (add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
-    :diminish
-    evil-snipe-local-mode
-    evil-snipe-override-mode
-    :custom
-    (evil-snipe-scope 'whole-line)
-    (evil-snipe-repeat-scope 'whole-visible))
+      (use-package evil
+        :init
+        (setq evil-want-C-i-jump nil
+              evil-search-module 'evil-search
+              evil-undo-system 'undo-redo)
+        :config
+        (evil-mode 1)
+        (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+        (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+        (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+        (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+        (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
+        (define-key evil-motion-state-map (kbd "<SPC>") 'evil-window-map)
+      
+        (setq-default evil-cross-lines t
+                      sentence-end-double-space nil
+                      evil-default-state 'normal)
+      
+        (cl-loop for (mode . state) in
+                 '((inferior-emacs-lisp-mode . emacs)
+                   (shell-mode . insert)
+                   (git-commit-mode . insert)
+                   (term-mode . emacs)
+                   (dired-mode . emacs)
+                   (wdired-mode . normal)
+                   (inferior-ess-mode . emacs)
+                   (help-mode . emacs)
+                   (comint-mode . emacs)
+                   (inferior-python-mode . emacs)
+                   (eww-mode . emacs)
+                   (undo-tree-visualizer . emacs)
+                   (mu4e-view-mode . emacs)
+                   (paradox-menu-mode . emacs)
+                   (vterm-mode . emacs)
+                   (flycheck-error-list-mode . emacs)
+                   (reaper-mode . emacs)
+                   (iESS-mode . emacs)
+                   (cfw:details-mode . emacs)
+                   (cfw:calendar-mode . emacs)
+                   (dashboard-mode . emacs)
+                   (helpful-mode . emacs)
+                   (deft-mode . emacs)
+                   (git-timemachine-mode . emacs)
+                   (reftex-index-mode . emacs))
+                 do (evil-set-initial-state mode state)))
+      
+      (use-package evil-surround
+        :config (global-evil-surround-mode 1))
+      
+      (use-package evil-exchange
+        :config (evil-exchange-install))
+      
+      (use-package evil-goggles
+        :diminish evil-goggles-mode
+        :config (evil-goggles-mode))
+      
+      (use-package evil-snipe
+        :config
+        (evil-snipe-mode +1)
+        (evil-snipe-override-mode +1)
+        (add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
+        :diminish
+        evil-snipe-local-mode
+        evil-snipe-override-mode
+        :custom
+        (evil-snipe-scope 'whole-line)
+        (evil-snipe-repeat-scope 'whole-visible))
 #+END_SRC
 
 ** Avy
@@ -1434,6 +1435,22 @@ Search-based navigation
     (define-key typopunct-map "." 'typopunct-insert-ellipsis)
     (add-to-list 'typopunct-language-alist '(norsk "«" "»" "‘" "’")))
 #+END_SRC
+
+** Org-marginalia
+
+Use marginal annotations in org-mode with any file.
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package org-marginalia
+    :straight (:host github :repo "nobiot/org-marginalia")
+    :bind (:map org-marginalia-mode-map
+                (("C-c n o" . org-marginalia-open)
+                 ("C-c m" . org-marginalia-mark)
+                 ("C-c n ]" . org-marginalia-next)
+                 ("C-c n [" . org-marginalia-prev)))
+    :config
+    (setq org-marginalia-notes-file-path (expand-file-name "marginalia.org" private/org-roam-directory)))
+#+end_src
 
 * Other useful utilities
 ** Session management
