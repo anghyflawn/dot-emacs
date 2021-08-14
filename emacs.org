@@ -1124,7 +1124,7 @@ This bit loads markdown-mode and sets up various customizations.
             (when (el-patch-swap
                     (eq (char-after begin) ?.)
                     (or (eq (char-after begin) ?.)
-                        (eq (char-after-begin) ?=)))
+                        (eq (char-after begin) ?=)))
               (setq begin (1+ begin)))
             (buffer-substring-no-properties begin end))))))
   
