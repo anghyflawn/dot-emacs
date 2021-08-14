@@ -10,6 +10,12 @@
   (use-package bind-key)
 #+END_SRC
 
+** El-patch
+
+#+begin_src emacs-lisp :noweb-ref init-before
+  (use-package el-patch)
+#+end_src
+
 ** Pinentry
 
 This sets up Emacs for GPG pinentry
@@ -30,7 +36,7 @@ This sets up Emacs for GPG pinentry
 * Initialization
 ** Paths
 
-Keep temporary files away from working directories
+Keep temporary files away from working directories 
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
   (defvar conf/temp-directory "~/.emacs.temp.dir")
@@ -235,6 +241,8 @@ This sets the colours of the background and fonts.
 
 ** Fonts
 
+Set up the actual fonts to use
+
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance
   (set-fontset-font "fontset-default" 'georgian "Noto Sans Georgian-semibold-normal")
   (set-fontset-font "fontset-default" 'ethiopic "Noto Serif Ethiopic")
@@ -247,6 +255,12 @@ This sets the colours of the background and fonts.
   ;;  '(default ((t (:family "Iosevka SS09" :weight light :height 165))))
   ;;  '(variable-pitch ((t (:family "PT Serif" :height 180 :weight medium)))))
 #+END_SRC
+
+Allow mixing fixed and variable pitch.
+
+#+begin_src emacs-lisp :noweb-ref appearance
+  (use-package mixed-pitch)
+#+end_src
 
 ** Misc
 
@@ -753,11 +767,11 @@ Narrower margins to focus when writing
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package olivetti
     :config
-    (setq-default olivetti-body-width 80)
+    (setq-default olivetti-body-width 75)
     (add-hook 'olivetti-mode-hook
               (defun my-olivetti-mode-hook ()
-                (if olivetti-mode (variable-pitch-mode 1)
-                  (variable-pitch-mode -1)))))
+                (if olivetti-mode (mixed-pitch-mode 1)
+                  (mixed-pitch-mode 'toggle)))))
 #+end_src
 
 *** Palimpsest-mode
@@ -957,7 +971,8 @@ The following sets up Org-mode itself
           org-src-fontify-natively t
           org-clock-persist 'history
           org-clock-idle-time 10
-          org-clock-x11idle-program-name "/usr/bin/xprintidle")
+          org-clock-x11idle-program-name "/usr/bin/xprintidle"
+          org-hide-emphasis-markers t)
     (org-clock-persistence-insinuate)
   
     ;; The following sets up my LaTeX export preferences
@@ -1045,6 +1060,14 @@ The following sets up Org-mode itself
            ("s-y" . org-download-yank)
            ("s-V" . org-download-clipboard))))
   
+  (use-package org-appear
+    :hook
+    (org-mode . org-appear-mode))
+  
+  (use-package org-pandoc-import
+    :straight (:host github
+               :repo "tecosaur/org-pandoc-import"
+               :files ("*.el" "filters" "preprocessors")))
 #+END_SRC
   
 ** Markdown and pandoc
@@ -1070,8 +1093,41 @@ This bit loads markdown-mode and sets up various customizations.
                 (pandoc-mode)
                 (typopunct-mode)
                 (outline-minor-mode)
-                (yas-minor-mode))))
-
+                (yas-minor-mode)))
+  
+    ;; Patch markdown-mode to understand pandoc's {=LANGUAGE} code
+    ;; blocks
+    
+    (el-patch-defun markdown-code-block-lang (&optional pos-prop)
+      "Return the language name for a GFM or tilde fenced code block.
+  The beginning of the block may be described by POS-PROP,
+  a cons of (pos . prop) giving the position and property
+  at the beginning of the block."
+      (or pos-prop
+          (setq pos-prop
+                (markdown-max-of-seq
+                 #'car
+                 (cl-remove-if
+                  #'null
+                  (cl-mapcar
+                   #'markdown-find-previous-prop
+                   (markdown-get-fenced-block-begin-properties))))))
+      (when pos-prop
+        (goto-char (car pos-prop))
+        (set-match-data (get-text-property (point) (cdr pos-prop)))
+        ;; Note: Hard-coded group number assumes tilde
+        ;; and GFM fenced code regexp groups agree.
+        (let ((begin (match-beginning 3))
+              (end (match-end 3)))
+          (when (and begin end)
+            ;; Fix language strings beginning with periods, like ".ruby".
+            (when (el-patch-swap
+                    (eq (char-after begin) ?.)
+                    (or (eq (char-after begin) ?.)
+                        (eq (char-after-begin) ?=)))
+              (setq begin (1+ begin)))
+            (buffer-substring-no-properties begin end))))))
+  
   (use-package edit-indirect-region-latex
     :after markdown-mode)
 #+END_SRC
@@ -1263,7 +1319,6 @@ and inserts it at point.
             org-ref-default-ref-type "cref"))
     
     (use-package citeproc)
-    (require 'org-cite)
     (require 'oc-csl)
     (setq org-cite-csl-locales-dir (expand-file-name "etc/csl/" user-emacs-directory)
           org-cite-csl-styles-dir (expand-file-name "etc/csl/" user-emacs-directory))
@@ -1318,78 +1373,80 @@ and inserts it at point.
     :config
     (setq wc-goal-modeline-format "WCΔ[%w/%gw]"))
 #+end_src
+
 ** Evil
 
 Evil is a mode that makes vi(m) like keybindings
 
 #+BEGIN_SRC emacs-lisp :noweb-ref evil 
-      (use-package evil
-        :init
-        (setq evil-want-C-i-jump nil
-              evil-search-module 'evil-search
-              evil-undo-system 'undo-redo)
-        :config
-        (evil-mode 1)
-        (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
-        (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
-        (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
-        (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
-        (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
-        (define-key evil-motion-state-map (kbd "<SPC>") 'evil-window-map)
-      
-        (setq-default evil-cross-lines t
-                      sentence-end-double-space nil
-                      evil-default-state 'normal)
-      
-        (cl-loop for (mode . state) in
-                 '((inferior-emacs-lisp-mode . emacs)
-                   (shell-mode . insert)
-                   (git-commit-mode . insert)
-                   (term-mode . emacs)
-                   (dired-mode . emacs)
-                   (wdired-mode . normal)
-                   (inferior-ess-mode . emacs)
-                   (help-mode . emacs)
-                   (comint-mode . emacs)
-                   (inferior-python-mode . emacs)
-                   (eww-mode . emacs)
-                   (undo-tree-visualizer . emacs)
-                   (mu4e-view-mode . emacs)
-                   (paradox-menu-mode . emacs)
-                   (vterm-mode . emacs)
-                   (flycheck-error-list-mode . emacs)
-                   (reaper-mode . emacs)
-                   (iESS-mode . emacs)
-                   (cfw:details-mode . emacs)
-                   (cfw:calendar-mode . emacs)
-                   (dashboard-mode . emacs)
-                   (helpful-mode . emacs)
-                   (deft-mode . emacs)
-                   (git-timemachine-mode . emacs)
-                   (reftex-index-mode . emacs))
-                 do (evil-set-initial-state mode state)))
-      
-      (use-package evil-surround
-        :config (global-evil-surround-mode 1))
-      
-      (use-package evil-exchange
-        :config (evil-exchange-install))
-      
-      (use-package evil-goggles
-        :diminish evil-goggles-mode
-        :config (evil-goggles-mode))
-      
-      (use-package evil-snipe
-        :config
-        (evil-snipe-mode +1)
-        (evil-snipe-override-mode +1)
-        (add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
-        :diminish
-        evil-snipe-local-mode
-        evil-snipe-override-mode
-        :custom
-        (evil-snipe-scope 'whole-line)
-        (evil-snipe-repeat-scope 'whole-visible))
+  (use-package evil
+    :init
+    (setq evil-want-C-i-jump nil
+          evil-want-fine-undo t
+          evil-search-module 'evil-search
+          evil-undo-system 'undo-tree)
+    :config
+    (evil-mode 1)
+    (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+    (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+    (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+    (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+    (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
+    (define-key evil-motion-state-map (kbd "<SPC>") 'evil-window-map)
+  
+    (setq-default evil-cross-lines t
+                  sentence-end-double-space nil
+                  evil-default-state 'normal)
+  
+    (cl-loop for (mode . state) in
+             '((inferior-emacs-lisp-mode . emacs)
+               (shell-mode . insert)
+               (git-commit-mode . insert)
+               (term-mode . emacs)
+               (dired-mode . emacs)
+               (wdired-mode . normal)
+               (inferior-ess-mode . emacs)
+               (help-mode . emacs)
+               (comint-mode . emacs)
+               (inferior-python-mode . emacs)
+               (eww-mode . emacs)
+               (undo-tree-visualizer . emacs)
+               (mu4e-view-mode . emacs)
+               (paradox-menu-mode . emacs)
+               (vterm-mode . emacs)
+               (flycheck-error-list-mode . emacs)
+               (reaper-mode . emacs)
+               (iESS-mode . emacs)
+               (cfw:details-mode . emacs)
+               (cfw:calendar-mode . emacs)
+               (dashboard-mode . emacs)
+               (helpful-mode . emacs)
+               (deft-mode . emacs)
+               (git-timemachine-mode . emacs)
+               (reftex-index-mode . emacs))
+             do (evil-set-initial-state mode state)))
+  
+  (use-package evil-surround
+    :config (global-evil-surround-mode 1))
+  
+  (use-package evil-exchange
+    :config (evil-exchange-install))
+  
+  (use-package evil-goggles
+    :diminish evil-goggles-mode
+    :config (evil-goggles-mode))
+  
+  (use-package evil-snipe
+    :config
+    (evil-snipe-mode +1)
+    (evil-snipe-override-mode +1)
+    (add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
+    :diminish
+    evil-snipe-local-mode
+    evil-snipe-override-mode
+    :custom
+    (evil-snipe-scope 'whole-line)
+    (evil-snipe-repeat-scope 'whole-visible))
 #+END_SRC
 
 ** Avy
@@ -1450,6 +1507,18 @@ Use marginal annotations in org-mode with any file.
                  ("C-c n [" . org-marginalia-prev)))
     :config
     (setq org-marginalia-notes-file-path (expand-file-name "marginalia.org" private/org-roam-directory)))
+#+end_src
+
+** Undo-tree
+
+Properly setup undo-tree
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package undo-tree
+    :config
+    (setq undo-tree-visualizer-timestamps t
+          undo-tree-visualizer-diff t)
+    (global-undo-tree-mode))
 #+end_src
 
 * Other useful utilities
@@ -1716,9 +1785,9 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
     :hook
     (mu4e-headers-mode . buffer-face-mode)
     :init
-
+  
     (require 'mu4e-contrib)
-
+  
     (setq mu4e-update-interval 300
           mu4e-change-filenames-when-moving t
           mu4e-attachment-dir  "~/Downloads"
@@ -1753,14 +1822,14 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
           mu4e-compose-dont-reply-to-self t
           mu4e-compose-keep-self-cc nil
           smtpmail-queue-dir "~/mail/queue/cur")
-
+  
     (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
-
+  
     (defvar ignore-email t)
     (defun ignore-email-toggle ()
       (interactive)
       (setq ignore-email (not ignore-email)))
-
+  
     (defun my-mu4e-update-hook ()
       "Only check email automatically on weekdays"
       (setq mu4e-get-mail-command
@@ -1770,7 +1839,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                   "true"
                 "mbsync -a"))))
     (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
-
+  
     (use-package helm-mu
       :bind ("C-c C-x m" . helm-mu-contacts)
       ("<f6>" . helm-mu)
@@ -1783,19 +1852,19 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
             ("s" . helm-mu))
       (:map mu4e-view-mode-map
             ("s" . helm-mu)))
-
+  
     (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive")
-
+  
     (add-to-list 'mu4e-bookmarks
                  '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
-
+  
     (add-to-list 'mu4e-bookmarks
                  '("flag:flagged" "Flagged messages" ?f))
-
+  
     (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
     (add-to-list 'mu4e-view-actions
                  '("ViewInBrowser" . mu4e-action-view-in-browser) t)
-
+  
     (setq mu4e-contexts
           `(,(make-mu4e-context
               :name "Work"
@@ -1839,7 +1908,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                       (message-sendmail-extra-arguments . ("-a" "personal")))))
           mu4e-context-policy 'pick-first
           mu4e-compose-context-policy 'ask)
-
+  
     (defun my-mu4e-context-switch ()
       "Interactively update the context"
       (interactive)
@@ -1853,8 +1922,8 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
         (kill-region (point) (point-max))
         (let ((message-signature mu4e-compose-signature))
           (message-insert-signature))))
-
-
+  
+  
     (add-hook 'mu4e-compose-mode-hook
               (defun my-compose-mode-hook ()
                 (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
@@ -1864,25 +1933,26 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                 (typopunct-mode)
                 (flyspell-mode)
                 (local-set-key (kbd "C-c C-x C-;") 'my-mu4e-context-switch)))
-
+  
     (setq message-send-mail-function 'message-send-mail-with-sendmail
           sendmail-program "/usr/bin/msmtp")
-
+  
     (use-package org-mu4e
       :straight nil
       :config
       (setq org-mu4e-link-query-in-headers-mode nil
             org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
                                     ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
-
+  
     (use-package mu4e-alert
-      :straight (:host github :repo "iqbalansari/mu4e-alert"))
-    (mu4e-alert-enable-notifications)
-    (mu4e-alert-enable-mode-line-display)
-    (mu4e-alert-set-default-style 'libnotify)
-    (setq mu4e-alert-interesting-mail-query unread-query)
-    (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails)
-
+      :straight (:host github :repo "iqbalansari/mu4e-alert")
+      :config
+      (mu4e-alert-enable-notifications)
+      (mu4e-alert-enable-mode-line-display)
+      (mu4e-alert-set-default-style 'ignore)
+      (setq mu4e-alert-interesting-mail-query unread-query)
+      (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails))
+  
     (require 'mu4e-icalendar)
     (mu4e-icalendar-setup))
 #+END_SRC
@@ -2200,7 +2270,7 @@ A drop-in replacement for Emacs' help buffers
     :straight
       (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
       :after org-roam
-      :hook (org-roam . org-roam-ui-mode))
+      :hook (after-init . org-roam-ui-mode))
   
   (use-package org-roam-server
     :disabled t
