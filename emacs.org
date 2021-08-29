@@ -1982,7 +1982,12 @@ Check mail if the timer breaks down
 ** Browser
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
-(setq browse-url-browser-function 'helm-browse-url-firefox)
+  (use-package osx-browse
+    :commands osx-browse-mode)
+  (pcase system-type
+          ('gnu-linux (setq browse-url-browser-function 'helm-browse-url-firefox))
+          ('darwin (progn (osx-browse-mode 1)
+                          (setq browse-url-browser-function 'osx-browse-url-firefox))))
 #+END_SRC
 
 ** Search
