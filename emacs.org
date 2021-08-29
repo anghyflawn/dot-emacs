@@ -55,24 +55,28 @@ Keep the =authinfo= file in the =.emacs.d= tree (as [[https://www.masteringemacs
 ** System  specifics
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-before
-      (setq x-alt-keysym 'meta)
-      (setq delete-by-moving-to-trash t)
-      (use-package exec-path-from-shell
-	:config
-	(exec-path-from-shell-initialize))
-
-      (pcase system-type
-	('darwin
-	 (setq trash-directory "~/.Trash/")
-	 ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
-	 (when (executable-find "gls")
-	   (setq insert-directory-program "gls"))
-	 (global-set-key (kbd "M-3")  ;; My Mac had # on Alt-3
-			 (lambda () 
-			   (interactive) 
-			   (insert "#"))) )
-	('gnu/linux
-	 (setq trash-directory "~/.local/share/Trash/files/")))
+    (setq delete-by-moving-to-trash t
+	  inhibit-compacting-font-caches nil)
+  
+    (use-package exec-path-from-shell
+      :config
+      (exec-path-from-shell-initialize))
+  
+    (pcase system-type
+      ('darwin
+       (setq mac-command-modifier 'super
+	     mac-option-modifier 'meta
+	     trash-directory "~/.Trash/")
+       ;; BSD ls does not support --dired. Use GNU core-utils: brew install coreutils
+       (when (executable-find "gls")
+	 (setq insert-directory-program "gls"))
+       (global-set-key (kbd "M-3")  ;; My Mac had # on Alt-3
+		       (lambda () 
+			 (interactive) 
+			 (insert "#"))) )
+      ('gnu/linux
+       (setq trash-directory "~/.local/share/Trash/files/"
+	     x-alt-keysym 'meta)))
 #+END_SRC
 
 ** Temporary files
@@ -249,7 +253,7 @@ Set up the actual fonts to use
   (set-fontset-font "fontset-default" 'hebrew "Noto Sans Hebrew")
   (set-fontset-font "fontset-default" 'syriac "Serto Batnan-22")
   (setq buffer-face-mode-face '(:family "Iosevka Fixed SS09"))
-  (set-face-attribute 'default nil :family "Iosevka SS09" :weight 'light :height 165)
+  (set-face-attribute 'default nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'variable-pitch nil :family "Literata" :height 160 :weight 'medium)
   ;; (custom-set-faces
   ;;  '(default ((t (:family "Iosevka SS09" :weight light :height 165))))
@@ -364,7 +368,8 @@ Makes it clearer which buffer is active
   (use-package dimmer
     :custom (dimmer-fraction 0.4)
     :config
-    (dimmer-configure-which-key)
+    (unless (eq system-type 'darwin)
+      (dimmer-configure-which-key))
     (dimmer-configure-helm)
     (dimmer-configure-hydra)
     (dimmer-configure-magit)
@@ -684,14 +689,16 @@ Language server protocol setup
     (setq gc-cons-threshold 100000000)
     (setq read-process-output-max (* 1024 1024))
     :hook ((R-mode . lsp)
-           (tex-mode . lsp)
-           (latex-mode . lsp)
-           (LaTeX-mode . lsp)
-           (bibtex-mode . lsp)
-           (python-mode . lsp)
-           (lsp-mode . lsp-enable-which-key-integration)
-           (LaTeX-mode . lsp-headerline-breadcrumb-mode))
-    :commands lsp)
+	   (tex-mode . lsp)
+	   (latex-mode . lsp)
+	   (LaTeX-mode . lsp)
+	   (bibtex-mode . lsp)
+	   (python-mode . lsp)
+	   (LaTeX-mode . lsp-headerline-breadcrumb-mode))
+    :commands lsp
+    :config
+    (unless (eq system-type 'darwin)
+      (add-hook 'lsp-mode-hook 'lsp-enable-which-key-integration)))
 
   ;; optionally
   (use-package lsp-ui :commands lsp-ui-mode)
@@ -702,6 +709,7 @@ Language server protocol setup
 
   (use-package which-key
     :diminish which-key-mode
+    :disabled (eq system-type 'darwin)
     :config
     (which-key-mode))
 #+END_SRC
@@ -952,6 +960,7 @@ The following sets up Org-mode itself
     (eval-after-load "org"
       '(define-key org-mode-map (kbd "C-c ]") nil))
     (require 'org-inlinetask)
+    (require 'org-habit)
     (setq org-log-done t
           org-use-property-inheritance t
           org-agenda-files private/org-files
@@ -974,6 +983,9 @@ The following sets up Org-mode itself
           org-clock-x11idle-program-name "/usr/bin/xprintidle"
           org-hide-emphasis-markers t)
     (org-clock-persistence-insinuate)
+  
+    (setq org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
+                                  ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a")))
   
     ;; The following sets up my LaTeX export preferences
   
@@ -1780,6 +1792,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
   (use-package mu4e
     :commands (mu4e compose-mail)
+    :disabled (eq system-type 'darwin)
     :load-path  "/usr/share/emacs/site-lisp/mu4e/"
     :bind ("<f5>" . mu4e)
     :hook
@@ -1962,7 +1975,8 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 Check mail if the timer breaks down
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
-(setq mail-timer (run-with-timer 0 600 'mu4e-update-mail-and-index t))
+  (unless (eq system-type 'darwin)
+    (setq mail-timer (run-with-timer 0 600 'mu4e-update-mail-and-index t)))
 #+END_SRC
 
 ** Browser
@@ -2206,6 +2220,7 @@ A drop-in replacement for Emacs' help buffers
 
 #+begin_src emacs-lisp :noweb-ref utils
   (use-package activity-watch-mode
+    :disabled (eq system-type 'darwin)
     :config
     (global-activity-watch-mode))
 #+end_src
@@ -2268,9 +2283,17 @@ A drop-in replacement for Emacs' help buffers
   
   (use-package org-roam-ui
     :straight
-      (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
-      :after org-roam
-      :hook (after-init . org-roam-ui-mode))
+    (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
+    :after org-roam
+    :hook (after-init . org-roam-ui-mode)
+    :config
+    (defun org-roam-ui-browse ()
+      (interactive)
+      (browse-url "http://127.0.0.1:35901/"))
+    (bind-keys ("C-c n s" . org-roam-ui-browse))
+    (add-hook 'org-roam-ui-mode-hook
+              (lambda ()
+                (set-process-query-on-exit-flag (get-process "httpd") nil))))
   
   (use-package org-roam-server
     :disabled t
