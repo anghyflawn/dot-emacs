@@ -683,30 +683,32 @@ Language server protocol setup
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (setq lsp-keymap-prefix "C-c M-l")
-
+  
   (use-package lsp-mode
     :init
     (setq gc-cons-threshold 100000000)
     (setq read-process-output-max (* 1024 1024))
     :hook ((R-mode . lsp)
-	   (tex-mode . lsp)
-	   (latex-mode . lsp)
-	   (LaTeX-mode . lsp)
-	   (bibtex-mode . lsp)
-	   (python-mode . lsp)
-	   (LaTeX-mode . lsp-headerline-breadcrumb-mode))
+           (tex-mode . lsp)
+           (latex-mode . lsp)
+           (LaTeX-mode . lsp)
+           ;; (bibtex-mode . lsp)
+           (python-mode . lsp)
+           (LaTeX-mode . lsp-headerline-breadcrumb-mode))
     :commands lsp
     :config
     (unless (eq system-type 'darwin)
       (add-hook 'lsp-mode-hook 'lsp-enable-which-key-integration)))
-
+  
   ;; optionally
   (use-package lsp-ui :commands lsp-ui-mode)
   (use-package helm-lsp :commands helm-lsp-workspace-symbol)
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-
-  (use-package lsp-latex)
-
+  
+  (use-package lsp-latex
+    :bind (:map LaTeX-mode-map
+                (("C-c C-'" . lsp-ui-imenu))))
+  
   (use-package which-key
     :diminish which-key-mode
     :disabled (eq system-type 'darwin)
@@ -803,6 +805,7 @@ Sidebar contents
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package imenu-list
     :bind ("C-c C-'" . imenu-list-smart-toggle)
+    :disabled
     :config
     (setq imenu-list-focus-after-activation t))
 #+end_src
@@ -1344,7 +1347,7 @@ and inserts it at point.
     :bind
     (("C-c ]" . helm-bibtex))
     :config
-    (setq bibtex-completion-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+    (setq bibtex-completion-bibliography `(,private/bibliography-file)
           bibtex-completion-library-path private/pdf-directory
           bibtex-completion-pdf-open-function 'find-file
           bibtex-completion-cite-prompt-for-optional-arguments nil
@@ -1435,6 +1438,7 @@ Evil is a mode that makes vi(m) like keybindings
                (helpful-mode . emacs)
                (deft-mode . emacs)
                (git-timemachine-mode . emacs)
+               (lsp-ui-imenu-mode . emacs)
                (reftex-index-mode . emacs))
              do (evil-set-initial-state mode state)))
   
@@ -2290,7 +2294,7 @@ A drop-in replacement for Emacs' help buffers
     :straight
     (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
     :after org-roam
-    :hook (after-init . org-roam-ui-mode)
+    :commands org-roam-ui-mode
     :config
     (defun org-roam-ui-browse ()
       (interactive)
