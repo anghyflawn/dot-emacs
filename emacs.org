@@ -1831,10 +1831,9 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
   (use-package mu4e
     :commands (mu4e compose-mail)
-    :disabled (eq system-type 'darwin)
+    :unless (eq system-type 'darwin)
     :load-path  "/usr/share/emacs/site-lisp/mu4e/"
     :bind ("<f5>" . mu4e)
-    :load-path "/usr/share/emacs/site-lisp/mu4e/"
     :hook
     (mu4e-headers-mode . buffer-face-mode)
     :init
