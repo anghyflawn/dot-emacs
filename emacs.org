@@ -1835,169 +1835,169 @@ Keep the Drafts folder clean
 I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
 #+BEGIN_SRC emacs-lisp :noweb-ref mail
-  (use-package mu4e
-    :commands (mu4e compose-mail)
-    :unless (eq system-type 'darwin)
-    :load-path  "/usr/share/emacs/site-lisp/mu4e/"
-    :bind ("<f5>" . mu4e)
-    :hook
-    (mu4e-headers-mode . buffer-face-mode)
-    :init
+  (unless (eq system-type 'darwin)
+    (use-package mu4e
+      :commands (mu4e compose-mail)
+      :load-path  "/usr/share/emacs/site-lisp/mu4e/"
+      :bind ("<f5>" . mu4e)
+      :hook
+      (mu4e-headers-mode . buffer-face-mode)
+      :init
   
-    (require 'mu4e-contrib)
+      (require 'mu4e-contrib)
   
-    (setq mu4e-update-interval 300
-          mu4e-change-filenames-when-moving t
-          mu4e-attachment-dir  "~/Downloads"
-          mu4e-view-show-images t
-          mu4e-get-mail-command "true"
-          mail-user-agent 'mu4e-user-agent
-          mu4e-compose-complete-addresses t
-          mu4e-compose-complete-only-after "2012-09-15"
-          mu4e-headers-include-related nil
-          mu4e-hide-index-messages t
-          mu4e-use-fancy-chars t
-          mu4e-headers-seen-mark      '("S" . "✔")
-          mu4e-headers-unread-mark    '("u" . "●")
-          mu4e-headers-new-mark       '("N" . "○")
-          mu4e-headers-replied-mark   '("R" . "←")
-          mu4e-headers-passed-mark    '("P" . "→")
-          mu4e-headers-flagged-mark   '("F" . "⚑")
-          mu4e-headers-draft-mark     '("D" . "⚒")
-          mu4e-headers-encrypted-mark '("x" . "e")
-          mu4e-headers-signed-mark    '("s" . "s")
-          mu4e-headers-trashed-mark   '("T" . "×")
-          mu4e-headers-attach-mark    '("a" . "⚓")
-          mu4e-headers-visible-flags  '(draft flagged passed replied unread)
-          mu4e-headers-default-prefix     '("|" . "│")
-          mu4e-headers-has-child-prefix   '("+" . "└")
-          mu4e-headers-first-child-prefix '("\\" . "└")
-          mu4e-index-cleanup t
-          mu4e-index-lazy-check nil
-          mu4e-headers-date-format "%d-%m-%Y"
-          message-kill-buffer-on-exit t
-          mu4e-view-use-gnus t
-          mu4e-compose-dont-reply-to-self t
-          mu4e-compose-keep-self-cc nil
-          smtpmail-queue-dir "~/mail/queue/cur")
+      (setq mu4e-update-interval 300
+	    mu4e-change-filenames-when-moving t
+	    mu4e-attachment-dir  "~/Downloads"
+	    mu4e-view-show-images t
+	    mu4e-get-mail-command "true"
+	    mail-user-agent 'mu4e-user-agent
+	    mu4e-compose-complete-addresses t
+	    mu4e-compose-complete-only-after "2012-09-15"
+	    mu4e-headers-include-related nil
+	    mu4e-hide-index-messages t
+	    mu4e-use-fancy-chars t
+	    mu4e-headers-seen-mark      '("S" . "✔")
+	    mu4e-headers-unread-mark    '("u" . "●")
+	    mu4e-headers-new-mark       '("N" . "○")
+	    mu4e-headers-replied-mark   '("R" . "←")
+	    mu4e-headers-passed-mark    '("P" . "→")
+	    mu4e-headers-flagged-mark   '("F" . "⚑")
+	    mu4e-headers-draft-mark     '("D" . "⚒")
+	    mu4e-headers-encrypted-mark '("x" . "e")
+	    mu4e-headers-signed-mark    '("s" . "s")
+	    mu4e-headers-trashed-mark   '("T" . "×")
+	    mu4e-headers-attach-mark    '("a" . "⚓")
+	    mu4e-headers-visible-flags  '(draft flagged passed replied unread)
+	    mu4e-headers-default-prefix     '("|" . "│")
+	    mu4e-headers-has-child-prefix   '("+" . "└")
+	    mu4e-headers-first-child-prefix '("\\" . "└")
+	    mu4e-index-cleanup t
+	    mu4e-index-lazy-check nil
+	    mu4e-headers-date-format "%d-%m-%Y"
+	    message-kill-buffer-on-exit t
+	    mu4e-view-use-gnus t
+	    mu4e-compose-dont-reply-to-self t
+	    mu4e-compose-keep-self-cc nil
+	    smtpmail-queue-dir "~/mail/queue/cur")
   
-    (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
+      (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
   
-    (defvar ignore-email t)
-    (defun ignore-email-toggle ()
-      (interactive)
-      (setq ignore-email (not ignore-email)))
+      (defvar ignore-email t)
+      (defun ignore-email-toggle ()
+	(interactive)
+	(setq ignore-email (not ignore-email)))
   
-    (defun my-mu4e-update-hook ()
-      "Only check email automatically on weekdays"
-      (setq mu4e-get-mail-command
-            (if ignore-email
-                "true"
-              (if (member (nth 6 (decode-time)) '(6 0))
-                  "true"
-                "mbsync -a"))))
-    (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
+      (defun my-mu4e-update-hook ()
+	"Only check email automatically on weekdays"
+	(setq mu4e-get-mail-command
+	      (if ignore-email
+		  "true"
+		(if (member (nth 6 (decode-time)) '(6 0))
+		    "true"
+		  "mbsync -a"))))
+      (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
   
-    (use-package helm-mu
-      :bind ("C-c C-x m" . helm-mu-contacts)
-      ("<f6>" . helm-mu)
-      :config
-      (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
-      :bind
-      (:map mu4e-main-mode-map
-            ("s" . helm-mu))
-      (:map mu4e-headers-mode-map
-            ("s" . helm-mu))
-      (:map mu4e-view-mode-map
-            ("s" . helm-mu)))
+      (use-package helm-mu
+	:bind ("C-c C-x m" . helm-mu-contacts)
+	("<f6>" . helm-mu)
+	:config
+	(setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
+	:bind
+	(:map mu4e-main-mode-map
+	      ("s" . helm-mu))
+	(:map mu4e-headers-mode-map
+	      ("s" . helm-mu))
+	(:map mu4e-view-mode-map
+	      ("s" . helm-mu)))
   
-    (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive")
+      (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive")
   
-    (add-to-list 'mu4e-bookmarks
-                 '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+      (add-to-list 'mu4e-bookmarks
+		   '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
   
-    (add-to-list 'mu4e-bookmarks
-                 '("flag:flagged" "Flagged messages" ?f))
+      (add-to-list 'mu4e-bookmarks
+		   '("flag:flagged" "Flagged messages" ?f))
   
-    (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
-    (add-to-list 'mu4e-view-actions
-                 '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+      (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
+      (add-to-list 'mu4e-view-actions
+		   '("ViewInBrowser" . mu4e-action-view-in-browser) t)
   
-    (setq mu4e-contexts
-          `(,(make-mu4e-context
-              :name "Work"
-              :enter-func (lambda () (mu4e-message "Entering main work context"))
-              :leave-func (lambda () (mu4e-message "Leaving main work context"))
-              :match-func (lambda (msg)
-                            (when msg
-                              (mu4e-message-contact-field-matches msg :to "iosad")))
-              :vars'((user-full-name . "Pavel Iosad")
-                     (user-mail-address . "pavel.iosad@ed.ac.uk")
-                     (mu4e-compose-reply-to-address . nil)
-                     (mu4e-compose-signature . (make-random-signature))
-                     (mu4e-drafts-folder . "/work/Drafts")
-                     (mu4e-sent-folder . "/work/Sent")
-                     (mu4e-trash-folder . "/work/Trash")
-                     (mu4e-refile-folder . "/work/Archive")
-                     (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
-                                                (:maildir "/work/Archive" :key ?a)
-                                                (:maildir "/work/Sent" :key ?s)
-                                                (:maildir "/work/Trash" :key ?t)))
-                     (message-sendmail-extra-arguments . nil)))
-            ,(make-mu4e-context
-              :name "Personal"
-              :enter-func (lambda () (mu4e-message "Entering personal context"))
-              :leave-func (lambda () (mu4e-message "Leaving personal context"))
-              :match-func (lambda (msg)
-                            (when msg
-                              (mu4e-message-contact-field-matches msg :to "anghyflawn")))
-              :vars '((user-full-name . "Pavel Iosad")
-                      (user-mail-address . "pavel@anghyflawn.net")
-                      (mu4e-compose-reply-to-address . nil)
-                      (mu4e-compose-signature . "Pavel Iosad")
-                      (mu4e-drafts-folder . "/work/Drafts")
-                      (mu4e-sent-folder . "/work/Sent")
-                      (mu4e-trash-folder . "/work/Trash")
-                      (mu4e-refile-folder . "/work/Archive")
-                      (mu4e-maildir-shortcuts . '((:maildir "/work/Inbox" :key ?i)
-                                                  (:maildir "/work/Archive" :key ?a)
-                                                  (:maildir "/work/Sent" :key ?s)
-                                                  (:maildir "/work/Trash" :key ?t)))
-                      (message-sendmail-extra-arguments . ("-a" "personal")))))
-          mu4e-context-policy 'pick-first
-          mu4e-compose-context-policy 'ask)
+      (setq mu4e-contexts
+	    `(,(make-mu4e-context
+		:name "Work"
+		:enter-func (lambda () (mu4e-message "Entering main work context"))
+		:leave-func (lambda () (mu4e-message "Leaving main work context"))
+		:match-func (lambda (msg)
+			      (when msg
+				(mu4e-message-contact-field-matches msg :to "iosad")))
+		:vars'((user-full-name . "Pavel Iosad")
+		       (user-mail-address . "pavel.iosad@ed.ac.uk")
+		       (mu4e-compose-reply-to-address . nil)
+		       (mu4e-compose-signature . (make-random-signature))
+		       (mu4e-drafts-folder . "/work/Drafts")
+		       (mu4e-sent-folder . "/work/Sent")
+		       (mu4e-trash-folder . "/work/Trash")
+		       (mu4e-refile-folder . "/work/Archive")
+		       (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
+						  (:maildir "/work/Archive" :key ?a)
+						  (:maildir "/work/Sent" :key ?s)
+						  (:maildir "/work/Trash" :key ?t)))
+		       (message-sendmail-extra-arguments . nil)))
+	      ,(make-mu4e-context
+		:name "Personal"
+		:enter-func (lambda () (mu4e-message "Entering personal context"))
+		:leave-func (lambda () (mu4e-message "Leaving personal context"))
+		:match-func (lambda (msg)
+			      (when msg
+				(mu4e-message-contact-field-matches msg :to "anghyflawn")))
+		:vars '((user-full-name . "Pavel Iosad")
+			(user-mail-address . "pavel@anghyflawn.net")
+			(mu4e-compose-reply-to-address . nil)
+			(mu4e-compose-signature . "Pavel Iosad")
+			(mu4e-drafts-folder . "/work/Drafts")
+			(mu4e-sent-folder . "/work/Sent")
+			(mu4e-trash-folder . "/work/Trash")
+			(mu4e-refile-folder . "/work/Archive")
+			(mu4e-maildir-shortcuts . '((:maildir "/work/Inbox" :key ?i)
+						    (:maildir "/work/Archive" :key ?a)
+						    (:maildir "/work/Sent" :key ?s)
+						    (:maildir "/work/Trash" :key ?t)))
+			(message-sendmail-extra-arguments . ("-a" "personal")))))
+	    mu4e-context-policy 'pick-first
+	    mu4e-compose-context-policy 'ask)
   
   
-    (add-hook 'mu4e-compose-mode-hook
-              (defun my-compose-mode-hook ()
-                (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
-                                                ("Work" ,(make-random-signature))))
-                (auto-fill-mode)
-                (set-fill-column 72)
-                (typopunct-mode)
-                (flyspell-mode)))
+      (add-hook 'mu4e-compose-mode-hook
+		(defun my-compose-mode-hook ()
+		  (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
+						  ("Work" ,(make-random-signature))))
+		  (auto-fill-mode)
+		  (set-fill-column 72)
+		  (typopunct-mode)
+		  (flyspell-mode)))
   
-    (setq message-send-mail-function 'message-send-mail-with-sendmail
-          sendmail-program "/usr/bin/msmtp")
+      (setq message-send-mail-function 'message-send-mail-with-sendmail
+	    sendmail-program "/usr/bin/msmtp")
   
-    (use-package org-mu4e
-      :straight nil
-      :config
-      (setq org-mu4e-link-query-in-headers-mode nil
-            org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
-                                    ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
+      (use-package org-mu4e
+	:straight nil
+	:config
+	(setq org-mu4e-link-query-in-headers-mode nil
+	      org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
+				      ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
   
-    (use-package mu4e-alert
-      :straight (:host github :repo "iqbalansari/mu4e-alert")
-      :config
-      (mu4e-alert-enable-notifications)
-      (mu4e-alert-enable-mode-line-display)
-      (mu4e-alert-set-default-style 'ignore)
-      (setq mu4e-alert-interesting-mail-query unread-query)
-      (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails))
+      (use-package mu4e-alert
+	:straight (:host github :repo "iqbalansari/mu4e-alert")
+	:config
+	(mu4e-alert-enable-notifications)
+	(mu4e-alert-enable-mode-line-display)
+	(mu4e-alert-set-default-style 'ignore)
+	(setq mu4e-alert-interesting-mail-query unread-query)
+	(global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails))
   
-    (require 'mu4e-icalendar)
-    (mu4e-icalendar-setup))
+      (require 'mu4e-icalendar)
+      (mu4e-icalendar-setup)))
 #+END_SRC
 
 *** Mail check
