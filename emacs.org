@@ -712,7 +712,7 @@ Language server protocol setup
   
   (use-package which-key
     :diminish which-key-mode
-    :disabled (eq system-type 'darwin)
+    :unless (eq system-type 'darwin)
     :config
     (which-key-mode))
 #+END_SRC
@@ -2249,7 +2249,7 @@ A drop-in replacement for Emacs' help buffers
 
 #+begin_src emacs-lisp :noweb-ref utils
   (use-package activity-watch-mode
-    :disabled (eq system-type 'darwin)
+    :unless (eq system-type 'darwin)
     :config
     (global-activity-watch-mode))
 #+end_src
