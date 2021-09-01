@@ -1353,7 +1353,7 @@ and inserts it at point.
       :disabled t
       :after org
       :config
-      (setq org-ref-default-bibliography '("~/texmf/bibtex/bib/biblio.bib")
+      (setq org-ref-default-bibliography `(,private/bibliography-file)
             org-ref-pdf-directory private/pdf-directory
             org-ref-default-ref-type "cref"))
     
@@ -2287,6 +2287,7 @@ A drop-in replacement for Emacs' help buffers
     (require 'org-roam-protocol))
   
   (use-package org-roam-bibtex
+    :after helm-bibtex
     :config
     (org-roam-bibtex-mode)
     ;; Remove the C-c ) binding, which conflicts with RefTeX
