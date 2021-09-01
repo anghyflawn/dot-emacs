@@ -1095,6 +1095,12 @@ The following sets up Org-mode itself
     :straight (:host github
                :repo "tecosaur/org-pandoc-import"
                :files ("*.el" "filters" "preprocessors")))
+  
+  (use-package org-drill
+    :config
+    (require 'org-drill)
+    (use-package org-drill-table))
+  
 #+END_SRC
   
 ** Markdown and pandoc
@@ -1672,7 +1678,7 @@ Set up =company-mode= for autocompletion.
     company-mode
     :config
     (global-company-mode 1)
-    (setq company-global-modes '(not message-mode latex-mode markdown-mode)))
+    (setq company-global-modes '(not message-mode latex-mode markdown-mode org-mode)))
 #+END_SRC
 
 ** Yasnippet
