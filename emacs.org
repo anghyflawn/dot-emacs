@@ -896,6 +896,8 @@ Sidebar contents
         (widen)
         (outline-mark-subtree)
         (ni-narrow-to-region-indirect-other-window (point) (mark) 0)
+        (when wc-goal-mode
+          (wc-goal-reset))
         (setq deactivate-mark t)))
   
   
@@ -1315,13 +1317,25 @@ and inserts it at point.
           reftex-cite-cleanup-optional-args t)
     (global-unset-key "\C-c /")
     (add-to-list 'reftex-bibliography-commands "addbibresource")
-
+  
     (let ((kpsewhich (string-trim-right (shell-command-to-string "which kpsewhich"))))
       (setq reftex-external-file-finders
             `(("tex" . ,(concat kpsewhich " -format=.tex %f"))
-              ("bib" . ,(concat kpsewhich " -format=.bib %f"))))))
-
-
+              ("bib" . ,(concat kpsewhich " -format=.bib %f")))))
+  
+    (defun my/buffer-file-name-for-reftex (old-fn &optional buffer)
+      "Make RefTeX work in indirect buffers"
+      (let ((bfn (funcall old-fn buffer)))
+        (if reftex-mode
+            (or bfn
+                (let ((base (buffer-base-buffer buffer)))
+                  (when base
+                    (funcall old-fn base))))
+          bfn)))
+  
+    (advice-add #'buffer-file-name :around #'my/buffer-file-name-for-reftex))
+  
+  
   (use-package bibtex
     :mode ("\\.bib" . bibtex-mode)
     :config
@@ -1331,11 +1345,11 @@ and inserts it at point.
           bibtex-autokey-titlewords-stretch 0
           bibtex-autokey-titlewords 1
           bibtex-autokey-year-title-separator "")
-
+  
     (add-hook 'bibtex-mode-hook
               (lambda ()
                 (set-fill-column 120)))
-
+  
     (defun bibtex-autokey-parse-date ()
       "Get the year from the `date' field in biblatex format, else the `year' field"
       (let ((date-string (car (split-string (bibtex-autokey-get-field "date") "-"))))
@@ -1348,8 +1362,8 @@ and inserts it at point.
       (let ((yearfield (bibtex-autokey-parse-date)))
         (substring yearfield (max 0 (- (length yearfield)
                                        bibtex-autokey-year-length))))))
-
-
+  
+  
   (use-package bibtex-utils
     :config
     (setq bu-bibtex-fields-ignore-list '(url abstract)))
