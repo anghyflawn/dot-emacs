@@ -712,7 +712,7 @@ Language server protocol setup
   
   (use-package which-key
     :diminish which-key-mode
-    :unless (eq system-type 'darwin)
+    ;; :unless (eq system-type 'darwin)
     :config
     (which-key-mode))
 #+END_SRC
@@ -1677,8 +1677,9 @@ Set up =company-mode= for autocompletion.
     :diminish
     company-mode
     :config
-    (global-company-mode 1)
-    (setq company-global-modes '(not message-mode latex-mode markdown-mode org-mode)))
+    (global-company-mode)
+    (setq company-global-modes '(not message-mode latex-mode markdown-mode)
+          company-backends (remove 'company-dabbrev company-backends)))
 #+END_SRC
 
 ** Yasnippet
