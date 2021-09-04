@@ -1095,6 +1095,12 @@ The following sets up Org-mode itself
     :straight (:host github
                :repo "tecosaur/org-pandoc-import"
                :files ("*.el" "filters" "preprocessors")))
+  
+  (use-package org-drill
+    :config
+    (require 'org-drill)
+    (use-package org-drill-table))
+  
 #+END_SRC
   
 ** Markdown and pandoc
