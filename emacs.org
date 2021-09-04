@@ -712,7 +712,10 @@ Language server protocol setup
   (use-package lsp-latex
     :commands lsp
     :bind (:map LaTeX-mode-map
-                (("C-c C-'" . lsp-ui-imenu))))
+                (("C-c C-'" . lsp-ui-imenu)))
+    :config
+    (setq lsp-latex-build-args
+          (cons "-lualatex" (remove "-pdf" lsp-latex-build-args))))
   
   (use-package which-key
     :diminish which-key-mode
