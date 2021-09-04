@@ -1672,7 +1672,7 @@ Set up =company-mode= for autocompletion.
     company-mode
     :config
     (global-company-mode 1)
-    (setq company-global-modes '(not message-mode latex-mode markdown-mode)))
+    (setq company-global-modes '(not message-mode latex-mode markdown-mode org-mode)))
 #+END_SRC
 
 ** Yasnippet
