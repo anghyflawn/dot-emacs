@@ -1402,11 +1402,7 @@ and inserts it at point.
   (use-package helm-bibtex
     :bind
     (("C-c ]" . helm-bibtex)
-<<<<<<< HEAD
-     (:map LaTeX-mode-map ("C-c ]" . helm-bibtex)))
-=======
      (:map LaTeX-mode-map (("C-c ]" . helm-bibtex))))
->>>>>>> ae600c0050b548659f53d5bea3017459b7656d25
     :config
     (setq bibtex-completion-bibliography `(,private/bibliography-file)
           bibtex-completion-library-path private/pdf-directory
@@ -2341,7 +2337,7 @@ A drop-in replacement for Emacs' help buffers
                :map org-roam-bibtex-mode-map
                ("C-c n a" . orb-note-actions)
                ("C-c n i" . orb-insert-link)
-               ("C-c n C-f" . orb-find-note-file))
+               ("C-c n C-f" . orb-find-note-file)))
   
   (use-package company-org-roam
     :disabled t
