@@ -590,14 +590,15 @@ Elpy is a bunch of nice Python utilities.
   (use-package ess-site
     :straight ess
     :mode ("\\.R\\'" . ess-r-mode)
+    :commands R
     :config
     (use-package ess-smart-underscore)
-
+  
     (use-package ess-rutils)  
-
+  
     (setq ess-eval-visibly 'nowait
-          ess-default-style 'RStudio)
-
+          ess-style 'RStudio)
+  
     (defun tex-Rnw-check (name)
       "When opening a .tex file, check to make sure there isn't a
   corresponding .Rnw available, to make sure we don't try to edit
@@ -610,13 +611,13 @@ Elpy is a bunch of nice Python utilities.
             (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
                 name
               (find-buffer-visiting rnw-file))))))
-
+  
     (defadvice switch-to-buffer (around noweb-check activate)
       (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
                                 (ad-get-arg 0))))
         ad-do-it))
     (ad-update 'switch-to-buffer)
-
+  
     (add-hook 'LaTeX-mode-hook
               (defun my-Rnw-mode-hook ()
                 "Add commands to AUCTeX's \\[TeX-command-list]."
@@ -628,19 +629,20 @@ Elpy is a bunch of nice Python utilities.
                                "Run LaTeX after Knit") t)
                 (dolist (suffix '("nw" "Snw" "Rnw"))
                   (add-to-list 'TeX-file-extensions suffix))))
-
+  
     (add-hook 'R-mode-hook
               (defun my-R-mode-hook ()
                 (company-mode)
                 (local-set-key (kbd "TAB") 'company-complete))))
-
+  
   (use-package ess-smart-equals
     :disabled t
     :init   (setq ess-smart-equals-extra-ops '(brace paren))
     :after  (:any ess-r-mode inferior-ess-r-mode ess-r-transcript-mode)
     :config (ess-smart-equals-activate))
-
+  
   (use-package ess-view-data
+    :commands (ess-r-mode R)
     :bind
     (:map ess-r-mode-map
           ("C-c _" . ess-view-data-print))
@@ -1418,7 +1420,7 @@ and inserts it at point.
     (add-to-list 'bibtex-completion-format-citation-functions
                  '(org-mode . bibtex-completion-format-citation-org-cite))
   
-    (dolist (action '("Insert citation" "Insert reference"))
+    (dolist (action '("Insert citation" "Insert reference" "Insert formatted citation(s)"))
       (helm-delete-action-from-source action helm-source-bibtex))
     (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0)
     (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3)
