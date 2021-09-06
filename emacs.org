@@ -1103,6 +1103,7 @@ The following sets up Org-mode itself
     (require 'org-drill)
     (use-package org-drill-table))
   
+  (use-package ox-pandoc)
 #+END_SRC
   
 ** Markdown and pandoc
@@ -1373,7 +1374,6 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
     (use-package org-ref
-      :disabled t
       :after org
       :config
       (setq org-ref-default-bibliography `(,private/bibliography-file)
@@ -1392,7 +1392,8 @@ and inserts it at point.
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package helm-bibtex
     :bind
-    (("C-c ]" . helm-bibtex))
+    (("C-c ]" . helm-bibtex)
+     (:map LaTeX-mode-map ("C-c ]" . helm-bibtex)))
     :config
     (setq bibtex-completion-bibliography `(,private/bibliography-file)
           bibtex-completion-library-path private/pdf-directory
@@ -1688,11 +1689,13 @@ Set up =company-mode= for autocompletion.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package company
-    :diminish
-    company-mode
     :config
-    (global-company-mode 1)
+    (global-company-mode -1)
     (setq company-global-modes '(not message-mode latex-mode markdown-mode org-mode)))
+  
+  (use-package company-box
+    :hook
+    (company-mode . company-box-mode))
 #+END_SRC
 
 ** Yasnippet
@@ -2320,11 +2323,11 @@ A drop-in replacement for Emacs' help buffers
                ("C-c n a" . orb-note-actions)
                :map org-roam-bibtex-mode-map
                ("C-c n a" . orb-note-actions)
-               ("C-c n i" . orb-insert)
-               ("C-c n C-f" . orb-find-non-ref-file)
-               ("C-c n i" . orb-insert-non-ref)))
+               ("C-c n i" . orb-insert-link)
+               ("C-c n C-f" . orb-find-note-file))
   
   (use-package company-org-roam
+    :disabled t
     :config
     (push 'company-org-roam company-backends))
   
