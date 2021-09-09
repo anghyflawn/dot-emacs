@@ -836,8 +836,7 @@ Sidebar contents
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package smartparens-config
-    :disabled t
-    :straight smartparens
+    :straight (:host github :repo "Fuco1/smartparens")
     :diminish smartparens-mode
     :config
     (show-smartparens-global-mode t)
