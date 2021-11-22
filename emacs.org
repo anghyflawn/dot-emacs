@@ -439,8 +439,10 @@ Even so, ~ansi-term~ doesn't obey:
     ((text-mode-hook . flyspell-mode)
      (prog-mode-hook . flyspell-prog-mode-hook))
     :config
-    (setq-default ispell-program-name "/usr/bin/aspell"
-                  ispell-really-aspell t)
+    (setq ispell-program-name (if (eq system-type 'darwin)
+                                  "/opt/homebrew/bin/aspell"
+                                "/usr/bin/aspell")
+          ispell-really-aspell t)
     (add-to-list 'ispell-dictionary-alist
                  '("nynorsk"
                    "[[:alpha:]]"
@@ -466,7 +468,7 @@ Even so, ~ansi-term~ doesn't obey:
                    "[[:alpha:]]"
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "cy") nil utf-8))
-
+  
     (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
 #+END_SRC
 
@@ -696,12 +698,13 @@ Language server protocol setup
     (setq gc-cons-threshold 100000000)
     (setq read-process-output-max (* 1024 1024))
     :hook ((R-mode . lsp)
-           (tex-mode . lsp)
-           (latex-mode . lsp)
-           (LaTeX-mode . lsp)
+           ;; (tex-mode . lsp)
+           ;; (latex-mode . lsp)
+           ;; (LaTeX-mode . lsp)
            ;; (bibtex-mode . lsp)
            (python-mode . lsp)
-           (LaTeX-mode . lsp-headerline-breadcrumb-mode))
+           ;; (LaTeX-mode . lsp-headerline-breadcrumb-mode)
+           )
     :commands lsp
     :config
     (add-hook 'lsp-mode-hook 'lsp-enable-which-key-integration))
@@ -712,6 +715,7 @@ Language server protocol setup
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
   
   (use-package lsp-latex
+    :disabled t
     :commands lsp
     :bind (:map LaTeX-mode-map
                 (("C-c C-'" . lsp-ui-imenu)))
@@ -721,7 +725,6 @@ Language server protocol setup
   
   (use-package which-key
     :diminish which-key-mode
-    ;; :unless (eq system-type 'darwin)
     :config
     (which-key-mode))
 #+END_SRC
@@ -1220,7 +1223,7 @@ Now we set up pandoc-mode and add some utility functions
         text))
     (defun pandoc--smallcaps (output-format txt)
       (format "[%s]{.smallcaps}" txt))
-
+  
     (defun markdown-insert-smallcaps ()
       (interactive
        (if (markdown-use-region-p)
@@ -1233,15 +1236,15 @@ Now we set up pandoc-mode and add some utility functions
          (if (thing-at-point-looking-at markdown-regex-code)
              (markdown-unwrap-thing-at-point nil 0 1)
            (markdown-wrap-or-insert "[" "]{.smallcaps}" 'word nil nil)))))
-
-
+  
+  
     (setq my-pandoc-directives
           '(("slide" . pandoc--hline-for-new-slide)
             ("pause" . pandoc--pause)
             ("sc" . pandoc--smallcaps)
             ("notlatex" . pandoc--not-in-latex)
             ("notbeamer" . pandoc--not-in-beamer)))
-
+  
     (defun pandoc--insert-feature (arg feature value)
       (interactive "P\nMFeature: \nMValue: ")
       (insert (format
@@ -1254,12 +1257,14 @@ Now we set up pandoc-mode and add some utility functions
               (defun my-pandoc-mode-hook ()
                 (setq pandoc-use-async t
                       pandoc-process-connection-type nil
-                      pandoc-binary "/usr/bin/pandoc")
+                      pandoc-binary (if (eq system-type 'darwin)
+                                        "/opt/homebrew/bin/pandoc"
+                                      "/usr/bin/pandoc"))
                 (local-set-key (kbd "C-c &") 'pandoc-jump-to-reference)
                 (pandoc-load-default-settings)
                 (dolist (x my-pandoc-directives)
                   (add-to-list 'pandoc-directives x))))
-
+  
     (defun make-slides-handout-filename (filename)
       "For non-nil filenames, add an appropriate suffix to the
   filename depending on the output format."
@@ -1271,7 +1276,7 @@ Now we set up pandoc-mode and add some utility functions
                   ("beamer" "-slides")
                   (- ""))
                 (file-name-extension filename))))
-
+  
     (defun make-slides-or-handout (oldfun &rest args)
       "Hijack the output setting to wrangle the filenames if
   necessary, otherwise just pass through."
@@ -1281,11 +1286,11 @@ Now we set up pandoc-mode and add some utility functions
                  (pandoc--set 'output 'slides-or-handout)
                  final-filename)
         (apply oldfun args)))
-
+  
     (advice-add 'pandoc--compose-output-file-name :around #'make-slides-or-handout))
-
-
-
+  
+  
+  
 #+END_SRC
 
 ** BibTeX
