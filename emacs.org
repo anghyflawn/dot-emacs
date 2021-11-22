@@ -225,23 +225,41 @@ Diminish some modes that are always on and which serve no purpose in the mode-li
 
 This sets the colours of the background and fonts.
 
-#+BEGIN_SRC emacs-lisp :noweb-ref appearance
+#+BEGIN_SRC emacs-lisp :noweb-ref appearance 
   (setq my-theme 'doom-dracula)
-
+  
   (defun load-my-theme (frame)
     (select-frame frame)
     (load-theme my-theme t))
-
+  
   (use-package doom-themes
     :config
     (setq doom-themes-treemacs-theme "doom-colors")
     (doom-themes-treemacs-config)
     (doom-themes-org-config))
-
-  (if (daemonp)
-      (add-hook 'after-make-frame-functions #'load-my-theme)
-    (load-theme my-theme t))
+  
+  ;; (if (daemonp)
+  ;;     (add-hook 'after-make-frame-functions #'load-my-theme)
+  ;;   (load-theme my-theme t))
 #+END_SRC
+
+*** Modus theme
+
+#+begin_src elisp :noweb-ref appearance
+  (use-package modus-themes
+   :ensure
+   :init
+   (setq modus-themes-italic-constructs t
+         modus-themes-bold-constructs nil
+         modus-themes-region '(bg-only no-extend)
+         modus-themes-mixed-fonts t
+         modus-themes-completions 'moderate
+         modus-themes-org-blocks 'tinted-background)
+   (modus-themes-load-themes)
+   :config
+   ;; Load the theme of your choice:
+   (modus-themes-load-vivendi))
+#+end_src
 
 ** Fonts
 
@@ -254,6 +272,7 @@ Set up the actual fonts to use
   (set-fontset-font "fontset-default" 'hebrew "Noto Sans Hebrew")
   (set-fontset-font "fontset-default" 'syriac "Serto Batnan-22")
   (setq buffer-face-mode-face '(:family "Iosevka Fixed SS09"))
+  (set-face-attribute 'fixed-pitch nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'default nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'variable-pitch nil :family (if (eq system-type 'darwin)
                                                       "Georgia"
@@ -433,10 +452,10 @@ Even so, ~ansi-term~ doesn't obey:
 ** Spelling
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-  (use-package wucuo
+  (use-package flyspell
     :hook
-    ((text-mode-hook . wucuo-start)
-     (prog-mode-hook . wucuo-start))
+    ((text-mode-hook . flyspell-mode)
+     (prog-mode-hook . flyspell-mode))
     :config
     (setq-default ispell-program-name "/usr/bin/aspell"
                   ispell-really-aspell t)
@@ -466,7 +485,7 @@ Even so, ~ansi-term~ doesn't obey:
                    "[^[:alpha:]]"
                    "[']" t ("-C" "-d" "cy") nil utf-8))
 
-    (setq-default lyspell-default-dictionary "en_GB-ize-w_accents"))                 
+    (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))
 #+END_SRC
 
 ** Syntax checking
@@ -641,7 +660,7 @@ Elpy is a bunch of nice Python utilities.
     :config (ess-smart-equals-activate))
   
   (use-package ess-view-data
-    :commands (ess-r-mode R)
+    :after ess-site
     :bind
     (:map ess-r-mode-map
           ("C-c _" . ess-view-data-print))
@@ -695,12 +714,13 @@ Language server protocol setup
     (setq gc-cons-threshold 100000000)
     (setq read-process-output-max (* 1024 1024))
     :hook ((R-mode . lsp)
-           (tex-mode . lsp)
-           (latex-mode . lsp)
-           (LaTeX-mode . lsp)
+           ;; (tex-mode . lsp)
+           ;; (latex-mode . lsp)
+           ;; (LaTeX-mode . lsp)
            ;; (bibtex-mode . lsp)
            (python-mode . lsp)
-           (LaTeX-mode . lsp-headerline-breadcrumb-mode))
+           ;; (LaTeX-mode . lsp-headerline-breadcrumb-mode)
+           )
     :commands lsp
     :config
     (add-hook 'lsp-mode-hook 'lsp-enable-which-key-integration))
@@ -711,6 +731,7 @@ Language server protocol setup
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
   
   (use-package lsp-latex
+    :disabled t
     :commands lsp
     :bind (:map LaTeX-mode-map
                 (("C-c C-'" . lsp-ui-imenu)))
@@ -720,7 +741,6 @@ Language server protocol setup
   
   (use-package which-key
     :diminish which-key-mode
-    ;; :unless (eq system-type 'darwin)
     :config
     (which-key-mode))
 #+END_SRC
@@ -898,7 +918,7 @@ Sidebar contents
                  "\\mbox{[\\ensuremath{%s}%s]}")
                value feature)))
     (setq-default my-alternative-input-method "ipa-x-sampa")
-  
+
     (defun LaTeX-narrow-to-subtree ()
       "Make text outside current section invisible."
       (interactive)
@@ -909,14 +929,17 @@ Sidebar contents
         (when wc-goal-mode
           (wc-goal-reset))
         (setq deactivate-mark t)))
-  
-  
+
+
     (add-hook 'LaTeX-mode-hook
               (defun my-LaTeX-mode-hook ()
                 (setq font-latex-match-function-keywords '(("ipa" "{")
                                                            ("twe" "{{{")
                                                            ("mbi" "{{")
                                                            ("x" "[{{")
+                                                           ("y" "[{")
+                                                           ("w" "[{{")
+                                                           ("yr" "[{")
                                                            ("xr" "[{{") 
                                                            ("ox" "[{{{")
                                                            ("featr" "{")
@@ -930,7 +953,7 @@ Sidebar contents
                       TeX-outline-extra '(("\\\\printbibliography" 2))
                       TeX-source-correlate t
                       TeX-engine 'luatex) 
-                (wucuo-start)
+                (flyspell-mode)
                 (TeX-fold-mode 1)
                 ;; This activates the X-SAMPA layout, making
                 ;; it accessible via C-\
@@ -947,7 +970,7 @@ Sidebar contents
                            ("C-c f" . insert-feature)
                            ("C-c }" . LaTeX-close-environment))
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
-  
+
   (use-package auctex-latexmk
     :after tex-site
     :config
@@ -955,7 +978,7 @@ Sidebar contents
               (defun my-LaTeXMk-setup ()
                 (auctex-latexmk-setup)
                 (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
-  
+
 #+END_SRC
 
 ** Org-mode
@@ -1135,7 +1158,7 @@ This bit loads markdown-mode and sets up various customizations.
                   markdown-fontify-code-blocks-natively t)
     (add-hook 'markdown-mode-hook
               (defun my-markdown-mode-hook ()
-                (wucuo-start)
+                (flyspell-mode)
                 (pandoc-mode)
                 (typopunct-mode)
                 (outline-minor-mode)
@@ -1383,21 +1406,25 @@ and inserts it at point.
 *** Referencing 
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
-  (use-package org-ref
-    :after org
-    :config
-    (setq org-ref-default-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)
-          org-ref-pdf-directory private/pdf-directory
-          org-ref-default-ref-type "cref"))
-  
-  (use-package citeproc)
-  (use-package oc-csl
-    :straight nil
-    :after org
-    :config
-    (setq org-cite-csl-locales-dir (expand-file-name "etc/csl/" user-emacs-directory)
-          org-cite-csl-styles-dir (expand-file-name "etc/csl/" user-emacs-directory)
-          org-cite-global-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)))
+    (use-package org-ref
+      :after (org oc)
+      :config
+      (setq org-ref-default-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)
+            org-ref-pdf-directory private/pdf-directory
+            org-ref-default-ref-type "cref"))
+    
+    (use-package citeproc-org
+      :config
+      (citeproc-org-setup))
+    (use-package oc
+      :straight nil)
+    (use-package oc-csl
+      :straight nil
+      :after org
+      :config
+      (setq org-cite-csl-locales-dir (expand-file-name "etc/csl/" user-emacs-directory)
+            org-cite-csl-styles-dir (expand-file-name "etc/csl/" user-emacs-directory)
+            org-cite-global-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)))
 #+END_SRC
 
 
@@ -1405,7 +1432,7 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package helm-bibtex
-    :after (citeproc oc-csl)
+    :after (oc-csl)
     :bind
     ("C-c ]" . helm-bibtex)
     :bind
@@ -1423,6 +1450,16 @@ and inserts it at point.
   
     (add-to-list 'bibtex-completion-format-citation-functions
                  '(org-mode . bibtex-completion-format-citation-org-cite))
+  
+    (defun helm-bibtex-insert-citeproc-reference (_candidate)
+        (let* ((locale-getter (citeproc-locale-getter-from-dir helm-bibtex-csl-locale-dir))
+               (item-getter (citeproc-itemgetter-from-bibtex helm-bibtex-bibliography))
+               (proc (citeproc-create helm-bibtex-csl-style item-getter locale-getter))
+               (cites (mapcar (lambda (x)
+                                (citeproc-citation-create :cites `(((id . ,x)))))
+                              (helm-marked-candidates))))
+          (citeproc-append-citations cites proc)
+          (insert (car (citeproc-render-bib proc 'plain)))))
   
     (progn (dolist (action '("Insert citation" "Insert formatted citation(s)" "Insert formatted reference" "Insert reference"))
              (helm-delete-action-from-source action helm-source-bibtex))
@@ -1873,154 +1910,154 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       (require 'mu4e-contrib)
   
       (setq mu4e-update-interval 300
-	    mu4e-change-filenames-when-moving t
-	    mu4e-attachment-dir  "~/Downloads"
-	    mu4e-view-show-images t
-	    mu4e-get-mail-command "true"
-	    mail-user-agent 'mu4e-user-agent
-	    mu4e-compose-complete-addresses t
-	    mu4e-compose-complete-only-after "2012-09-15"
-	    mu4e-headers-include-related nil
-	    mu4e-hide-index-messages t
-	    mu4e-use-fancy-chars t
-	    mu4e-headers-seen-mark      '("S" . "✔")
-	    mu4e-headers-unread-mark    '("u" . "●")
-	    mu4e-headers-new-mark       '("N" . "○")
-	    mu4e-headers-replied-mark   '("R" . "←")
-	    mu4e-headers-passed-mark    '("P" . "→")
-	    mu4e-headers-flagged-mark   '("F" . "⚑")
-	    mu4e-headers-draft-mark     '("D" . "⚒")
-	    mu4e-headers-encrypted-mark '("x" . "e")
-	    mu4e-headers-signed-mark    '("s" . "s")
-	    mu4e-headers-trashed-mark   '("T" . "×")
-	    mu4e-headers-attach-mark    '("a" . "⚓")
-	    mu4e-headers-visible-flags  '(draft flagged passed replied unread)
-	    mu4e-headers-default-prefix     '("|" . "│")
-	    mu4e-headers-has-child-prefix   '("+" . "└")
-	    mu4e-headers-first-child-prefix '("\\" . "└")
-	    mu4e-index-cleanup t
-	    mu4e-index-lazy-check nil
-	    mu4e-headers-date-format "%d-%m-%Y"
-	    message-kill-buffer-on-exit t
-	    mu4e-view-use-gnus t
-	    mu4e-compose-dont-reply-to-self t
-	    mu4e-compose-keep-self-cc nil
-	    smtpmail-queue-dir "~/mail/queue/cur")
+            mu4e-change-filenames-when-moving t
+            mu4e-attachment-dir  "~/Downloads"
+            mu4e-view-show-images t
+            mu4e-get-mail-command "true"
+            mail-user-agent 'mu4e-user-agent
+            mu4e-compose-complete-addresses t
+            mu4e-compose-complete-only-after "2012-09-15"
+            mu4e-headers-include-related nil
+            mu4e-hide-index-messages t
+            mu4e-use-fancy-chars t
+            mu4e-headers-seen-mark      '("S" . "✔")
+            mu4e-headers-unread-mark    '("u" . "●")
+            mu4e-headers-new-mark       '("N" . "○")
+            mu4e-headers-replied-mark   '("R" . "←")
+            mu4e-headers-passed-mark    '("P" . "→")
+            mu4e-headers-flagged-mark   '("F" . "⚑")
+            mu4e-headers-draft-mark     '("D" . "⚒")
+            mu4e-headers-encrypted-mark '("x" . "e")
+            mu4e-headers-signed-mark    '("s" . "s")
+            mu4e-headers-trashed-mark   '("T" . "×")
+            mu4e-headers-attach-mark    '("a" . "⚓")
+            mu4e-headers-visible-flags  '(draft flagged passed replied unread)
+            mu4e-headers-default-prefix     '("|" . "│")
+            mu4e-headers-has-child-prefix   '("+" . "└")
+            mu4e-headers-first-child-prefix '("\\" . "└")
+            mu4e-index-cleanup t
+            mu4e-index-lazy-check nil
+            mu4e-headers-date-format "%d-%m-%Y"
+            message-kill-buffer-on-exit t
+            mu4e-view-use-gnus t
+            mu4e-compose-dont-reply-to-self t
+            mu4e-compose-keep-self-cc nil
+            smtpmail-queue-dir "~/mail/queue/cur")
   
       (define-key mu4e-headers-mode-map (kbd "i") 'mu4e-update-index)
   
       (defvar ignore-email t)
       (defun ignore-email-toggle ()
-	(interactive)
-	(setq ignore-email (not ignore-email)))
+        (interactive)
+        (setq ignore-email (not ignore-email)))
   
       (defun my-mu4e-update-hook ()
-	"Only check email automatically on weekdays"
-	(setq mu4e-get-mail-command
-	      (if ignore-email
-		  "true"
-		(if (member (nth 6 (decode-time)) '(6 0))
-		    "true"
-		  "mbsync -a"))))
+        "Only check email automatically on weekdays"
+        (setq mu4e-get-mail-command
+              (if ignore-email
+                  "true"
+                (if (member (nth 6 (decode-time)) '(6 0))
+                    "true"
+                  "mbsync -a"))))
       (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
   
       (use-package helm-mu
-	:bind ("C-c C-x m" . helm-mu-contacts)
-	("<f6>" . helm-mu)
-	:config
-	(setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
-	:bind
-	(:map mu4e-main-mode-map
-	      ("s" . helm-mu))
-	(:map mu4e-headers-mode-map
-	      ("s" . helm-mu))
-	(:map mu4e-view-mode-map
-	      ("s" . helm-mu)))
+        :bind ("C-c C-x m" . helm-mu-contacts)
+        ("<f6>" . helm-mu)
+        :config
+        (setq helm-mu-contacts-after "15-Sep-2012 00:00:00")
+        :bind
+        (:map mu4e-main-mode-map
+              ("s" . helm-mu))
+        (:map mu4e-headers-mode-map
+              ("s" . helm-mu))
+        (:map mu4e-view-mode-map
+              ("s" . helm-mu)))
   
-      (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/work/Archive")
-  
-      (add-to-list 'mu4e-bookmarks
-		   '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+      (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/outlook/INBOX")
   
       (add-to-list 'mu4e-bookmarks
-		   '("flag:flagged" "Flagged messages" ?f))
+                   '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
+  
+      (add-to-list 'mu4e-bookmarks
+                   '("flag:flagged" "Flagged messages" ?f))
   
       (add-to-list 'mu4e-bookmarks `(,unread-query "Unread messages" ?u))
       (add-to-list 'mu4e-view-actions
-		   '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+                   '("ViewInBrowser" . mu4e-action-view-in-browser) t)
   
       (setq mu4e-contexts
-	    `(,(make-mu4e-context
-		:name "Work"
-		:enter-func (lambda () (mu4e-message "Entering main work context"))
-		:leave-func (lambda () (mu4e-message "Leaving main work context"))
-		:match-func (lambda (msg)
-			      (when msg
-				(mu4e-message-contact-field-matches msg :to "iosad")))
-		:vars'((user-full-name . "Pavel Iosad")
-		       (user-mail-address . "pavel.iosad@ed.ac.uk")
-		       (mu4e-compose-reply-to-address . nil)
-		       (mu4e-compose-signature . (make-random-signature))
-		       (mu4e-drafts-folder . "/work/Drafts")
-		       (mu4e-sent-folder . "/work/Sent")
-		       (mu4e-trash-folder . "/work/Trash")
-		       (mu4e-refile-folder . "/work/Archive")
-		       (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
-						  (:maildir "/work/Archive" :key ?a)
-						  (:maildir "/work/Sent" :key ?s)
-						  (:maildir "/work/Trash" :key ?t)))
-		       (message-sendmail-extra-arguments . nil)))
-	      ,(make-mu4e-context
-		:name "Personal"
-		:enter-func (lambda () (mu4e-message "Entering personal context"))
-		:leave-func (lambda () (mu4e-message "Leaving personal context"))
-		:match-func (lambda (msg)
-			      (when msg
-				(mu4e-message-contact-field-matches msg :to "anghyflawn")))
-		:vars '((user-full-name . "Pavel Iosad")
-			(user-mail-address . "pavel@anghyflawn.net")
-			(mu4e-compose-reply-to-address . nil)
-			(mu4e-compose-signature . "Pavel Iosad")
-			(mu4e-drafts-folder . "/work/Drafts")
-			(mu4e-sent-folder . "/work/Sent")
-			(mu4e-trash-folder . "/work/Trash")
-			(mu4e-refile-folder . "/work/Archive")
-			(mu4e-maildir-shortcuts . '((:maildir "/work/Inbox" :key ?i)
-						    (:maildir "/work/Archive" :key ?a)
-						    (:maildir "/work/Sent" :key ?s)
-						    (:maildir "/work/Trash" :key ?t)))
-			(message-sendmail-extra-arguments . ("-a" "personal")))))
-	    mu4e-context-policy 'pick-first
-	    mu4e-compose-context-policy 'ask)
+            `(,(make-mu4e-context
+                :name "Work"
+                :enter-func (lambda () (mu4e-message "Entering main work context"))
+                :leave-func (lambda () (mu4e-message "Leaving main work context"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (mu4e-message-contact-field-matches msg :to "iosad")))
+                :vars '((user-full-name . "Pavel Iosad")
+                        (user-mail-address . "pavel.iosad@ed.ac.uk")
+                        (mu4e-compose-reply-to-address . nil)
+                        (mu4e-compose-signature . (make-random-signature))
+                        (mu4e-drafts-folder . "/outlook/Drafts")
+                        (mu4e-sent-folder . "/outlook/Sent Items")
+                        (mu4e-trash-folder . "/outlook/Deleted Items")
+                        (mu4e-refile-folder . "/outlook/Archive")
+                        (mu4e-maildir-shortcuts . ((:maildir "/outlook/INBOX" :key ?i)
+                                                   (:maildir "/outlook/Archive" :key ?a)
+                                                   (:maildir "/outlook/Sent Items" :key ?s :hide-unread t)
+                                                   (:maildir "/outlook/Deleted Items" :key ?t :hide t)))
+                        (message-sendmail-extra-arguments . nil)))
+              ,(make-mu4e-context
+                :name "Personal"
+                :enter-func (lambda () (mu4e-message "Entering personal context"))
+                :leave-func (lambda () (mu4e-message "Leaving personal context"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (mu4e-message-contact-field-matches msg :to "anghyflawn")))
+                :vars '((user-full-name . "Pavel Iosad")
+                        (user-mail-address . "pavel@anghyflawn.net")
+                        (mu4e-compose-reply-to-address . nil)
+                        (mu4e-compose-signature . "Pavel Iosad")
+                        (mu4e-drafts-folder . "/work/Drafts")
+                        (mu4e-sent-folder . "/work/Sent")
+                        (mu4e-trash-folder . "/work/Trash")
+                        (mu4e-refile-folder . "/work/Archive")
+                        (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
+                                                   (:maildir "/work/Archive" :key ?a)
+                                                   (:maildir "/work/Sent" :key ?s :hide-unread t)
+                                                   (:maildir "/work/Trash" :key ?t :hide t)))
+                        (message-sendmail-extra-arguments . ("-a" "personal")))))
+            mu4e-context-policy 'pick-first
+            mu4e-compose-context-policy 'ask)
   
   
       (add-hook 'mu4e-compose-mode-hook
-		(defun my-compose-mode-hook ()
-		  (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
-						  ("Work" ,(make-random-signature))))
-		  (auto-fill-mode)
-		  (set-fill-column 72)
-		  (typopunct-mode)
-		  (wucuo-start)))
+                (defun my-compose-mode-hook ()
+                  (setq mu4e-compose-signature `(pcase (mu4e-context-name (mu4e-context-current))
+                                                  ("Work" ,(make-random-signature))))
+                  (auto-fill-mode)
+                  (set-fill-column 72)
+                  (typopunct-mode)
+                  (flyspell-mode)))
   
       (setq message-send-mail-function 'message-send-mail-with-sendmail
-	    sendmail-program "/usr/bin/msmtp")
+            sendmail-program "/usr/bin/msmtp")
   
       (use-package org-mu4e
-	:straight nil
-	:config
-	(setq org-mu4e-link-query-in-headers-mode nil
-	      org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
-				      ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
+        :straight nil
+        :config
+        (setq org-mu4e-link-query-in-headers-mode nil
+              org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
+                                      ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a"))))
   
       (use-package mu4e-alert
-	:straight (:host github :repo "iqbalansari/mu4e-alert")
-	:config
-	(mu4e-alert-enable-notifications)
-	(mu4e-alert-enable-mode-line-display)
-	(mu4e-alert-set-default-style 'ignore)
-	(setq mu4e-alert-interesting-mail-query unread-query)
-	(global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails))
+        :straight (:host github :repo "iqbalansari/mu4e-alert")
+        :config
+        (mu4e-alert-enable-notifications)
+        (mu4e-alert-enable-mode-line-display)
+        (mu4e-alert-set-default-style 'ignore)
+        (setq mu4e-alert-interesting-mail-query unread-query)
+        (global-set-key (kbd "<f7>") 'mu4e-alert-view-unread-mails))
   
       (require 'mu4e-icalendar)
       (mu4e-icalendar-setup)))
@@ -2527,45 +2564,45 @@ the ~noweb-ref~ arguments in the ~src~ blocks throughout this document.
 
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   ;;; emacs.el --- Emacs configuration generated via Org Babel
-
+  
   ;;; Commentary:
-
+  
   ;; Do not modify this file by hand.  It was automatically generated
   ;; from `emacs.org` in the same directory.  See that file for more
   ;; information.
-
+  
   ;;; Code:
-
+  
   ;; Configuration group: init-before
   <<init-before>>
-
+  
   ;; Configuration group: appearance
   <<appearance>>
-
+  
   ;; Configuration group: evil
   <<evil>>
-
+  
   ;; Configuration group: editing
   <<editing>>
-
+  
   ;; Configuration group: pandoc
   <<pandoc>>
-
+  
   ;; Configuration group: mail
   <<mail>>
-
+  
   ;; Configuration group: org
   <<org>>
-
+  
   ;; Configuration group: utils
   <<utils>>
-
   ;; Configuration group: init-after
+  
   <<init-after>>
-
+  
   ;; Configuration group: final-packages (things that seem to break so
   ;; load them last to pre-empt debug)
   <<final-packages>>
-
+  
   ;; emacs.el ends here
 #+END_SRC
