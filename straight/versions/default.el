@@ -99,7 +99,6 @@
  ("narrow-indirect" . "5a7fffffb8278ee01574b9317873aaa371c60142")
  ("no-littering" . "b12a85a5afff7b5d60f889c1c2e8f5deab7fdbae")
  ("olivetti" . "032b3d779f7b374bd12f62b7fc717a310ea16bee")
- ("org" . "3664447eb2417b38f0053674f248d2b0f1592ff0")
  ("org-appear" . "148aa124901ae598f69320e3dcada6325cdc2cf0")
  ("org-caldav" . "8569941a0a5a9393ba51afc8923fd7b77b73fa7a")
  ("org-contrib" . "fc81309cf6756607a836f93049a9393c2967c4e0")

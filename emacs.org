@@ -24,7 +24,7 @@ This sets up Emacs for GPG pinentry
   (use-package pinentry
     :config
     (setq epa-pinentry-mode 'loopback)
-    (pinentry-start))
+          (pinentry-start))
 #+END_SRC
 
 ** Keep =~/.emacs.d= clean
@@ -1410,25 +1410,39 @@ and inserts it at point.
 *** Referencing 
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
-    (use-package org-ref
-      :after (org oc)
-      :config
-      (setq org-ref-default-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)
-            org-ref-pdf-directory private/pdf-directory
-            org-ref-default-ref-type "cref"))
-    
-    (use-package citeproc-org
-      :config
-      (citeproc-org-setup))
-    (use-package oc
-      :straight nil)
-    (use-package oc-csl
-      :straight nil
-      :after org
-      :config
-      (setq org-cite-csl-locales-dir (expand-file-name "etc/csl/" user-emacs-directory)
-            org-cite-csl-styles-dir (expand-file-name "etc/csl/" user-emacs-directory)
-            org-cite-global-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)))
+  (use-package org-ref
+    :after (org oc)
+    :config
+    (setq org-ref-default-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)
+          org-ref-pdf-directory private/pdf-directory
+          org-ref-default-ref-type "cref"))
+
+  (use-package oc
+    :straight nil
+    :after org
+    :config
+    (setq org-cite-global-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)))
+
+  (use-package oc-csl
+    :straight nil
+    :after oc
+    :init
+    (setq org-cite-csl-locales-dir (expand-file-name "etc/csl/" user-emacs-directory)
+          org-cite-csl-styles-dir (expand-file-name "etc/csl/" user-emacs-directory)))
+
+  (use-package citeproc
+    :after (oc ocs-csl)
+    :straight (:host github :repo "andras-simonyi/citeproc-el")
+    :config
+    (citeproc-org-setup))
+
+  (use-package oc-csl-activate
+    :straight (:host github :repo "andras-simonyi/org-cite-csl-activate")
+    :config
+    (add-hook 'org-mode-hook (lambda () (cursor-sensor-mode 1)))
+    (setq org-cite-activate-processor 'csl-activate
+          org-cite-csl-activate-use-document-style t))
+
 #+END_SRC
 
 

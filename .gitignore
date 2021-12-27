@@ -32,3 +32,5 @@ elpa/*
 /straight
 !/straight/versions/
 /pomidor-session.json
+/org-persist/
+/places
