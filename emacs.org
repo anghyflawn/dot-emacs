@@ -1033,14 +1033,22 @@ The following sets up Org-mode itself
           org-clock-persist 'history
           org-clock-idle-time 10
           org-clock-x11idle-program-name "/usr/bin/xprintidle"
-          org-hide-emphasis-markers t)
+          org-hide-emphasis-markers t
+          org-preview-latex-default-process 'imagemagick)
     (org-clock-persistence-insinuate)
-  
+
+    ; The following allows to export LaTeX code blocks in org-mode-export
+    (org-babel-do-load-languages 'org-babel-load-languages
+                                 '((latex . t)))
+    (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+    ; org-confirm-babel-evaluate can be set to t, but it's safer to do
+    ; this on a file/directory basis
+
     (setq org-capture-templates '(("t" "todo" entry (file+headline main-agenda-file "Tasks") "* TODO %?\n%a")
                                   ("e" "event" entry (file+headline main-agenda-file "Events from email") "* %?\n%^{Date + time}T\n%a")))
-  
+
     ;; The following sets up my LaTeX export preferences
-  
+
     (with-eval-after-load 'ox-latex
       (add-to-list 'org-latex-classes
                    '("memoir-article" (f-read-text (expand-file-name "etc/ox-latex-preamble.txt" user-emacs-directory))
@@ -1048,7 +1056,7 @@ The following sets up Org-mode itself
                      ("\\subsection{%s}" . "\\subsection*{%s}")
                      ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
                      ("\\paragraph{%s}" . "\\paragraph*{%s}")))
-  
+
       (setq org-latex-packages-alist
             '(("" "luatextra" t ("lualatex"))
               ("" "xltxtra" t ("xelatex"))
@@ -1065,7 +1073,7 @@ The following sets up Org-mode itself
               ("" "cleveref" nil)
               ("activate={true, nocompatibility}, tracking" "microtype" nil ("pdflatex" "lualatex"))
               ("english, german" "selnolig" nil ("lualatex")))))
-  
+
     (setq-default org-latex-compiler "lualatex"
                   org-latex-bib-compiler "biber"
                   org-latex-pdf-process
@@ -1073,21 +1081,21 @@ The following sets up Org-mode itself
                     "%bib %b"
                     "%latex -interaction nonstopmode -output-directory %o %f")
                   org-export-with-toc nil))
-  
+
   (add-hook 'org-mode-hook
             (defun my-org-mode-hook ()
               (local-set-key (kbd "C-c '") 'org-edit-src-code)))
-  
+
   (defun my-clock-files ()
     (-distinct (append org-agenda-files private/org-project-files)))
-  
+
   (use-package org-crypt
     :straight nil
     :config
     (org-crypt-use-before-save-magic)
     (setq org-tags-exclude-from-inheritance '("crypt")
           org-crypt-key nil))
-  
+
   (use-package org-trello
     :disabled t
     :after org
@@ -1098,11 +1106,11 @@ The following sets up Org-mode itself
                        (let ((filename (buffer-file-name (current-buffer))))
                          (when (and filename (string= "trello" (file-name-extension filename)))
                            (org-trello-mode))))))
-  
+
   (use-package org-bullets
     :disabled t
     :hook (org-mode . org-bullets-mode))
-  
+
   (use-package org-protocol
     :straight nil
     :config
@@ -1112,7 +1120,7 @@ The following sets up Org-mode itself
              "* %^{Title}\nSource: %u, %c\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n\n%?")
             ("L" "Protocol Link" entry (file+headline ,(concat org-directory "protocol-notes.org") "Inbox")
              "* %? [[%:link][%:description]] \nCaptured On: %U"))))
-  
+
   (use-package org-download
     :after org
     :config
@@ -1123,21 +1131,21 @@ The following sets up Org-mode itself
           (("s-Y" . org-download-screenshot)
            ("s-y" . org-download-yank)
            ("s-V" . org-download-clipboard))))
-  
+
   (use-package org-appear
     :hook
     (org-mode . org-appear-mode))
-  
+
   (use-package org-pandoc-import
     :straight (:host github
                :repo "tecosaur/org-pandoc-import"
                :files ("*.el" "filters" "preprocessors")))
-  
+
   (use-package org-drill
     :config
     (require 'org-drill)
     (use-package org-drill-table))
-  
+
   (use-package ox-pandoc)
 #+END_SRC
   
