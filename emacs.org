@@ -2340,14 +2340,6 @@ A drop-in replacement for Emacs' help buffers
 #+END_SRC
 
 
-*** ActivityWatch
-
-#+begin_src emacs-lisp :noweb-ref utils
-  (use-package activity-watch-mode
-    :unless (eq system-type 'darwin)
-    :config
-    (global-activity-watch-mode))
-#+end_src
 ** Projectile
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils 
