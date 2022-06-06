@@ -223,27 +223,33 @@ Diminish some modes that are always on and which serve no purpose in the mode-li
 
 ** Theme
 
+Load some additional themes
+
+#+begin_src emacs-lisp :noweb-ref appearance
+  (use-package parchment-theme)
+#+end_src
+
 This sets the colours of the background and fonts.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref appearance 
   (setq my-theme 'doom-dracula)
-  
+
   (defun load-my-theme (frame)
     (select-frame frame)
     (load-theme my-theme t))
-  
+
   (use-package doom-themes
     :config
     (setq doom-themes-treemacs-theme "doom-colors")
     (doom-themes-treemacs-config)
     (doom-themes-org-config))
-  
-  ;; (if (daemonp)
-  ;;     (add-hook 'after-make-frame-functions #'load-my-theme)
-  ;;   (load-theme my-theme t))
+
+  (if (daemonp)
+      (add-hook 'after-make-frame-functions #'load-my-theme)
+    (load-theme my-theme t))
 #+END_SRC
 
-*** Modus theme
+*** COMMENT Modus theme
 
 #+begin_src elisp :noweb-ref appearance
   (use-package modus-themes
@@ -276,7 +282,7 @@ Set up the actual fonts to use
   (set-face-attribute 'default nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'variable-pitch nil :family (if (eq system-type 'darwin)
                                                       "Georgia"
-                                                    "Literata") :height
+                                                    "Spectral") :height
                                                     (if (eq system-type 'darwin)
                                                         180
                                                       160) :weight 'medium)
@@ -694,6 +700,13 @@ This is the recommended solution for Rmarkdown files.
     :after polymode)
 #+END_SRC
 
+**** Quarto
+
+Mode for [[https://quarto.org][quarto]] interaction, built on [[*Polymode][polymode]]
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package quarto-mode)
+#+end_src
 *** Stan
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
@@ -939,7 +952,11 @@ Sidebar contents
                                                            ("twe" "{{{")
                                                            ("mbi" "{{")
                                                            ("x" "[{{")
+                                                           ("xt" "[{{")
+                                                           ("xo" "[{{")
                                                            ("y" "[{")
+                                                           ("yt" "[{")
+                                                           ("yo" "[{")
                                                            ("w" "[{{")
                                                            ("yr" "[{")
                                                            ("xr" "[{{") 
@@ -1096,21 +1113,6 @@ The following sets up Org-mode itself
     (setq org-tags-exclude-from-inheritance '("crypt")
           org-crypt-key nil))
 
-  (use-package org-trello
-    :disabled t
-    :after org
-    :config
-    (add-to-list 'auto-mode-alist '("\\.trello$" . org-mode)) 
-    :hook
-    (org-mode-hook . (lambda ()
-                       (let ((filename (buffer-file-name (current-buffer))))
-                         (when (and filename (string= "trello" (file-name-extension filename)))
-                           (org-trello-mode))))))
-
-  (use-package org-bullets
-    :disabled t
-    :hook (org-mode . org-bullets-mode))
-
   (use-package org-protocol
     :straight nil
     :config
@@ -1147,6 +1149,25 @@ The following sets up Org-mode itself
     (use-package org-drill-table))
 
   (use-package ox-pandoc)
+
+  (use-package org-modern
+    :after org
+    :config
+    (setq org-auto-align-tags nil
+          org-tags-column 0
+          org-catch-invisible-edits 'smart
+          org-special-ctrl-a/e t
+          org-pretty-entities t
+          org-ellipsis "…"
+          org-agenda-tags-column 0
+          org-agenda-block-separator ?─
+          org-agenda-time-grid
+          '((daily today require-timed)
+            (800 1000 1200 1400 1600 1800 2000)
+            " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+          org-agenda-current-time-string
+          "⭠ now ─────────────────────────────────────────────────")
+    (global-org-modern-mode))
 #+END_SRC
   
 ** Markdown and pandoc
@@ -1421,9 +1442,10 @@ and inserts it at point.
   (use-package org-ref
     :after (org oc)
     :config
-    (setq org-ref-default-bibliography `(,private/bibliography-file ,private/russian-bibliography-file)
-          org-ref-pdf-directory private/pdf-directory
-          org-ref-default-ref-type "cref"))
+    (setq org-ref-insert-cite-function (lambda () (org-cite-insert nil))
+          org-ref-default-ref-type "cref")
+    (define-key org-mode-map (kbd "C-c (") org-ref-insert-label-function)
+    (define-key org-mode-map (kbd "C-c )") org-ref-insert-ref-function))
 
   (use-package oc
     :straight nil
@@ -1437,12 +1459,6 @@ and inserts it at point.
     :init
     (setq org-cite-csl-locales-dir (expand-file-name "etc/csl/" user-emacs-directory)
           org-cite-csl-styles-dir (expand-file-name "etc/csl/" user-emacs-directory)))
-
-  (use-package citeproc
-    :after (oc ocs-csl)
-    :straight (:host github :repo "andras-simonyi/citeproc-el")
-    :config
-    (citeproc-org-setup))
 
   (use-package oc-csl-activate
     :straight (:host github :repo "andras-simonyi/org-cite-csl-activate")
@@ -1672,6 +1688,30 @@ Properly setup undo-tree
     (add-to-list 'psession-object-to-save-alist '(helm-ucs--names . "helm-ucs--names.el")))
 #+END_SRC
 
+** Fussy completion
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package fussy
+    :straight (:host github :repo "jojojames/fussy")
+    :config
+    (push 'fussy completion-styles)
+    (setq
+     ;; For example, project-find-file uses 'project-files which uses
+     ;; substring completion by default. Set to nil to make sure it's using
+     ;; flx.
+     completion-category-defaults nil
+     completion-category-overrides nil))
+
+  (use-package fzf-native
+    :straight
+    (fzf-native
+     :repo "dangduc/fzf-native"
+     :host github
+     :files (:defaults "bin"))
+    :config
+    (setq fussy-score-fn 'fussy-fzf-native-score)
+    (fzf-native-load-dyn))
+#+end_src
 ** Helm
 
 Helm is a powerful engine for completion and narrowing down
@@ -1707,10 +1747,10 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z") 'helm-select-action)
-  
+
     (when (executable-find "curl")
       (setq helm-google-suggest-use-curl-p t))
-  
+
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
           helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
           helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
@@ -1718,20 +1758,21 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
           helm-ff-file-name-history-use-recentf t
           helm-buffers-fuzzy-matching t
           helm-recentf-fuzzy-match t
-          helm-inherit-input-method nil)
-  
+          helm-inherit-input-method nil
+          helm-completion-style 'emacs)
+
     (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
                                helm-source-locate))
-  
+
   (use-package helm-dictionary
     :after helm)
-  
+
   (use-package helm-org
     :bind ("C-c u" . helm-org-in-buffer-headings))
-  
+
   (use-package helm-themes
     :after helm)
-  
+
   (use-package helm-ag
     :after helm)
 #+END_SRC
@@ -2581,6 +2622,16 @@ PDF annotation tools
     (with-eval-after-load 'gif-screencast
       (define-key gif-screencast-mode-map (kbd "<f8>") 'gif-screencast-toggle-pause)
       (define-key gif-screencast-mode-map (kbd "<f9>") 'gif-screencast-stop)))
+#+end_src
+
+** Scratch
+
+Quick scatch buffer
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package scratch
+    :bind
+    ("C-c s" . scratch))
 #+end_src
 
 * Configuration Layout
