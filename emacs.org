@@ -1712,6 +1712,7 @@ Properly setup undo-tree
      completion-category-overrides nil))
 
   (use-package fzf-native
+    :disabled (eq system-type 'darwin)
     :straight
     (fzf-native
      :repo "dangduc/fzf-native"
