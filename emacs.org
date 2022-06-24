@@ -281,7 +281,7 @@ Set up the actual fonts to use
   (set-face-attribute 'fixed-pitch nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'default nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'variable-pitch nil :family (if (eq system-type 'darwin)
-                                                      "Georgia"
+                                                      "Castoro"
                                                     "Spectral") :height
                                                     (if (eq system-type 'darwin)
                                                         180
@@ -294,7 +294,9 @@ Set up the actual fonts to use
 Allow mixing fixed and variable pitch.
 
 #+begin_src emacs-lisp :noweb-ref appearance
-  (use-package mixed-pitch)
+      (use-package mixed-pitch
+        :config
+        (setq mixed-pitch-set-height t))
 #+end_src
 
 ** Misc
