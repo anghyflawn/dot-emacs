@@ -253,7 +253,7 @@ This sets the colours of the background and fonts.
 
 #+begin_src elisp :noweb-ref appearance
   (use-package modus-themes
-   :ensure
+   :disabled t
    :init
    (setq modus-themes-italic-constructs t
          modus-themes-bold-constructs nil
@@ -281,7 +281,7 @@ Set up the actual fonts to use
   (set-face-attribute 'fixed-pitch nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'default nil :family "Iosevka SS09" :weight (if (eq system-type 'darwin) 'medium 'light) :height 170)
   (set-face-attribute 'variable-pitch nil :family (if (eq system-type 'darwin)
-                                                      "Georgia"
+                                                      "Castoro"
                                                     "Spectral") :height
                                                     (if (eq system-type 'darwin)
                                                         180
@@ -294,7 +294,9 @@ Set up the actual fonts to use
 Allow mixing fixed and variable pitch.
 
 #+begin_src emacs-lisp :noweb-ref appearance
-  (use-package mixed-pitch)
+      (use-package mixed-pitch
+        :config
+        (setq mixed-pitch-set-height t))
 #+end_src
 
 ** Misc
@@ -1226,10 +1228,10 @@ This bit loads markdown-mode and sets up various customizations.
                 (typopunct-mode)
                 (outline-minor-mode)
                 (yas-minor-mode)))
-  
+
     ;; Patch markdown-mode to understand pandoc's {=LANGUAGE} code
     ;; blocks
-  
+
     (el-patch-defun markdown-code-block-lang (&optional pos-prop)
       "Return the language name for a GFM or tilde fenced code block.
   The beginning of the block may be described by POS-PROP,
@@ -1259,7 +1261,7 @@ This bit loads markdown-mode and sets up various customizations.
                         (eq (char-after begin) ?=)))
               (setq begin (1+ begin)))
             (buffer-substring-no-properties begin end)))))
-  
+
     ;; patch markdown-narrow-to-subtree to use indirect buffers
     (el-patch-defun markdown-narrow-to-subtree ()
       "Narrow buffer to the current subtree."
@@ -1273,8 +1275,8 @@ This bit loads markdown-mode and sets up various customizations.
                       (backward-char 1))
                   (point))
            (el-patch-add 0))))))
-  
-  
+
+
   (use-package edit-indirect-region-latex
     :after markdown-mode)
 #+END_SRC
@@ -1305,7 +1307,7 @@ Now we set up pandoc-mode and add some utility functions
         text))
     (defun pandoc--smallcaps (output-format txt)
       (format "[%s]{.smallcaps}" txt))
-  
+
     (defun markdown-insert-smallcaps ()
       (interactive
        (if (markdown-use-region-p)
@@ -1318,15 +1320,15 @@ Now we set up pandoc-mode and add some utility functions
          (if (thing-at-point-looking-at markdown-regex-code)
              (markdown-unwrap-thing-at-point nil 0 1)
            (markdown-wrap-or-insert "[" "]{.smallcaps}" 'word nil nil)))))
-  
-  
+
+
     (setq my-pandoc-directives
           '(("slide" . pandoc--hline-for-new-slide)
             ("pause" . pandoc--pause)
             ("sc" . pandoc--smallcaps)
             ("notlatex" . pandoc--not-in-latex)
             ("notbeamer" . pandoc--not-in-beamer)))
-  
+
     (defun pandoc--insert-feature (arg feature value)
       (interactive "P\nMFeature: \nMValue: ")
       (insert (format
@@ -1335,6 +1337,8 @@ Now we set up pandoc-mode and add some utility functions
                  "[$%s$%s]")
                value feature)))
     :config
+    (when (eq system-type 'darwin)
+      (add-to-list 'pandoc-viewers '("docx" "open"))) 
     (add-hook 'pandoc-mode-hook
               (defun my-pandoc-mode-hook ()
                 (setq pandoc-use-async t
@@ -1346,7 +1350,7 @@ Now we set up pandoc-mode and add some utility functions
                 (pandoc-load-default-settings)
                 (dolist (x my-pandoc-directives)
                   (add-to-list 'pandoc-directives x))))
-  
+
     (defun make-slides-handout-filename (filename)
       "For non-nil filenames, add an appropriate suffix to the
   filename depending on the output format."
@@ -1358,7 +1362,7 @@ Now we set up pandoc-mode and add some utility functions
                   ("beamer" "-slides")
                   (- ""))
                 (file-name-extension filename))))
-  
+
     (defun make-slides-or-handout (oldfun &rest args)
       "Hijack the output setting to wrangle the filenames if
   necessary, otherwise just pass through."
@@ -1368,11 +1372,11 @@ Now we set up pandoc-mode and add some utility functions
                  (pandoc--set 'output 'slides-or-handout)
                  final-filename)
         (apply oldfun args)))
-  
+
     (advice-add 'pandoc--compose-output-file-name :around #'make-slides-or-handout))
-  
-  
-  
+
+
+
 #+END_SRC
 
 ** BibTeX
@@ -1570,11 +1574,11 @@ Evil is a mode that makes vi(m) like keybindings
     (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
     (define-key evil-insert-state-map (kbd "C-e") 'end-of-line)
     ;; (define-key evil-motion-state-map (kbd "<SPC>") 'evil-window-map)
-  
+
     (setq-default evil-cross-lines t
                   sentence-end-double-space nil
                   evil-default-state 'normal)
-  
+
     (cl-loop for (mode . state) in
              '((inferior-emacs-lisp-mode . emacs)
                (shell-mode . insert)
@@ -1603,17 +1607,17 @@ Evil is a mode that makes vi(m) like keybindings
                (lsp-ui-imenu-mode . emacs)
                (reftex-index-mode . emacs))
              do (evil-set-initial-state mode state)))
-  
+
   (use-package evil-surround
     :config (global-evil-surround-mode 1))
-  
+
   (use-package evil-exchange
     :config (evil-exchange-install))
-  
+
   (use-package evil-goggles
     :diminish evil-goggles-mode
     :config (evil-goggles-mode))
-  
+
   (use-package evil-snipe
     :config
     (evil-snipe-mode +1)
@@ -1625,6 +1629,13 @@ Evil is a mode that makes vi(m) like keybindings
     :custom
     (evil-snipe-scope 'whole-line)
     (evil-snipe-repeat-scope 'whole-visible))
+
+  (when (eq system-type 'darwin)
+    (use-package evil-escape
+      :after evil
+      :config
+      (setq-default evil-escape-key-sequence "jk")
+      (evil-escape-mode)))
 #+END_SRC
 
 ** Avy
@@ -1733,6 +1744,7 @@ Properly setup undo-tree
      completion-category-overrides nil))
 
   (use-package fzf-native
+    :disabled (eq system-type 'darwin)
     :straight
     (fzf-native
      :repo "dangduc/fzf-native"
@@ -1759,16 +1771,16 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
      ("C-s" . helm-occur)
      ("C-x C-d" . helm-browse-project))
     :commands (helm-buffers-list
-               helm-colors
-               helm-find-files
-               helm-for-files
-               helm-google-suggest
-               helm-mini
-               helm-help
-               helm-show-kill-ring
-               helm-org-keywords
-               helm-M-x
-               helm-occur)
+	       helm-colors
+	       helm-find-files
+	       helm-for-files
+	       helm-google-suggest
+	       helm-mini
+	       helm-help
+	       helm-show-kill-ring
+	       helm-org-keywords
+	       helm-M-x
+	       helm-occur)
     :diminish
     helm-mode
     :config
