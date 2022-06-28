@@ -547,6 +547,15 @@ Magit provides featureful Git integration.
   (use-package git-auto-commit-mode)
 #+END_SRC
 
+*** Very large files
+
+My bibliography is getting sluggish.
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package vlf-setup
+    :straight vlf)
+#+end_src
+
 ** Programming modes
 *** Emacs Lisp
 
@@ -991,6 +1000,7 @@ Sidebar contents
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
   (use-package auctex-latexmk
+    :disabled t
     :after tex-site
     :config
     (add-hook 'LaTeX-mode-hook
@@ -1148,14 +1158,36 @@ The following sets up Org-mode itself
     (require 'org-drill)
     (use-package org-drill-table))
 
-  (use-package ox-pandoc)
+  (use-package ox-pandoc
+    :after org
+    :config
+    (setq org-pandoc-options
+          `((standalone . t)
+            (csl . "~/ownCloud/varia/unified-style-linguistics.csl")
+            (filter . ,(substring (shell-command-to-string "which pandoc-crossref") 0 -1)))
+          org-pandoc-options-for-docx
+          '((citeproc . t)
+            (number-sections . t))
+          org-pandoc-menu-entry
+          '((61 "to ms-pdf and open." org-pandoc-export-to-ms-pdf-and-open)
+            (45 "to ms-pdf." org-pandoc-export-to-ms-pdf)
+            (98 "to beamer-pdf and open." org-pandoc-export-to-beamer-pdf-and-open)
+            (66 "to beamer-pdf." org-pandoc-export-to-beamer-pdf)
+            (108 "to latex-pdf and open." org-pandoc-export-to-latex-pdf-and-open)
+            (76 "to latex-pdf." org-pandoc-export-to-latex-pdf)
+            (111 "to odt and open." org-pandoc-export-to-odt-and-open)
+            (79 "to odt." org-pandoc-export-to-odt)
+            (118 "to revealjs and open." org-pandoc-export-to-revealjs-and-open)
+            (86 "as revealjs." org-pandoc-export-as-revealjs)
+            (120 "to docx and open." org-pandoc-export-to-docx-and-open)
+            (88 "to docx." org-pandoc-export-to-docx))))
 
   (use-package org-modern
     :after org
     :config
     (setq org-auto-align-tags nil
           org-tags-column 0
-          org-catch-invisible-edits 'smart
+          org-catch-invisible-edits nil
           org-special-ctrl-a/e t
           org-pretty-entities t
           org-ellipsis "…"
@@ -1469,12 +1501,10 @@ and inserts it at point.
 
 #+END_SRC
 
-
-*** Helm-Bibtex
+** Helm-Bibtex
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package helm-bibtex
-    :after (oc-csl)
     :bind
     ("C-c ]" . helm-bibtex)
     :bind
@@ -1487,12 +1517,12 @@ and inserts it at point.
           bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date maintitle mainsubtitle)
           bibtex-completion-cite-default-command "parencite"
           bibtex-completion-display-formats '((t . "${author:20} ${title:*} ${date:4} ${=has-pdf=:1} ${=type=:7}")))
-  
+
     (advice-add 'bibtex-completion-candidates :filter-return 'reverse)
-  
+
     (add-to-list 'bibtex-completion-format-citation-functions
                  '(org-mode . bibtex-completion-format-citation-org-cite))
-  
+
     (defun helm-bibtex-insert-citeproc-reference (_candidate)
         (let* ((locale-getter (citeproc-locale-getter-from-dir helm-bibtex-csl-locale-dir))
                (item-getter (citeproc-itemgetter-from-bibtex helm-bibtex-bibliography))
@@ -1502,15 +1532,15 @@ and inserts it at point.
                               (helm-marked-candidates))))
           (citeproc-append-citations cites proc)
           (insert (car (citeproc-render-bib proc 'plain)))))
-  
+
     (progn (dolist (action '("Insert citation" "Insert formatted citation(s)" "Insert formatted reference" "Insert reference"))
              (helm-delete-action-from-source action helm-source-bibtex))
            (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0)
            (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3))
-  
+
     (defvar helm-bibtex-csl-style (expand-file-name "etc/csl/unified-style-linguistics.csl" user-emacs-directory))
     (defvar helm-bibtex-csl-locale-dir (expand-file-name "etc/csl/" user-emacs-directory)))
-  
+
 #+END_SRC
 
 *** Word count goals
