@@ -544,10 +544,23 @@ Magit provides featureful Git integration.
     :init
     (abridge-diff-mode 1))
 
-  (use-package git-timemachine)
+  (use-package git-time-machine)
 
   (use-package git-auto-commit-mode)
 #+END_SRC
+
+** Visual regexp
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package visual-regexp)
+
+  (use-package visual-regexp-steroids
+    :bind
+    ((("C-c r" . vr/replace) 
+      ("C-c q" . vr/query-replace)
+      ("C-r" . vr/isearch-backward)
+      ("C-s" . vr/isearch-forward))))
+#+end_src
 
 ** Programming modes
 *** Emacs Lisp
@@ -707,7 +720,7 @@ This is the recommended solution for Rmarkdown files.
 Mode for [[https://quarto.org][quarto]] interaction, built on [[*Polymode][polymode]]
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package quarto-mode)
+    (use-package quarto-mode)
 #+end_src
 *** Stan
 
@@ -947,7 +960,7 @@ Sidebar contents
           (wc-goal-reset))
         (setq deactivate-mark t)))
 
-
+    :config
     (add-hook 'LaTeX-mode-hook
               (defun my-LaTeX-mode-hook ()
                 (setq font-latex-match-function-keywords '(("ipa" "{")
@@ -956,16 +969,15 @@ Sidebar contents
                                                            ("x" "[{{")
                                                            ("xt" "[{{")
                                                            ("xo" "[{{")
+                                                           ("w" "[{{")
+                                                           ("xr" "[{{") 
+                                                           ("ox" "[{{{")
                                                            ("y" "[{")
                                                            ("yt" "[{")
                                                            ("yo" "[{")
-                                                           ("w" "[{{")
                                                            ("yr" "[{")
-                                                           ("xr" "[{{") 
-                                                           ("ox" "[{{{")
                                                            ("featr" "{")
                                                            "ex" "pex" "pex~" "xe" "a")
-                      font-latex-match-biblatex-keywords '(("posscitet" "[[{"))
                       TeX-parse-self t
                       TeX-auto-save t
                       TeX-electric-sub-and-superscript t
@@ -986,19 +998,29 @@ Sidebar contents
                 (TeX-source-correlate-mode 1)
                 (add-to-list 'TeX-view-program-selection
                              '(output-pdf "PDF Tools"))
-                (bind-keys :map TeX-mode-map
+                (bind-keys :map LaTeX-mode-map
                            ("C-x n @" . LaTeX-narrow-to-subtree)
                            ("C-c f" . insert-feature)
-                           ("C-c }" . LaTeX-close-environment))
+                           ("C-c }" . LaTeX-close-environment)
+                           ("C-c ]" . helm-bibtex))
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
   (use-package auctex-latexmk
+    :disabled t
     :after tex-site
     :config
     (add-hook 'LaTeX-mode-hook
               (defun my-LaTeXMk-setup ()
                 (auctex-latexmk-setup)
                 (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
+
+  (use-package procress
+    :straight (:host github :repo "haji-ali/procress")
+    :commands tex-procress-mode
+    :init
+    (add-hook 'LaTeX-mode-hook 'tex-procress-mode)
+    :config
+    (procress-load-default-svg-images))
 
 #+END_SRC
 
@@ -1478,11 +1500,10 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package helm-bibtex
-    :after (oc-csl)
+    :after oc-csl
     :bind
+    ;; (:map LaTeX-mode-map (("C-c ]" . helm-bibtex)))
     ("C-c ]" . helm-bibtex)
-    :bind
-    (:map LaTeX-mode-map (("C-c ]" . helm-bibtex)))
     :config
     (setq bibtex-completion-bibliography `(,private/bibliography-file)
           bibtex-completion-library-path private/pdf-directory
@@ -1491,12 +1512,12 @@ and inserts it at point.
           bibtex-completion-additional-search-fields '(subtitle booktitle booksubtitle date maintitle mainsubtitle)
           bibtex-completion-cite-default-command "parencite"
           bibtex-completion-display-formats '((t . "${author:20} ${title:*} ${date:4} ${=has-pdf=:1} ${=type=:7}")))
-  
+
     (advice-add 'bibtex-completion-candidates :filter-return 'reverse)
-  
+
     (add-to-list 'bibtex-completion-format-citation-functions
                  '(org-mode . bibtex-completion-format-citation-org-cite))
-  
+
     (defun helm-bibtex-insert-citeproc-reference (_candidate)
         (let* ((locale-getter (citeproc-locale-getter-from-dir helm-bibtex-csl-locale-dir))
                (item-getter (citeproc-itemgetter-from-bibtex helm-bibtex-bibliography))
@@ -1506,15 +1527,15 @@ and inserts it at point.
                               (helm-marked-candidates))))
           (citeproc-append-citations cites proc)
           (insert (car (citeproc-render-bib proc 'plain)))))
-  
+
     (progn (dolist (action '("Insert citation" "Insert formatted citation(s)" "Insert formatted reference" "Insert reference"))
              (helm-delete-action-from-source action helm-source-bibtex))
            (helm-add-action-to-source "Insert citation" 'helm-bibtex-insert-citation helm-source-bibtex 0)
            (helm-add-action-to-source "Insert formatted reference" 'helm-bibtex-insert-citeproc-reference helm-source-bibtex 3))
-  
+
     (defvar helm-bibtex-csl-style (expand-file-name "etc/csl/unified-style-linguistics.csl" user-emacs-directory))
     (defvar helm-bibtex-csl-locale-dir (expand-file-name "etc/csl/" user-emacs-directory)))
-  
+
 #+END_SRC
 
 *** Word count goals
@@ -1854,6 +1875,14 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
   (use-package all-the-icons)
 
   (use-package vterm)
+
+  (use-package vterm-toggle
+    :after vterm
+    :bind
+    ("s-<return>" . vterm-toggle)
+    ("M-s-<return>" . vterm-toggle-cd)
+    (:map vterm-mode-map
+          (([(control return)] . vterm-toggle-insert-cd))))
 #+END_SRC
 
 These are some convenience functions for my own use
@@ -2197,6 +2226,22 @@ Much better than DocView
                 ("K" . dired-open-xdg)))
 #+END_SRC
 
+** Dirvish
+
+Updated dired
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package dirvish
+    :init
+    (dirvish-override-dired-mode)
+    :custom
+    (dirvish-mode-line-format '(:left (sort file-time " " file-size symlink) :right (omit yank index)))
+    (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state))
+    :config
+    (dirvish-peek-mode)
+    :bind
+    (("C-c f" . dirvish-fd)))
+#+end_src
 ** Helpful
 
 A drop-in replacement for Emacs' help buffers
