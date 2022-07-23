@@ -558,8 +558,14 @@ Magit provides featureful Git integration.
     :bind
     ((("C-c r" . vr/replace) 
       ("C-c q" . vr/query-replace)
-      ("C-r" . vr/isearch-backward)
-      ("C-s" . vr/isearch-forward))))
+      ("C-c M-r" . vr/isearch-backward)
+      ("C-c M-s" . vr/isearch-forward)))
+    :config
+    (setq vr/command-python
+          (let ((python-command (if (equalp system-type 'darwin)
+                                    "/opt/homebrew/bin/python3"
+                                  "python")))
+            (format "%s %s" python-command (expand-file-name "straight/build/visual-regexp-steroids/regexp.py" user-emacs-directory)))))
 #+end_src
 
 ** Programming modes
