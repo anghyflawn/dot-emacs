@@ -1011,6 +1011,7 @@ Sidebar contents
                 (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
 
   (use-package procress
+    :disabled
     :straight (:host github :repo "haji-ali/procress")
     :commands tex-procress-mode
     :init
@@ -1706,6 +1707,23 @@ Properly setup undo-tree
       (global-undo-tree-mode))
 #+end_src
 
+** Accent entry
+
+Completion for accent entries
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package accent
+    :bind
+    ("C-x C-a" . accent-menu)
+    :config
+    (setq accent-custom '((a (ă))
+                          (e (ĕ))
+                          (i (ĭ))
+                          (o (ŏ))
+                          (u (ŭ))
+                          (y (ȳ)))))
+#+end_src
+
 * Other useful utilities
 ** Session management
 
@@ -2208,7 +2226,8 @@ Much better than DocView
     :magic ("%PDF" . pdf-view-mode)
     :config
     (pdf-tools-install :no-query)
-    (setq pdf-view-resize-factor 1.1)
+    (setq pdf-view-resize-factor 1.1
+          pdf-view-use-scaling t)
     (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 #+END_SRC
 
