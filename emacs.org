@@ -214,7 +214,9 @@ We don't need scroll bars or tool bars, or indeed menus
     (menu-bar-mode -1))
 #+END_SRC
 
-Diminish some modes that are always on and which serve no purpose in the mode-line
+** COMMENT Diminish modes
+
+Diminish some modes that are always on and which serve no purpose in the mode-line. Not needed with minions?
 
 #+BEGIN_SRC emacs-lisp :noweb-ref init-after
 (diminish 'auto-revert-mode)
@@ -240,8 +242,6 @@ This sets the colours of the background and fonts.
 
   (use-package doom-themes
     :config
-    (setq doom-themes-treemacs-theme "doom-colors")
-    (doom-themes-treemacs-config)
     (doom-themes-org-config))
 
   (if (daemonp)
@@ -249,11 +249,10 @@ This sets the colours of the background and fonts.
     (load-theme my-theme t))
 #+END_SRC
 
-*** COMMENT Modus theme
+*** COMMENT Modus themes
 
 #+begin_src elisp :noweb-ref appearance
   (use-package modus-themes
-   :disabled t
    :init
    (setq modus-themes-italic-constructs t
          modus-themes-bold-constructs nil
@@ -286,9 +285,6 @@ Set up the actual fonts to use
                                                     (if (eq system-type 'darwin)
                                                         180
                                                       160) :weight 'medium)
-  ;; (custom-set-faces
-  ;;  '(default ((t (:family "Iosevka SS09" :weight light :height 165))))
-  ;;  '(variable-pitch ((t (:family "PT Serif" :height 180 :weight medium)))))
 #+END_SRC
 
 Allow mixing fixed and variable pitch.
@@ -408,13 +404,12 @@ Makes it clearer which buffer is active
     (dimmer-mode 1))
 #+END_SRC
 
-** Zoom windows
+** COMMENT Zoom windows
 
 Sensible window layouts. These currently don't seem to work well for me.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package zoom
-    :disabled t
     :config
     (defun zoom-size-callback ()
       (cond ((> (frame-pixel-width) 1280) '(90 . 0.75))
@@ -424,7 +419,6 @@ Sensible window layouts. These currently don't seem to work well for me.
      '(zoom-size 'zoom-size-callback)))
 
   (use-package edwina
-    :disabled t
     :config
     ;; (setq display-buffer-base-action '(display-buffer-below-selected))
     (edwina-mode 1))
@@ -544,18 +538,28 @@ Magit provides featureful Git integration.
     :init
     (abridge-diff-mode 1))
 
-  (use-package git-timemachine)
+  (use-package git-time-machine)
 
   (use-package git-auto-commit-mode)
 #+END_SRC
 
-*** Very large files
-
-My bibliography is getting sluggish.
+** Visual regexp
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package vlf-setup
-    :straight vlf)
+  (use-package visual-regexp)
+
+  (use-package visual-regexp-steroids
+    :bind
+    ((("C-c r" . vr/replace) 
+      ("C-c q" . vr/query-replace)
+      ("C-c M-r" . vr/isearch-backward)
+      ("C-c M-s" . vr/isearch-forward)))
+    :config
+    (setq vr/command-python
+          (let ((python-command (if (eq system-type 'darwin)
+                                    "/opt/homebrew/bin/python3"
+                                  "python")))
+            (format "%s %s" python-command (expand-file-name "straight/build/visual-regexp-steroids/regexp.py" user-emacs-directory)))))
 #+end_src
 
 ** Programming modes
@@ -600,12 +604,10 @@ Elpy is a bunch of nice Python utilities.
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package python
     :mode ("\\.py\\'" . python-mode)
-    :init
-    (use-package elpy
-      :disabled t
-      :config (elpy-enable))
     :config
-    (setq-default python-shell-interpreter "/usr/bin/python"))
+    (setq-default python-shell-interpreter (if (eq system-type 'darwin)
+                                               "/opt/homebrew/bin/python3"
+                                             "/usr/bin/python")))
 #+END_SRC
 
 *** Common Lisp
@@ -716,7 +718,7 @@ This is the recommended solution for Rmarkdown files.
 Mode for [[https://quarto.org][quarto]] interaction, built on [[*Polymode][polymode]]
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package quarto-mode)
+    (use-package quarto-mode)
 #+end_src
 *** Stan
 
@@ -843,7 +845,7 @@ Narrower margins to focus when writing
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package olivetti
     :config
-    (setq-default olivetti-body-width (if (eq system-type 'darwin)
+    (setq olivetti-body-width (if (eq system-type 'darwin)
                                           88
                                         75))
     (add-hook 'olivetti-mode-hook
@@ -866,14 +868,13 @@ Easily save sentences elsewhere for reuse
      (palimpsest-trash-key "C-c C-x C-q")))
 #+end_src
 
-*** Imenu-list
+*** COMMENT Imenu-list
 
 Sidebar contents
 
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package imenu-list
     :bind ("C-c C-'" . imenu-list-smart-toggle)
-    :disabled
     :config
     (setq imenu-list-focus-after-activation t))
 #+end_src
@@ -920,7 +921,6 @@ Sidebar contents
                ("M-]" . sp-unwrap-sexp)
                ("C-x C-t" . sp-transpose-hybrid-sexp))
     (use-package evil-smartparens
-      :diminish evil-smartparens-mode
       :config
       (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
       (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
@@ -956,7 +956,7 @@ Sidebar contents
           (wc-goal-reset))
         (setq deactivate-mark t)))
 
-
+    :config
     (add-hook 'LaTeX-mode-hook
               (defun my-LaTeX-mode-hook ()
                 (setq font-latex-match-function-keywords '(("ipa" "{")
@@ -965,16 +965,15 @@ Sidebar contents
                                                            ("x" "[{{")
                                                            ("xt" "[{{")
                                                            ("xo" "[{{")
+                                                           ("w" "[{{")
+                                                           ("xr" "[{{") 
+                                                           ("ox" "[{{{")
                                                            ("y" "[{")
                                                            ("yt" "[{")
                                                            ("yo" "[{")
-                                                           ("w" "[{{")
                                                            ("yr" "[{")
-                                                           ("xr" "[{{") 
-                                                           ("ox" "[{{{")
                                                            ("featr" "{")
                                                            "ex" "pex" "pex~" "xe" "a")
-                      font-latex-match-biblatex-keywords '(("posscitet" "[[{"))
                       TeX-parse-self t
                       TeX-auto-save t
                       TeX-electric-sub-and-superscript t
@@ -995,10 +994,11 @@ Sidebar contents
                 (TeX-source-correlate-mode 1)
                 (add-to-list 'TeX-view-program-selection
                              '(output-pdf "PDF Tools"))
-                (bind-keys :map TeX-mode-map
+                (bind-keys :map LaTeX-mode-map
                            ("C-x n @" . LaTeX-narrow-to-subtree)
                            ("C-c f" . insert-feature)
-                           ("C-c }" . LaTeX-close-environment))
+                           ("C-c }" . LaTeX-close-environment)
+                           ("C-c ]" . helm-bibtex))
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
   (use-package auctex-latexmk
@@ -1009,6 +1009,15 @@ Sidebar contents
               (defun my-LaTeXMk-setup ()
                 (auctex-latexmk-setup)
                 (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
+
+  (use-package procress
+    :disabled
+    :straight (:host github :repo "haji-ali/procress")
+    :commands tex-procress-mode
+    :init
+    (add-hook 'LaTeX-mode-hook 'tex-procress-mode)
+    :config
+    (procress-load-default-svg-images))
 
 #+END_SRC
 
@@ -1509,10 +1518,10 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package helm-bibtex
+    :after oc-csl
     :bind
+    ;; (:map LaTeX-mode-map (("C-c ]" . helm-bibtex)))
     ("C-c ]" . helm-bibtex)
-    :bind
-    (:map LaTeX-mode-map (("C-c ]" . helm-bibtex)))
     :config
     (setq bibtex-completion-bibliography `(,private/bibliography-file)
           bibtex-completion-library-path private/pdf-directory
@@ -1711,11 +1720,29 @@ Use marginal annotations in org-mode with any file.
 Properly setup undo-tree
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package undo-tree
+    (use-package undo-tree
+      :config
+      (setq undo-tree-visualizer-timestamps t
+            undo-tree-visualizer-diff t
+            undo-tree-auto-save-history nil)
+      (global-undo-tree-mode))
+#+end_src
+
+** Accent entry
+
+Completion for accent entries
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package accent
+    :bind
+    ("C-x C-a" . accent-menu)
     :config
-    (setq undo-tree-visualizer-timestamps t
-          undo-tree-visualizer-diff t)
-    (global-undo-tree-mode))
+    (setq accent-custom '((a (ă))
+                          (e (ĕ))
+                          (i (ĭ))
+                          (o (ŏ))
+                          (u (ŭ))
+                          (y (ȳ)))))
 #+end_src
 
 * Other useful utilities
@@ -1884,6 +1911,14 @@ Yasnippet is a handy framework for storing little bits of code/text that you reu
   (use-package all-the-icons)
 
   (use-package vterm)
+
+  (use-package vterm-toggle
+    :after vterm
+    :bind
+    ("s-<return>" . vterm-toggle)
+    ("M-s-<return>" . vterm-toggle-cd)
+    (:map vterm-mode-map
+          (([(control return)] . vterm-toggle-insert-cd))))
 #+END_SRC
 
 These are some convenience functions for my own use
@@ -2212,10 +2247,12 @@ Much better than DocView
     :magic ("%PDF" . pdf-view-mode)
     :config
     (pdf-tools-install :no-query)
-    (setq pdf-view-resize-factor 1.1)
+    (setq pdf-view-resize-factor 1.1
+          pdf-view-use-scaling t)
     (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 #+END_SRC
-** Dired
+
+** COMMENT Dired
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package dired-narrow
@@ -2227,6 +2264,22 @@ Much better than DocView
                 ("K" . dired-open-xdg)))
 #+END_SRC
 
+** Dirvish
+
+Updated dired
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package dirvish
+    :init
+    (dirvish-override-dired-mode)
+    :custom
+    (dirvish-mode-line-format '(:left (sort file-time " " file-size symlink) :right (omit yank index)))
+    (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state))
+    :config
+    (dirvish-peek-mode)
+    :bind
+    (("C-c f" . dirvish-fd)))
+#+end_src
 ** Helpful
 
 A drop-in replacement for Emacs' help buffers
@@ -2241,11 +2294,10 @@ A drop-in replacement for Emacs' help buffers
      ("C-c C" . helpful-command)))
 #+END_SRC
 
-** Anki-editor
+** COMMENT Anki-editor
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package anki-editor
-    :disabled t
     :config
     (add-hook 'anki-editor-mode-hook
               '(lambda ()
@@ -2253,11 +2305,10 @@ A drop-in replacement for Emacs' help buffers
                  (local-set-key (kbd "M-RET") 'anki-editor-insert-note))))
 #+END_SRC
 
-** Tabs
+** COMMENT Tabs
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package centaur-tabs
-    :disabled t
     :config
     (centaur-tabs-mode t)
     (centaur-tabs-headline-match)
@@ -2338,7 +2389,7 @@ A drop-in replacement for Emacs' help buffers
           ("g T" . centaur-tabs-backward)))
 #+END_SRC
 
-** Treemacs
+** COMMENT Treemacs
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package treemacs
@@ -2412,7 +2463,7 @@ A drop-in replacement for Emacs' help buffers
 
 ** Time tracking
 
-*** Reaper
+*** COMMENT Reaper
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package reaper
@@ -2474,7 +2525,6 @@ A drop-in replacement for Emacs' help buffers
                ("C-c n C-f" . orb-find-note-file)))
   
   (use-package company-org-roam
-    :disabled t
     :config
     (push 'company-org-roam company-backends))
   
@@ -2564,11 +2614,10 @@ Subtitle editing, because that is apparently my life now
                 ("C-SPC" . subed-mpv-toggle-pause)))
 #+END_SRC
 
-** Spotify
+** COMMENT Spotify
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package mingus
-    :disabled t
     :config
     (evil-set-initial-state 'mingus-mode 'emacs)
     (evil-set-initial-state 'mingus-browser-mode 'emacs)
@@ -2588,7 +2637,7 @@ Manage annoying pop-up buffers
     (push " *Pandoc log*" popwin:special-display-config))
 #+end_src
 
-** Pomidor
+** COMMENT Pomidor
 
 Pomodoro for Emacs
 
