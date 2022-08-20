@@ -229,6 +229,11 @@ Load some additional themes
 
 #+begin_src emacs-lisp :noweb-ref appearance
   (use-package parchment-theme)
+  (use-package mindre-theme
+    :config
+    (setq mindre-use-more-bold nil
+          mindre-use-faded-lisp-parens t))
+
 #+end_src
 
 This sets the colours of the background and fonts.
@@ -1045,7 +1050,7 @@ The following sets up Org-mode itself
     ("C-c l" . org-store-link)
     ("C-c a" . org-agenda)
     ("C-c t" . org-capture)
-    ("C-x C-a C-w" . find-main-agenda-file)
+    ;; ("C-x C-a C-w" . find-main-agenda-file)
     :config
     (eval-after-load "org"
       '(define-key org-mode-map (kbd "C-c ]") nil))
@@ -1720,12 +1725,12 @@ Use marginal annotations in org-mode with any file.
 Properly setup undo-tree
 
 #+begin_src emacs-lisp :noweb-ref editing
-    (use-package undo-tree
-      :config
-      (setq undo-tree-visualizer-timestamps t
-            undo-tree-visualizer-diff t
-            undo-tree-auto-save-history nil)
-      (global-undo-tree-mode))
+  (use-package undo-tree
+    :config
+    (setq undo-tree-visualizer-timestamps t
+          undo-tree-visualizer-diff t
+          undo-tree-auto-save-history nil)
+    (global-undo-tree-mode))
 #+end_src
 
 ** Accent entry
@@ -1755,6 +1760,20 @@ Completion for accent entries
     (psession-mode 1)
     (add-to-list 'psession-object-to-save-alist '(helm-ucs--names . "helm-ucs--names.el")))
 #+END_SRC
+
+** Auto save
+
+This is a lightweight auto-save mode
+
+#+begin_src emacs-lisp :noweb utils
+  (use-package salv
+    :straight (:host github :repo "alphapapa/salv.el")
+    :hook
+    (LaTeX-mode . salv-mode)
+    (org-mode . salv-mode)
+    (markdown-mode . salv-mode)
+    (ess-r-mode . salv-mode))
+#+end_src
 
 ** Fussy completion
 
