@@ -557,7 +557,8 @@ Magit provides featureful Git integration.
     :init
     (abridge-diff-mode 1))
 
-  (use-package git-time-machine)
+  (use-package git-timemachine
+    :commands (git-timemachine git-timemachine-toggle))
 
   (use-package git-auto-commit-mode)
 #+END_SRC
