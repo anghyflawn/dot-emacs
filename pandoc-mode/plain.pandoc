@@ -1,7 +1,7 @@
 ;; -*- mode: emacs-lisp -*-
 
 ;; pandoc-mode global settings file
-;; saved on 2021.05.03 11:49
+;; saved on 2022.06.09 11:16
 
 ((citeproc . t)
  (html-q-tags)
@@ -13,7 +13,6 @@
  (natbib)
  (table-of-contents)
  (no-highlight)
- (no-wrap)
  (section-divs)
  (listings)
  (number-sections)
@@ -21,7 +20,6 @@
  (self-contained)
  (incremental)
  (gladtex)
- (smart)
  (parse-raw)
  (reference-links)
  (normalize)
@@ -121,6 +119,7 @@
   ("raw_html")
   ("raw_tex")
   ("simple_tables")
+  ("smart")
   ("startnum")
   ("strikeout")
   ("subscript")
