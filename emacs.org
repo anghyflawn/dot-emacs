@@ -1796,21 +1796,21 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
      ("C-s" . helm-occur)
      ("C-x C-d" . helm-browse-project))
     :commands (helm-buffers-list
-	       helm-colors
-	       helm-find-files
-	       helm-for-files
-	       helm-google-suggest
-	       helm-mini
-	       helm-help
-	       helm-show-kill-ring
-	       helm-org-keywords
-	       helm-M-x
-	       helm-occur)
+               helm-colors
+               helm-find-files
+               helm-for-files
+               helm-google-suggest
+               helm-mini
+               helm-help
+               helm-show-kill-ring
+               helm-org-keywords
+               helm-M-x
+               helm-occur)
     :diminish
     helm-mode
     :config
     (helm-mode)
-    (require 'helm-config)
+    ;; (require 'helm-config)
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z") 'helm-select-action)
@@ -2608,6 +2608,8 @@ Subtitle editing, because that is apparently my life now
                 (subed-disable-sync-point-to-player)
                 (turn-on-auto-fill)
                 (typopunct-mode)))
+    (when (eq system-type 'darwin)
+      (setq subed-mpv-socket-dir "/tmp/subed-mpv-socket"))
     :bind (:map subed-mode-map
                 ("C-SPC" . subed-mpv-toggle-pause)))
 #+END_SRC
@@ -2713,7 +2715,7 @@ PDF annotation tools
       (define-key gif-screencast-mode-map (kbd "<f9>") 'gif-screencast-stop)))
 #+end_src
 
-** Scratch
+** COMMENT Scratch
 
 Quick scatch buffer
 
