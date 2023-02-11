@@ -185,14 +185,16 @@ Don't show symlinked filenames
 
 Some packages to fix the mode-line
 
-#+begin_src emacs-lisp :noweb-ref appearance
+#+begin_src emacs-lisp :noweb-ref final-packages
   (use-package minions
     :after doom-modeline
+    :disabled (eq system-type 'darwin)
     :config
     (minions-mode 1)
     (setq minions-direct '(wc-goal-mode)))
-  
+
   (use-package doom-modeline
+    :disabled (eq system-type 'darwin)
     :init
     (doom-modeline-mode 1)
     :config
@@ -203,6 +205,7 @@ Some packages to fix the mode-line
           doom-modeline-icon (display-graphic-p)
           doom-modeline-major-mode-icon t
           doom-modeline-major-mode-color-icon t
+          doom-modeline-buffer-file-name-style 'auto
           doom-modeline-unicode-fallback t
           doom-modeline-enable-word-count t
           doom-modeline-enable-word-count-modes '(markdown-mode org-mode latex-mode)
@@ -211,7 +214,7 @@ Some packages to fix the mode-line
           doom-modeline-indent-info nil
           doom-modeline-workspace-name t
           doom-modeline-modal-icon t
-          doom-modeline-mu4e t))
+          doom-modeline-mu4e (eq system-type 'gnu/linux)))
     #+end_src
 
 ** Unneeded chrome
@@ -890,6 +893,7 @@ Easily save sentences elsewhere for reuse
   (use-package palimpsest-mode
     :straight (:host github :repo "danielsz/Palimpsest")
     :hook (text-mode . palimpsest-mode)
+    :diminish palimpsest-mode
     :custom
     ((palimpsest-send-bottom "C-c C-x C-r")
      (palimpsest-send-top "C-c C-x C-s")
@@ -1668,6 +1672,7 @@ Evil is a mode that makes vi(m) like keybindings
 
   (when (eq system-type 'darwin)
     (use-package evil-escape
+      :disabled t
       :after evil
       :config
       (setq-default evil-escape-key-sequence "jk")
@@ -1748,6 +1753,7 @@ Properly setup undo-tree
 
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package undo-tree
+    :diminish undo-tree-mode
     :config
     (setq undo-tree-visualizer-timestamps t
           undo-tree-visualizer-diff t
@@ -2081,16 +2087,16 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
      ("C-s" . helm-occur)
      ("C-x C-d" . helm-browse-project))
     :commands (helm-buffers-list
-               helm-colors
-               helm-find-files
-               helm-for-files
-               helm-google-suggest
-               helm-mini
-               helm-help
-               helm-show-kill-ring
-               helm-org-keywords
-               helm-M-x
-               helm-occur)
+	       helm-colors
+	       helm-find-files
+	       helm-for-files
+	       helm-google-suggest
+	       helm-mini
+	       helm-help
+	       helm-show-kill-ring
+	       helm-org-keywords
+	       helm-M-x
+	       helm-occur)
     :diminish
     helm-mode
     :config
@@ -2104,17 +2110,17 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
       (setq helm-google-suggest-use-curl-p t))
 
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-          helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-          helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-          helm-use-frame-when-more-than-two-windows nil
-          helm-ff-file-name-history-use-recentf t
-          helm-buffers-fuzzy-matching t
-          helm-recentf-fuzzy-match t
-          helm-inherit-input-method nil
-          helm-completion-style 'emacs)
+	  helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+	  helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+	  helm-use-frame-when-more-than-two-windows nil
+	  helm-ff-file-name-history-use-recentf t
+	  helm-buffers-fuzzy-matching t
+	  helm-recentf-fuzzy-match t
+	  helm-inherit-input-method nil
+	  helm-completion-style 'emacs)
 
     (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
-                               helm-source-locate))
+			       helm-source-locate))
 
   (use-package helm-dictionary
     :after helm)
@@ -2153,12 +2159,14 @@ Set up =company-mode= for autocompletion.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package company
+    :diminish company-mode
     :config
     (global-company-mode)
     (setq company-global-modes '(not message-mode latex-mode markdown-mode)
           company-backends (remove 'company-dabbrev company-backends)))
-  
+
   (use-package company-box
+    :diminish company-box-mode
     :hook
     (company-mode . company-box-mode))
 #+END_SRC
