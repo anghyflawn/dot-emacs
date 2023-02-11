@@ -757,7 +757,7 @@ Mode for [[https://quarto.org][quarto]] interaction, built on [[*Polymode][polym
       :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
 #+END_SRC
 
-*** COMMENT LSP mode
+*** LSP mode
 
 Language server protocol setup
 
