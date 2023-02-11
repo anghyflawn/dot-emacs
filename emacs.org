@@ -656,7 +656,7 @@ Activate relevant virtualenvs
 *** R
 **** Basic ESS setup
 
-#+BEGIN_SRC emacs-lisp :noweb-ref editing
+#+BEGIN_SRC emacs-lisp :noweb-ref ess
   (use-package ess-site
     :straight ess
     :mode ("\\.R\\'" . ess-r-mode)
@@ -724,24 +724,20 @@ Activate relevant virtualenvs
 
 This is the recommended solution for Rmarkdown files.
 
-#+BEGIN_SRC emacs-lisp :noweb-ref editing
-  (use-package polymode           ; ESS with polymode
-    :mode (("\\.[Rr]md\\'" . poly-markdown+r-mode)
-	   ("\\.[Rr]nw\\'" . poly-noweb+r-mode))
+#+BEGIN_SRC emacs-lisp :noweb-ref ess
+  (use-package polymode 
     :config
-    (setq-default 
-     pm-weaver "knitR-ESS"
-     polymode-weaver-output-file-format "%s"
-     polymode-exporter-output-file-format "%s"))
+    (setq pm-weaver "knitR-ESS"
+          polymode-weaver-output-file-format "%s"
+          polymode-exporter-output-file-format "%s")
+    (add-to-list 'polymode-run-these-after-change-functions-in-other-buffers 'lsp-on-change)
+    (add-to-list 'polymode-run-these-before-change-functions-in-other-buffers 'lsp-before-change))
 
-  (use-package poly-R
-    :after polymode ess-site)
+  (use-package poly-R)
 
-  (use-package poly-markdown
-    :after polymode markdown-mode)
+  (use-package poly-markdown)
 
-  (use-package poly-noweb
-    :after polymode)
+  (use-package poly-noweb)
 #+END_SRC
 
 **** Quarto
@@ -761,7 +757,7 @@ Mode for [[https://quarto.org][quarto]] interaction, built on [[*Polymode][polym
       :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
 #+END_SRC
 
-*** LSP mode
+*** COMMENT LSP mode
 
 Language server protocol setup
 
@@ -2101,7 +2097,6 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
     helm-mode
     :config
     (helm-mode)
-    ;; (require 'helm-config)
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z") 'helm-select-action)
@@ -2393,7 +2388,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
       (add-hook 'mu4e-update-pre-hook #'my-mu4e-update-hook)
 
 
-      (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/outlook/INBOX")
+      (setq unread-query "flag:unread maildir:/work/Inbox or flag:unread maildir:/outlook/INBOX or flag:unread maildir:/anghyflawn/Inbox")
 
       (add-to-list 'mu4e-bookmarks
                    '("date:today..now AND NOT flag:trashed AND NOT from:iosad" "Today's messages" ?t))
@@ -2906,7 +2901,7 @@ Trying to use this
     (deft-directory private/org-roam-directory))
 #+END_SRC
 
-** Subed
+** COMMENT Subed
 
 Subtitle editing, because that is apparently my life now
 
@@ -3054,45 +3049,49 @@ the ~noweb-ref~ arguments in the ~src~ blocks throughout this document.
 
 #+BEGIN_SRC emacs-lisp :tangle yes :noweb no-export :exports code
   ;;; emacs.el --- Emacs configuration generated via Org Babel
-  
+
   ;;; Commentary:
-  
+
   ;; Do not modify this file by hand.  It was automatically generated
   ;; from `emacs.org` in the same directory.  See that file for more
   ;; information.
-  
+
   ;;; Code:
-  
+
   ;; Configuration group: init-before
   <<init-before>>
-  
-  ;; Configuration group: appearance
+
+  ;; ;; Configuration group: appearance
   <<appearance>>
-  
+
   ;; Configuration group: evil
   <<evil>>
-  
+
   ;; Configuration group: editing
   <<editing>>
-  
+
   ;; Configuration group: pandoc
   <<pandoc>>
-  
+
   ;; Configuration group: mail
   <<mail>>
-  
+
   ;; Configuration group: org
   <<org>>
-  
+
   ;; Configuration group: utils
   <<utils>>
+
   ;; Configuration group: init-after
-  
+
   <<init-after>>
-  
+
+  ;; Configuration group: ess
+  <<ess>>
+
   ;; Configuration group: final-packages (things that seem to break so
   ;; load them last to pre-empt debug)
   <<final-packages>>
-  
+
   ;; emacs.el ends here
 #+END_SRC
