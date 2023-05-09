@@ -1000,6 +1000,8 @@ Sidebar contents
                                                            ("yt" "[{")
                                                            ("yo" "[{")
                                                            ("yr" "[{")
+                                                           ("z" "[{{{{")
+                                                           ("zipa" "[{{{{{")
                                                            ("featr" "{")
                                                            "ex" "pex" "pex~" "xe" "a")
                       TeX-parse-self t
