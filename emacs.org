@@ -470,7 +470,7 @@ Even so, ~ansi-term~ doesn't obey:
   (ad-activate 'ansi-term)
 #+END_SRC
 
-** Spelling
+** COMMENT Spelling
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package flyspell
@@ -511,6 +511,15 @@ Even so, ~ansi-term~ doesn't obey:
     (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
 #+END_SRC
 
+** Alternative spelling setup
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package jinx
+    :hook (emacs-startup . global-jinx-mode)
+    :bind ([remap ispell-word] . jinx-correct)
+    :config
+    (setq jinx-languages "en_GB"))
+#+end_src
 ** Syntax checking
 
 Use [[https://github.com/flycheck/flycheck][Flycheck]] to validate syntax on the fly.
@@ -563,7 +572,9 @@ Magit provides featureful Git integration.
   (use-package git-auto-commit-mode)
 #+END_SRC
 
-** Visual regexp
+** COMMENT Visual regexp
+
+Not currently in use
 
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package visual-regexp)
@@ -634,6 +645,7 @@ Activate relevant virtualenvs
 
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package auto-virtualenvwrapper
+    :disabled t
     :config
     (add-hook 'python-mode-hook #'auto-virtualenvwrapper-activate))
 #+end_src
@@ -657,65 +669,70 @@ Activate relevant virtualenvs
   (use-package ess-site
     :straight ess
     :mode ("\\.R\\'" . ess-r-mode)
+    :interpreter ("r" . inferior-ess-R-mode)
     :commands R
     :config
-    (use-package ess-smart-underscore)
-  
-    (use-package ess-rutils)  
+    (use-package ess-rutils
+      :straight nil)
   
     (setq ess-eval-visibly 'nowait
-          ess-style 'RStudio)
-  
+	  ess-style 'RStudio)
+
+    (defun my-inferior-ess-init ()
+      (setq-local ansi-color-for-comint-mode 'filter))
+    (add-hook 'inferior-ess-R-mode-hook 'my-inferior-ess-init)
+
     (defun tex-Rnw-check (name)
       "When opening a .tex file, check to make sure there isn't a
   corresponding .Rnw available, to make sure we don't try to edit
   the wrong file."
       (when (and (bufferp name)
-                 (buffer-file-name name))
-        (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
-          (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
-                     (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
-            (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
-                name
-              (find-buffer-visiting rnw-file))))))
-  
+		 (buffer-file-name name))
+	(let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
+	  (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+		     (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
+	    (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
+		name
+	      (find-buffer-visiting rnw-file))))))
+
     (defadvice switch-to-buffer (around noweb-check activate)
       (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
-                                (ad-get-arg 0))))
-        ad-do-it))
+				(ad-get-arg 0))))
+	ad-do-it))
     (ad-update 'switch-to-buffer)
-  
+
     (add-hook 'LaTeX-mode-hook
-              (defun my-Rnw-mode-hook ()
-                "Add commands to AUCTeX's \\[TeX-command-list]."
-                (unless (and (featurep 'tex-site) (featurep 'tex))
-                  (error "AUCTeX does not seem to be loaded"))
-                (add-to-list 'TeX-command-list
-                             '("LaTeXKnit" "%l %(mode) %s"
-                               TeX-run-TeX nil (latex-mode) :help
-                               "Run LaTeX after Knit") t)
-                (dolist (suffix '("nw" "Snw" "Rnw"))
-                  (add-to-list 'TeX-file-extensions suffix))))
-  
-    (add-hook 'R-mode-hook
-              (defun my-R-mode-hook ()
-                (company-mode)
-                (local-set-key (kbd "TAB") 'company-complete))))
-  
+	      (defun my-Rnw-mode-hook ()
+		"Add commands to AUCTeX's \\[TeX-command-list]."
+		(unless (and (featurep 'tex-site) (featurep 'tex))
+		  (error "AUCTeX does not seem to be loaded"))
+		(add-to-list 'TeX-command-list
+			     '("LaTeXKnit" "%l %(mode) %s"
+			       TeX-run-TeX nil (latex-mode) :help
+			       "Run LaTeX after Knit") t)
+		(dolist (suffix '("nw" "Snw" "Rnw"))
+		  (add-to-list 'TeX-file-extensions suffix))))
+
+    (add-hook 'ess-mode-hook
+	      (defun my-ess-mode-hook ()
+		(company-mode)
+		(local-set-key (kbd "TAB") 'company-complete))))
+
   (use-package ess-smart-equals
     :disabled t
     :init   (setq ess-smart-equals-extra-ops '(brace paren))
     :after  (:any ess-r-mode inferior-ess-r-mode ess-r-transcript-mode)
     :config (ess-smart-equals-activate))
-  
+
   (use-package ess-view-data
-    :after ess-site
-    :bind
-    (:map ess-r-mode-map
-          ("C-c _" . ess-view-data-print))
-    (:map inferior-ess-r-mode-map
-          ("C-c _" . ess-view-data-print)))
-#+END_SRC
+    :bind (:map ess-mode-map
+		("C-c _" . ess-view-data-print))
+    :config
+    (evil-set-initial-state 'ess-view-data-mode 'emacs))
+
+  (use-package ess-smart-underscore :after ess-site)
+
+    #+END_SRC
 
 **** Polymode
 
@@ -754,14 +771,15 @@ Mode for [[https://quarto.org][quarto]] interaction, built on [[*Polymode][polym
       :config (add-hook 'stan-mode-hook 'yas-minor-mode)))
 #+END_SRC
 
-*** COMMENT LSP mode
+*** LSP mode
 
 Language server protocol setup
 
-#+BEGIN_SRC emacs-lisp :noweb-ref utils
+#+BEGIN_SRC emacs-lisp :noweb-ref editing
   (setq lsp-keymap-prefix "C-c M-l")
 
   (use-package lsp-mode
+    :after (ess-site polymode poly-R poly-markdown)
     :init
     (setq gc-cons-threshold 100000000)
     (setq read-process-output-max (* 1024 1024))
@@ -790,12 +808,8 @@ Language server protocol setup
     :config
     (setq lsp-latex-build-args
           (cons "-lualatex" (remove "-pdf" lsp-latex-build-args))))
-
-  (use-package which-key
-    :diminish which-key-mode
-    :config
-    (which-key-mode))
 #+END_SRC
+
 
 *** Yaml mode
 
@@ -1006,7 +1020,7 @@ Sidebar contents
                       TeX-outline-extra '(("\\\\printbibliography" 2))
                       TeX-source-correlate t
                       TeX-engine 'luatex) 
-                (flyspell-mode)
+                ;; (flyspell-mode)
                 (TeX-fold-mode 1)
                 ;; This activates the X-SAMPA layout, making
                 ;; it accessible via C-\
@@ -1184,11 +1198,13 @@ The following sets up Org-mode itself
     (org-mode . org-appear-mode))
 
   (use-package org-pandoc-import
+    :disabled t
     :straight (:host github
                :repo "tecosaur/org-pandoc-import"
                :files ("*.el" "filters" "preprocessors")))
 
   (use-package org-drill
+    :disabled t
     :config
     (require 'org-drill)
     (use-package org-drill-table))
@@ -1256,7 +1272,7 @@ This bit loads markdown-mode and sets up various customizations.
                   markdown-fontify-code-blocks-natively t)
     (add-hook 'markdown-mode-hook
               (defun my-markdown-mode-hook ()
-                (flyspell-mode)
+                ;; (flyspell-mode)
                 (pandoc-mode)
                 (typopunct-mode)
                 (outline-minor-mode)
@@ -1546,7 +1562,7 @@ and inserts it at point.
     ;; (:map LaTeX-mode-map (("C-c ]" . helm-bibtex)))
     ("C-c ]" . helm-bibtex)
     :config
-    (setq bibtex-completion-bibliography `(,private/bibliography-file)
+    (setq bibtex-completion-bibliography `(,private/inprep-file ,private/bibliography-file)
           bibtex-completion-library-path private/pdf-directory
           bibtex-completion-pdf-open-function 'find-file
           bibtex-completion-cite-prompt-for-optional-arguments nil
@@ -1661,13 +1677,6 @@ Evil is a mode that makes vi(m) like keybindings
     :custom
     (evil-snipe-scope 'whole-line)
     (evil-snipe-repeat-scope 'whole-visible))
-
-  (when (eq system-type 'darwin)
-    (use-package evil-escape
-      :after evil
-      :config
-      (setq-default evil-escape-key-sequence "jk")
-      (evil-escape-mode)))
 #+END_SRC
 
 ** Avy
@@ -1728,6 +1737,7 @@ Use marginal annotations in org-mode with any file.
 
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package org-marginalia
+    :disabled t
     :straight (:host github :repo "nobiot/org-marginalia")
     :bind (:map org-marginalia-mode-map
                 (("C-c n o" . org-marginalia-open)
@@ -1793,7 +1803,7 @@ This is a lightweight auto-save mode
     (ess-r-mode . salv-mode))
 #+end_src
 
-** Fussy completion
+** COMMENT Fussy completion
 
 #+begin_src emacs-lisp :noweb-ref utils
   (use-package fussy
@@ -2077,16 +2087,16 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
      ("C-s" . helm-occur)
      ("C-x C-d" . helm-browse-project))
     :commands (helm-buffers-list
-	       helm-colors
-	       helm-find-files
-	       helm-for-files
-	       helm-google-suggest
-	       helm-mini
-	       helm-help
-	       helm-show-kill-ring
-	       helm-org-keywords
-	       helm-M-x
-	       helm-occur)
+               helm-colors
+               helm-find-files
+               helm-for-files
+               helm-google-suggest
+               helm-mini
+               helm-help
+               helm-show-kill-ring
+               helm-org-keywords
+               helm-M-x
+               helm-occur)
     :diminish
     helm-mode
     :config
@@ -2120,8 +2130,10 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
   (use-package helm-themes
     :after helm)
 
+  (use-package ag)
+  
   (use-package helm-ag
-    :after helm)
+    :after (helm ag))
 #+END_SRC
 
 Helm-backup is a handy tool which puts all your saed files under Git
@@ -2234,7 +2246,7 @@ These are some convenience functions for my own use
     (clean-buffer (replace-regexp "\\\\rt" "×")))
 #+END_SRC
 
-** Calendar integration
+** COMMENT Calendar integration
 
 This bit exports the agenda from my org-mode calendar to an iCalendar
 and copies it to a remote server, where it gets picked up by the phone
@@ -2404,49 +2416,49 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                                      (:maildir "/outlook/Deleted Items" :key ?t :hide t))
             message-sendmail-extra-arguments nil)
 
-      ;; (setq mu4e-contexts
-      ;;       `(,(make-mu4e-context
-      ;;           :name "Work"
-      ;;           :enter-func (lambda () (mu4e-message "Entering main work context"))
-      ;;           :leave-func (lambda () (mu4e-message "Leaving main work context"))
-      ;;           :match-func (lambda (msg)
-      ;;                         (when msg
-      ;;                           (mu4e-message-contact-field-matches msg :to "iosad")))
-      ;;           :vars '((user-full-name . "Pavel Iosad")
-      ;;                   (user-mail-address . "pavel.iosad@ed.ac.uk")
-      ;;                   (mu4e-compose-reply-to-address . nil)
-      ;;                   (mu4e-compose-signature . (make-random-signature))
-      ;;                   (mu4e-drafts-folder . "/outlook/Drafts")
-      ;;                   (mu4e-sent-folder . "/outlook/Sent Items")
-      ;;                   (mu4e-trash-folder . "/outlook/Deleted Items")
-      ;;                   (mu4e-refile-folder . "/outlook/Archive")
-      ;;                   (mu4e-maildir-shortcuts . ((:maildir "/outlook/INBOX" :key ?i)
-      ;;                                              (:maildir "/outlook/Archive" :key ?a)
-      ;;                                              (:maildir "/outlook/Sent Items" :key ?s :hide-unread t)
-      ;;                                              (:maildir "/outlook/Deleted Items" :key ?t :hide t)))
-      ;;                   (message-sendmail-extra-arguments . nil)))
-      ;;         ,(make-mu4e-context
-      ;;           :name "Personal"
-      ;;           :enter-func (lambda () (mu4e-message "Entering personal context"))
-      ;;           :leave-func (lambda () (mu4e-message "Leaving personal context"))
-      ;;           :match-func (lambda (msg)
-      ;;                         (when msg
-      ;;                           (mu4e-message-contact-field-matches msg :to "anghyflawn")))
-      ;;           :vars '((user-full-name . "Pavel Iosad")
-      ;;                   (user-mail-address . "pavel@anghyflawn.net")
-      ;;                   (mu4e-compose-reply-to-address . nil)
-      ;;                   (mu4e-compose-signature . "Pavel Iosad")
-      ;;                   (mu4e-drafts-folder . "/work/Drafts")
-      ;;                   (mu4e-sent-folder . "/work/Sent")
-      ;;                   (mu4e-trash-folder . "/work/Trash")
-      ;;                   (mu4e-refile-folder . "/work/Archive")
-      ;;                   (mu4e-maildir-shortcuts . ((:maildir "/work/Inbox" :key ?i)
-      ;;                                              (:maildir "/work/Archive" :key ?a)
-      ;;                                              (:maildir "/work/Sent" :key ?s :hide-unread t)
-      ;;                                              (:maildir "/work/Trash" :key ?t :hide t)))
-      ;;                   (message-sendmail-extra-arguments . ("-a" "personal")))))
-      ;;       mu4e-context-policy 'pick-first
-      ;;       mu4e-compose-context-policy 'ask)
+      (setq mu4e-contexts
+            `(,(make-mu4e-context
+                :name "Work"
+                :enter-func (lambda () (mu4e-message "Entering main work context"))
+                :leave-func (lambda () (mu4e-message "Leaving main work context"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (mu4e-message-contact-field-matches msg :to "iosad")))
+                :vars '((user-full-name . "Pavel Iosad")
+                        (user-mail-address . "pavel.iosad@ed.ac.uk")
+                        (mu4e-compose-reply-to-address . nil)
+                        (mu4e-compose-signature . (make-random-signature))
+                        (mu4e-drafts-folder . "/outlook/Drafts")
+                        (mu4e-sent-folder . "/outlook/Sent Items")
+                        (mu4e-trash-folder . "/outlook/Deleted Items")
+                        (mu4e-refile-folder . "/outlook/Archive")
+                        (mu4e-maildir-shortcuts . ((:maildir "/outlook/INBOX" :key ?i)
+                                                   (:maildir "/outlook/Archive" :key ?a)
+                                                   (:maildir "/outlook/Sent Items" :key ?s :hide-unread t)
+                                                   (:maildir "/outlook/Deleted Items" :key ?t :hide t)))
+                        (message-sendmail-extra-arguments . nil)))
+              ,(make-mu4e-context
+                :name "Personal"
+                :enter-func (lambda () (mu4e-message "Entering personal context"))
+                :leave-func (lambda () (mu4e-message "Leaving personal context"))
+                :match-func (lambda (msg)
+                              (when msg
+                                (mu4e-message-contact-field-matches msg :to "anghyflawn")))
+                :vars '((user-full-name . "Pavel Iosad")
+                        (user-mail-address . "pavel@anghyflawn.net")
+                        (mu4e-compose-reply-to-address . nil)
+                        (mu4e-compose-signature . "Pavel Iosad")
+                        (mu4e-drafts-folder . "/anghyflawn/Drafts")
+                        (mu4e-sent-folder . "/anghyflawn/Sent")
+                        (mu4e-trash-folder . "/anghyflawn/Trash")
+                        (mu4e-refile-folder . "/anghyflawn/Archive")
+                        (mu4e-maildir-shortcuts . ((:maildir "/anghyflawn/Inbox" :key ?i)
+                                                   (:maildir "/anghyflawn/Archive" :key ?a)
+                                                   (:maildir "/anghyflawn/Sent" :key ?s :hide-unread t)
+                                                   (:maildir "/anghyflawn/Trash" :key ?t :hide t)))
+                        (message-sendmail-extra-arguments . ("-a" "personal")))))
+            mu4e-context-policy 'pick-first
+            mu4e-compose-context-policy 'ask)
 
 
       (add-hook 'mu4e-compose-mode-hook
@@ -2455,7 +2467,8 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
                   (auto-fill-mode)
                   (set-fill-column 72)
                   (typopunct-mode)
-                  (flyspell-mode)))))
+                  ;; (flyspell-mode)
+                  ))))
 
   (use-package mu4e-alert
     :bind (("<f7>" . mu4e-alert-view-unread-mails))
@@ -2575,6 +2588,17 @@ A drop-in replacement for Emacs' help buffers
      ("C-c C" . helpful-command)))
 #+END_SRC
 
+** Which-key
+
+Show available keys
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package which-key
+    :diminish which-key-mode
+    :config
+    (which-key-mode))
+
+#+end_src
 ** COMMENT Anki-editor
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
@@ -2670,7 +2694,7 @@ A drop-in replacement for Emacs' help buffers
           ("g T" . centaur-tabs-backward)))
 #+END_SRC
 
-** Buffer grouping
+** COMMENT Buffer grouping
 
 Trying to use this
 
@@ -2999,7 +3023,7 @@ Copied from [[https://github.com/alphapapa/unpackaged.el][unpackaged.el]]
                                      (when smerge-mode
                                        (unpackaged/smerge-hydra/body)))))
 #+end_src
-** Org-noter
+** COMMENT Org-noter
 
 PDF annotation tools
 
@@ -3010,7 +3034,7 @@ PDF annotation tools
     (setq org-noter-notes-search-path `(,private/notes-directory ".")))
 #+end_src
 
-** Screencast
+** COMMENT Screencast
 
 #+begin_src emacs-lisp :noweb-ref utils
   (use-package gif-screencast
@@ -3020,7 +3044,7 @@ PDF annotation tools
       (define-key gif-screencast-mode-map (kbd "<f9>") 'gif-screencast-stop)))
 #+end_src
 
-** Scratch
+** COMMENT Scratch
 
 Quick scatch buffer
 
@@ -3057,6 +3081,9 @@ the ~noweb-ref~ arguments in the ~src~ blocks throughout this document.
   ;; Configuration group: evil
   <<evil>>
 
+  ;; Configuration group: ess
+  <<ess>>
+
   ;; Configuration group: editing
   <<editing>>
 
@@ -3073,11 +3100,7 @@ the ~noweb-ref~ arguments in the ~src~ blocks throughout this document.
   <<utils>>
 
   ;; Configuration group: init-after
-
   <<init-after>>
-
-  ;; Configuration group: ess
-  <<ess>>
 
   ;; Configuration group: final-packages (things that seem to break so
   ;; load them last to pre-empt debug)
