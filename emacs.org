@@ -186,35 +186,34 @@ Don't show symlinked filenames
 Some packages to fix the mode-line
 
 #+begin_src emacs-lisp :noweb-ref final-packages
-  (use-package minions
-    :after doom-modeline
-    :disabled (eq system-type 'darwin)
-    :config
-    (minions-mode 1)
-    (setq minions-direct '(wc-goal-mode)))
+  (unless (eq system-type 'darwin)
+    (use-package minions
+      :after doom-modeline
+      :config
+      (minions-mode 1)
+      (setq minions-direct '(wc-goal-mode)))
 
-  (use-package doom-modeline
-    :disabled (eq system-type 'darwin)
-    :init
-    (doom-modeline-mode 1)
-    :config
-    (custom-set-faces
-     '(mode-line ((t (:family "Castoro" :height 1.0))))
-     '(mode-line-inactive ((t (:family "Castoro" :height 1.0)))))
-    (setq doom-modeline-height 1
-          doom-modeline-icon (display-graphic-p)
-          doom-modeline-major-mode-icon t
-          doom-modeline-major-mode-color-icon t
-          doom-modeline-buffer-file-name-style 'auto
-          doom-modeline-unicode-fallback t
-          doom-modeline-enable-word-count t
-          doom-modeline-enable-word-count-modes '(markdown-mode org-mode latex-mode)
-          doom-modeline-buffer-encoding nil
-          doom-modeline-minor-modes t
-          doom-modeline-indent-info nil
-          doom-modeline-workspace-name t
-          doom-modeline-modal-icon t
-          doom-modeline-mu4e (eq system-type 'gnu/linux)))
+    (use-package doom-modeline
+      :init
+      (doom-modeline-mode 1)
+      :config
+      (custom-set-faces
+       '(mode-line ((t (:family "Castoro" :height 1.0))))
+       '(mode-line-inactive ((t (:family "Castoro" :height 1.0)))))
+      (setq doom-modeline-height 1
+            doom-modeline-icon (display-graphic-p)
+            doom-modeline-major-mode-icon t
+            doom-modeline-major-mode-color-icon t
+            doom-modeline-buffer-file-name-style 'auto
+            doom-modeline-unicode-fallback t
+            doom-modeline-enable-word-count t
+            doom-modeline-enable-word-count-modes '(markdown-mode org-mode latex-mode)
+            doom-modeline-buffer-encoding nil
+            doom-modeline-minor-modes t
+            doom-modeline-indent-info nil
+            doom-modeline-workspace-name t
+            doom-modeline-modal-icon t
+            doom-modeline-mu4e (eq system-type 'gnu/linux))))
     #+end_src
 
 ** Unneeded chrome
