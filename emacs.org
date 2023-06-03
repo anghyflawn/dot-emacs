@@ -670,55 +670,69 @@ Activate relevant virtualenvs
 #+BEGIN_SRC emacs-lisp :noweb-ref ess
   (use-package ess-site
     :straight ess
+    :config
+    (setq ess-use-ido nil
+          ess-eval-visibly 'nowait
+          ess-style 'RStudio))
+
+  (use-package ess-rutils
+    :straight ess)
+
+  (use-package ess-r-mode
+    :straight ess
     :mode ("\\.R\\'" . ess-r-mode)
     :interpreter ("r" . inferior-ess-R-mode)
-    :commands R
     :config
-    (use-package ess-rutils
-      :straight nil)
-  
-    (setq ess-eval-visibly 'nowait
-	  ess-style 'RStudio)
-
     (defun my-inferior-ess-init ()
       (setq-local ansi-color-for-comint-mode 'filter))
     (add-hook 'inferior-ess-R-mode-hook 'my-inferior-ess-init)
+
+    (defun R-pipe-operator ()
+      (interactive)
+      (just-one-space 1)
+      (insert "|>")
+      (just-one-space 1))
 
     (defun tex-Rnw-check (name)
       "When opening a .tex file, check to make sure there isn't a
   corresponding .Rnw available, to make sure we don't try to edit
   the wrong file."
       (when (and (bufferp name)
-		 (buffer-file-name name))
-	(let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
-	  (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
-		     (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
-	    (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
-		name
-	      (find-buffer-visiting rnw-file))))))
+                 (buffer-file-name name))
+        (let* ((rnw-file (format "%s.Rnw" (file-name-sans-extension (buffer-file-name name)))))
+          (when (and (equal (file-name-extension (buffer-file-name name)) "tex")
+                     (member rnw-file (mapcar #'buffer-file-name (buffer-list))))
+            (if (yes-or-no-p "You are trying to open a .tex file, but the corresponding .Rnw file seems to be open. Are you sure?")
+                name
+              (find-buffer-visiting rnw-file))))))
 
     (defadvice switch-to-buffer (around noweb-check activate)
       (let ((buffer-or-name (or (tex-Rnw-check (ad-get-arg 0))
-				(ad-get-arg 0))))
-	ad-do-it))
+                                (ad-get-arg 0))))
+        ad-do-it))
     (ad-update 'switch-to-buffer)
 
     (add-hook 'LaTeX-mode-hook
-	      (defun my-Rnw-mode-hook ()
-		"Add commands to AUCTeX's \\[TeX-command-list]."
-		(unless (and (featurep 'tex-site) (featurep 'tex))
-		  (error "AUCTeX does not seem to be loaded"))
-		(add-to-list 'TeX-command-list
-			     '("LaTeXKnit" "%l %(mode) %s"
-			       TeX-run-TeX nil (latex-mode) :help
-			       "Run LaTeX after Knit") t)
-		(dolist (suffix '("nw" "Snw" "Rnw"))
-		  (add-to-list 'TeX-file-extensions suffix))))
+              (defun my-Rnw-mode-hook ()
+                "Add commands to AUCTeX's \\[TeX-command-list]."
+                (unless (and (featurep 'tex-site) (featurep 'tex))
+                  (error "AUCTeX does not seem to be loaded"))
+                (add-to-list 'TeX-command-list
+                             '("LaTeXKnit" "%l %(mode) %s"
+                               TeX-run-TeX nil (latex-mode) :help
+                               "Run LaTeX after Knit") t)
+                (dolist (suffix '("nw" "Snw" "Rnw"))
+                  (add-to-list 'TeX-file-extensions suffix))))
 
     (add-hook 'ess-mode-hook
-	      (defun my-ess-mode-hook ()
-		(company-mode)
-		(local-set-key (kbd "TAB") 'company-complete))))
+              (defun my-ess-mode-hook ()
+                (company-mode)
+                (local-set-key (kbd "TAB") 'company-complete)))
+    :bind
+    (:map ess-r-mode-map
+          ("C-S-m" . R-pipe-operator))
+    (:map inferior-ess-r-mode-map
+          ("C-S-m" . R-pipe-operator)))
 
   (use-package ess-smart-equals
     :disabled t
@@ -727,8 +741,11 @@ Activate relevant virtualenvs
     :config (ess-smart-equals-activate))
 
   (use-package ess-view-data
-    :bind (:map ess-mode-map
-		("C-c _" . ess-view-data-print))
+    :bind
+    (:map ess-r-mode-map
+          ("C-c _" . ess-view-data-print))
+    (:map inferior-ess-r-mode-map
+          ("C-c _" . ess-view-data-print))
     :config
     (evil-set-initial-state 'ess-view-data-mode 'emacs))
 
@@ -926,45 +943,96 @@ Sidebar contents
     :straight (:host github :repo "Fuco1/smartparens")
     :diminish smartparens-mode
     :config
-    (show-smartparens-global-mode t)
-    (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
-    (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
-    (add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
-    (sp-local-pair 'LaTeX-mode "'" "'" :actions nil)
-    (sp-local-pair 'markdown-mode "'" "'")
-    (bind-keys :map smartparens-mode-map
-               ("C-M-a" . sp-beginning-of-sexp)
-               ("C-M-e" . sp-end-of-sexp)
-               ("C-<down>" . sp-down-sexp)
-               ("C-<up>"   . sp-up-sexp)
-               ("M-<down>" . sp-backward-down-sexp)
-               ("M-<up>"   . sp-backward-up-sexp)
-               ("C-M-f" . sp-forward-sexp)
-               ("C-M-b" . sp-backward-sexp)
-               ("C-M-n" . sp-next-sexp)
-               ("C-M-p" . sp-previous-sexp)
-               ("C-S-f" . sp-forward-symbol)
-               ("C-S-b" . sp-backward-symbol)
-               ("M-<right>" . sp-forward-slurp-sexp)
-               ("C-<right>" . sp-forward-barf-sexp)
-               ("M-<left>"  . sp-backward-slurp-sexp)
-               ("C-<left>"  . sp-backward-barf-sexp)
-               ("C-M-t" . sp-transpose-sexp)
-               ("C-M-k" . sp-kill-sexp)
-               ("C-k"   . sp-kill-hybrid-sexp)
-               ("M-k"   . sp-backward-kill-sexp)
-               ("C-M-w" . sp-copy-sexp)
-               ("C-M-d" . delete-sexp)
-               ("M-<backspace>" . backward-kill-word)
-               ("C-<backspace>" . sp-backward-kill-word)
-               ([remap sp-backward-kill-word] . backward-kill-word)
-               ("M-[" . sp-backward-unwrap-sexp)
-               ("M-]" . sp-unwrap-sexp)
-               ("C-x C-t" . sp-transpose-hybrid-sexp))
-    (use-package evil-smartparens
-      :config
-      (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
-      (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
+    (defhydra hydra-smartparens (:idle 1 :hint nil)
+      "
+    S-exps (quit with _q_)
+
+    ^Nav^            ^Barf/Slurp^          ^Depth^
+    ^---^------------^----------^----------^-----^-----------------------
+    _f_: forward     _s_:  slurp forward   _R_:      splice
+    _b_: backward    _S_:  barf forward    _r_:      raise
+    _a_: begin       _d_:  slurp backward  _<up>_:   raise backward
+    _e_: end         _D_:  barf backward   _<down>_: raise forward
+    _m_: mark
+
+    ^Kill^           ^Misc^                       ^Wrap^
+    ^----^-----------^----^-----------------------^----^------------------
+    _w_: copy        _j_: join                    _(_: wrap with ( )
+    _k_: kill        _s_: split                   _{_: wrap with { }
+    ^^               _t_: transpose               _'_: wrap with ' '
+    ^^               _c_: convolute               _\"_: wrap with \" \"
+    ^^               _i_: indent defun"
+      ("q" nil)
+      ;; Wrapping
+      ("(" (lambda (a) (interactive "P") (sp-wrap-with-pair "(")))
+      ("{" (lambda (a) (interactive "P") (sp-wrap-with-pair "{")))
+      ("'" (lambda (a) (interactive "P") (sp-wrap-with-pair "'")))
+      ("\"" (lambda (a) (interactive "P") (sp-wrap-with-pair "\"")))
+      ;; Navigation
+      ("f" sp-beginning-of-next-sexp)
+      ("b" sp-beginning-of-previous-sexp)
+      ("a" sp-beginning-of-sexp)
+      ("e" sp-end-of-sexp)
+      ("m" sp-mark-sexp)
+      ;; Kill/copy
+      ("w" sp-copy-sexp :exit t)
+      ("k" sp-kill-sexp :exit t)
+      ;; Misc
+      ("t" sp-transpose-sexp)
+      ("j" sp-join-sexp)
+      ("c" sp-convolute-sexp)
+      ("i" sp-indent-defun)
+      ;; Depth changing
+      ("R" sp-splice-sexp)
+      ("r" sp-splice-sexp-killing-around)
+      ("<up>" sp-splice-sexp-killing-backward)
+      ("<down>" sp-splice-sexp-killing-forward)
+      ;; Barfing/slurping
+      ("s" sp-forward-slurp-sexp)
+      ("S" sp-forward-barf-sexp)
+      ("D" sp-backward-barf-sexp)
+      ("d" sp-backward-slurp-sexp))
+
+      (show-smartparens-global-mode t)
+      (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+      (add-hook 'markdown-mode-hook 'turn-on-smartparens-strict-mode)
+      (add-hook 'LaTeX-mode-hook 'turn-on-smartparens-strict-mode)
+      (sp-local-pair 'LaTeX-mode "'" "'" :actions nil)
+      (sp-local-pair 'markdown-mode "'" "'")
+      (bind-keys :map smartparens-mode-map
+                 ("C-M-a" . sp-beginning-of-sexp)
+                 ("C-M-e" . sp-end-of-sexp)
+                 ("C-<down>" . sp-down-sexp)
+                 ("C-<up>"   . sp-up-sexp)
+                 ("M-<down>" . sp-backward-down-sexp)
+                 ("M-<up>"   . sp-backward-up-sexp)
+                 ("C-M-f" . sp-forward-sexp)
+                 ("C-M-b" . sp-backward-sexp)
+                 ("C-M-n" . sp-next-sexp)
+                 ("C-M-p" . sp-previous-sexp)
+                 ("C-S-f" . sp-forward-symbol)
+                 ("C-S-b" . sp-backward-symbol)
+                 ("M-<right>" . sp-forward-slurp-sexp)
+                 ("C-<right>" . sp-forward-barf-sexp)
+                 ("M-<left>"  . sp-backward-slurp-sexp)
+                 ("C-<left>"  . sp-backward-barf-sexp)
+                 ("C-M-t" . sp-transpose-sexp)
+                 ("C-M-k" . sp-kill-sexp)
+                 ("C-k"   . sp-kill-hybrid-sexp)
+                 ("M-k"   . sp-backward-kill-sexp)
+                 ("C-M-w" . sp-copy-sexp)
+                 ("C-M-d" . delete-sexp)
+                 ("M-<backspace>" . backward-kill-word)
+                 ("C-<backspace>" . sp-backward-kill-word)
+                 ([remap sp-backward-kill-word] . backward-kill-word)
+                 ("M-[" . sp-backward-unwrap-sexp)
+                 ("M-]" . sp-unwrap-sexp)
+                 ("C-x C-t" . sp-transpose-hybrid-sexp)
+                 ("C-c s" . hydra-smartparens/body))
+      (use-package evil-smartparens
+        :config
+        (add-hook 'LaTeX-mode-hook #'evil-smartparens-mode)
+        (add-hook 'prog-mode-hook #'evil-smartparens-mode)))
 #+END_SRC
 
 ** LaTeX
@@ -1013,6 +1081,8 @@ Sidebar contents
                                                            ("yt" "[{")
                                                            ("yo" "[{")
                                                            ("yr" "[{")
+                                                           ("xf" "[{{{")
+                                                           ("yf" "[{{")
                                                            ("z" "[{{{{")
                                                            ("zipa" "[{{{{{")
                                                            ("featr" "{")
@@ -1054,11 +1124,10 @@ Sidebar contents
                 (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
 
   (use-package procress
-    :disabled
     :straight (:host github :repo "haji-ali/procress")
-    :commands tex-procress-mode
+    :commands procress-auctex-mode
     :init
-    (add-hook 'LaTeX-mode-hook 'tex-procress-mode)
+    (add-hook 'LaTeX-mode-hook #'procress-auctex-mode)
     :config
     (procress-load-default-svg-images))
 
@@ -1741,16 +1810,16 @@ Search-based navigation
 Use marginal annotations in org-mode with any file.
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package org-marginalia
-    :disabled t
-    :straight (:host github :repo "nobiot/org-marginalia")
-    :bind (:map org-marginalia-mode-map
-                (("C-c n o" . org-marginalia-open)
-                 ("C-c m" . org-marginalia-mark)
-                 ("C-c n ]" . org-marginalia-next)
-                 ("C-c n [" . org-marginalia-prev)))
+  (use-package org-remark
+    :bind
+    ("C-c n m" . org-remark-mark)
+    (:map org-remark-mode-map
+          (("C-c n o" . org-remark-open)
+           ("C-c n ]" . org-remark-view-next)
+           ("C-c n [" . org-remark-view-prev)
+           ("C-c n r" . org-remark-remove)))
     :config
-    (setq org-marginalia-notes-file-path (expand-file-name "marginalia.org" private/org-roam-directory)))
+    (org-remark-global-tracking-mode +1))
 #+end_src
 
 ** Undo-tree
