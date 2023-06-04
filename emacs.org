@@ -820,7 +820,6 @@ Language server protocol setup
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 
   (use-package lsp-latex
-    :disabled t
     :commands lsp
     :bind (:map LaTeX-mode-map
                 (("C-c C-'" . lsp-ui-imenu)))
