@@ -558,6 +558,7 @@ Magit provides featureful Git integration.
     (setq magithub-clone-default-directory "~/src"))
 
   (use-package forge
+    :disabled
     :after magit
     :config
     (add-to-list 'forge-alist '("git.ecdf.ed.ac.uk" "git.ecdf.ed.ac.uk/api/v4/" "UoE GitLab" forge-gitlab-repository)))
@@ -674,9 +675,6 @@ Activate relevant virtualenvs
     (setq ess-use-ido nil
           ess-eval-visibly 'nowait
           ess-style 'RStudio))
-
-  (use-package ess-rutils
-    :straight ess)
 
   (use-package ess-r-mode
     :straight ess
@@ -1324,6 +1322,9 @@ The following sets up Org-mode itself
           org-agenda-current-time-string
           "⭠ now ─────────────────────────────────────────────────")
     (global-org-modern-mode))
+
+  (use-package org-wc
+    :straight (:host github :repo "tesujimath/org-wc"))
 #+END_SRC
   
 ** Markdown and pandoc
