@@ -186,7 +186,7 @@ Don't show symlinked filenames
 Some packages to fix the mode-line
 
 #+begin_src emacs-lisp :noweb-ref final-packages
-  (unless (eq system-type 'darwin)
+  ;; (unless (eq system-type 'darwin)
     (use-package minions
       :after doom-modeline
       :config
@@ -213,7 +213,7 @@ Some packages to fix the mode-line
             doom-modeline-indent-info nil
             doom-modeline-workspace-name t
             doom-modeline-modal-icon t
-            doom-modeline-mu4e (eq system-type 'gnu/linux))))
+            doom-modeline-mu4e (eq system-type 'gnu/linux)));)
     #+end_src
 
 ** Unneeded chrome
@@ -516,11 +516,12 @@ Even so, ~ansi-term~ doesn't obey:
 ** Alternative spelling setup
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package jinx
-    :hook (emacs-startup . global-jinx-mode)
-    :bind ([remap ispell-word] . jinx-correct)
-    :config
-    (setq jinx-languages "en_GB"))
+  (unless (eq system-type 'darwin)
+    (use-package jinx
+      :hook (emacs-startup . global-jinx-mode)
+      :bind ([remap ispell-word] . jinx-correct)
+      :config
+      (setq jinx-languages "en_GB")))
 #+end_src
 ** Syntax checking
 
@@ -1114,7 +1115,7 @@ Sidebar contents
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
   (use-package auctex-latexmk
-    :disabled t
+    :disabled 
     :after tex-site
     :config
     (add-hook 'LaTeX-mode-hook
@@ -1122,13 +1123,14 @@ Sidebar contents
                 (auctex-latexmk-setup)
                 (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
 
-  (use-package procress
-    :straight (:host github :repo "haji-ali/procress")
-    :commands procress-auctex-mode
-    :init
-    (add-hook 'LaTeX-mode-hook #'procress-auctex-mode)
-    :config
-    (procress-load-default-svg-images))
+  (unless (eq system-type 'darwin)
+    (use-package procress
+      :straight (:host github :repo "haji-ali/procress")
+      :commands procress-auctex-mode
+      :init
+      (add-hook 'LaTeX-mode-hook #'procress-auctex-mode)
+      :config
+      (procress-load-default-svg-images)))
 
 #+END_SRC
 
