@@ -207,7 +207,7 @@ Some packages to fix the mode-line
             doom-modeline-buffer-file-name-style 'auto
             doom-modeline-unicode-fallback t
             doom-modeline-enable-word-count t
-            doom-modeline-enable-word-count-modes '(markdown-mode org-mode latex-mode)
+            doom-modeline-continuous-word-count-modes '(markdown-mode org-mode LaTeX-mode)
             doom-modeline-buffer-encoding nil
             doom-modeline-minor-modes t
             doom-modeline-indent-info nil
@@ -519,6 +519,7 @@ Even so, ~ansi-term~ doesn't obey:
   (use-package jinx
     :hook (emacs-startup . global-jinx-mode)
     :bind ([remap ispell-word] . jinx-correct)
+    :after helm
     :config
     (setq jinx-languages "en_GB"))
 #+end_src
@@ -679,17 +680,15 @@ Activate relevant virtualenvs
   (use-package ess-r-mode
     :straight ess
     :mode ("\\.R\\'" . ess-r-mode)
-    :interpreter ("r" . inferior-ess-R-mode)
+    :interpreter ("R" . inferior-ess-R-mode)
     :config
     (defun my-inferior-ess-init ()
       (setq-local ansi-color-for-comint-mode 'filter))
-    (add-hook 'inferior-ess-R-mode-hook 'my-inferior-ess-init)
 
     (defun R-pipe-operator ()
       (interactive)
       (just-one-space 1)
-      (insert "|>")
-      (just-one-space 1))
+      (insert "|>"))
 
     (defun tex-Rnw-check (name)
       "When opening a .tex file, check to make sure there isn't a
@@ -717,20 +716,20 @@ Activate relevant virtualenvs
                   (error "AUCTeX does not seem to be loaded"))
                 (add-to-list 'TeX-command-list
                              '("LaTeXKnit" "%l %(mode) %s"
-                               TeX-run-TeX nil (latex-mode) :help
+                               TeX-run-TeX nil (LaTeX-mode) :help
                                "Run LaTeX after Knit") t)
                 (dolist (suffix '("nw" "Snw" "Rnw"))
                   (add-to-list 'TeX-file-extensions suffix))))
 
     (add-hook 'ess-mode-hook
-              (defun my-ess-mode-hook ()
-                (company-mode)
-                (local-set-key (kbd "TAB") 'company-complete)))
+  	      (defun my-ess-mode-hook ()
+  		(add-hook 'inferior-ess-r-mode-hook 'my-inferior-ess-init)
+  		(company-mode)))
     :bind
     (:map ess-r-mode-map
-          ("C-S-m" . R-pipe-operator))
+  	  ("C-S-m" . R-pipe-operator))
     (:map inferior-ess-r-mode-map
-          ("C-S-m" . R-pipe-operator)))
+  	  ("C-S-m" . R-pipe-operator)))
 
   (use-package ess-smart-equals
     :disabled t
@@ -747,7 +746,7 @@ Activate relevant virtualenvs
     :config
     (evil-set-initial-state 'ess-view-data-mode 'emacs))
 
-  (use-package ess-smart-underscore :after ess-site)
+  (use-package ess-smart-underscore :after ess-site :disabled)
 
     #+END_SRC
 
@@ -1083,6 +1082,7 @@ Sidebar contents
                                                            ("z" "[{{{{")
                                                            ("zipa" "[{{{{{")
                                                            ("featr" "{")
+  							 ("cat" "{")
                                                            "ex" "pex" "pex~" "xe" "a")
                       TeX-parse-self t
                       TeX-auto-save t
@@ -1182,7 +1182,7 @@ The following sets up Org-mode itself
           org-clock-x11idle-program-name "/usr/bin/xprintidle"
           org-hide-emphasis-markers t
           org-preview-latex-default-process 'imagemagick)
-    (org-clock-persistence-insinuate)
+    ;; (org-clock-persistence-insinuate)
 
     ; The following allows to export LaTeX code blocks in org-mode-export
     (org-babel-do-load-languages 'org-babel-load-languages
@@ -1502,6 +1502,17 @@ Now we set up pandoc-mode and add some utility functions
 
 #+END_SRC
 
+** COMMENT Typst
+
+Experimental support for [[https://typst.app][Typst]]
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package typst-ts-mode
+    :straight (:type git :host sourcehut :repo "meow_king/typst-ts-mode")
+    :config
+    (setq typst-ts-mode-watch-options "--open"))
+#+end_src
+
 ** BibTeX
 
 This defines a function (call it using =M-x get-bibtex-from-doi=)
@@ -1599,6 +1610,7 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org-ref
+    :disabled
     :after (org oc)
     :bind (:map org-mode-map
                 (("C-c )" . org-ref-insert-link-hydra/body)))
@@ -1727,7 +1739,8 @@ Evil is a mode that makes vi(m) like keybindings
                (deft-mode . emacs)
                (git-timemachine-mode . emacs)
                (lsp-ui-imenu-mode . emacs)
-               (reftex-index-mode . emacs))
+               (reftex-index-mode . emacs)
+  	     (info-mode . emacs))
              do (evil-set-initial-state mode state)))
 
   (use-package evil-surround
@@ -1811,8 +1824,10 @@ Use marginal annotations in org-mode with any file.
 
 #+begin_src emacs-lisp :noweb-ref editing
   (use-package org-remark
+    :demand t
     :bind
     ("C-c n m" . org-remark-mark)
+    ("C-c n l" . org-remark-mark-line)
     (:map org-remark-mode-map
           (("C-c n o" . org-remark-open)
            ("C-c n ]" . org-remark-view-next)
@@ -1822,6 +1837,15 @@ Use marginal annotations in org-mode with any file.
     (org-remark-global-tracking-mode +1))
 #+end_src
 
+** COMMENT Binder
+
+Multi-file projects
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package binder
+    :config
+    (evil-set-initial-state 'binder-sidebar-mode 'emacs))
+#+end_src
 ** Undo-tree
 
 Properly setup undo-tree
@@ -2175,7 +2199,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
     :diminish
     helm-mode
     :config
-    (helm-mode)
+    (helm-mode 1)
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z") 'helm-select-action)
@@ -2184,17 +2208,17 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
       (setq helm-google-suggest-use-curl-p t))
 
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-	  helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-	  helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-	  helm-use-frame-when-more-than-two-windows nil
-	  helm-ff-file-name-history-use-recentf t
-	  helm-buffers-fuzzy-matching t
-	  helm-recentf-fuzzy-match t
-	  helm-inherit-input-method nil
-	  helm-completion-style 'emacs)
+  	  helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+  	  helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+  	  helm-use-frame-when-more-than-two-windows nil
+  	  helm-ff-file-name-history-use-recentf t
+  	  helm-buffers-fuzzy-matching t
+  	  helm-recentf-fuzzy-match t
+  	  helm-inherit-input-method nil
+  	  helm-completion-style 'emacs)
 
     (helm-add-action-to-source "Attach to Email" #'mml-attach-file 
-			       helm-source-locate))
+  			       helm-source-locate))
 
   (use-package helm-dictionary
     :after helm)
@@ -2206,7 +2230,7 @@ introduction [[http://tuhdo.github.io/helm-intro.html][here]].
     :after helm)
 
   (use-package ag)
-  
+
   (use-package helm-ag
     :after (helm ag))
 #+END_SRC
@@ -2217,7 +2241,6 @@ don't want or don't have that much space.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package helm-backup
-    :disabled t
     :config
     (global-set-key (kbd "C-c b") 'helm-backup)
     (add-hook 'after-save-hook 'helm-backup-versioning))
@@ -2225,6 +2248,7 @@ don't want or don't have that much space.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
   (use-package helm-descbinds
+    :disabled
     :config
     (helm-descbinds-mode))
 #+END_SRC
@@ -2238,7 +2262,7 @@ Set up =company-mode= for autocompletion.
     :diminish company-mode
     :config
     (global-company-mode)
-    (setq company-global-modes '(not message-mode latex-mode markdown-mode)
+    (setq company-global-modes '(not message-mode LaTeX-mode markdown-mode)
           company-backends (remove 'company-dabbrev company-backends)))
 
   (use-package company-box
@@ -2792,6 +2816,24 @@ Trying to use this
 
 #+end_src
 
+** Alternative buffer grouping
+
+#+begin_src emacs-lisp :noweb-ref utils
+  (use-package perspective
+    :bind ("C-x C-b" . persp-list-buffers)
+    :custom (persp-mode-prefix-key (kbd "C-x x"))
+    :init (persp-mode))
+
+  (use-package persp-projectile
+    :bind (:map projectile-mode-map
+  	      ("M-P" . projectile-persp-switch-project)))
+
+
+  (advice-add 'mu4e :before
+   (lambda (&rest r)
+     (persp-switch "main"))
+   '((name . "switch-to-main-perspective")))
+#+end_src
 ** COMMENT Treemacs
 
 #+BEGIN_SRC emacs-lisp :noweb-ref utils
@@ -2883,7 +2925,7 @@ Trying to use this
   (use-package projectile
     :bind-keymap ("C-c p" . projectile-command-map)
     :diminish projectile-mode
-    :config
+    :init
     (projectile-mode +1)
     (setq projectile-project-search-path private/projectile-project-search-path))
 
