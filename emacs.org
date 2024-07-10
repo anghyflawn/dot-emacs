@@ -472,45 +472,46 @@ Even so, ~ansi-term~ doesn't obey:
   (ad-activate 'ansi-term)
 #+END_SRC
 
-** COMMENT Spelling
+** Spelling
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-  (use-package flyspell
-    :hook
-    ((text-mode-hook . flyspell-mode)
-     (prog-mode-hook . flyspell-mode))
-    :config
-    (setq ispell-program-name (if (eq system-type 'darwin)
-                                  "/opt/homebrew/bin/aspell"
-                                "/usr/bin/aspell")
-          ispell-really-aspell t)
-    (add-to-list 'ispell-dictionary-alist
-                 '("nynorsk"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "nynorsk") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("gaidhlig"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "gd") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("gaeilge"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "ga") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("bokmal"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "nb") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("cymraeg"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "cy") nil utf-8))
-  
-    (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
+  (when (eq system-type 'darwin)
+    (use-package flyspell
+      :hook
+      ((text-mode-hook . flyspell-mode)
+       (prog-mode-hook . flyspell-mode))
+      :config
+      (setq ispell-program-name (if (eq system-type 'darwin)
+  				  "/opt/homebrew/bin/aspell"
+  				"/usr/bin/aspell")
+  	  ispell-really-aspell t)
+      (add-to-list 'ispell-dictionary-alist
+  		 '("nynorsk"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "nynorsk") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("gaidhlig"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "gd") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("gaeilge"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "ga") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("bokmal"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "nb") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("cymraeg"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "cy") nil utf-8))
+
+      (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")))                 
 #+END_SRC
 
 ** Alternative spelling setup
@@ -748,7 +749,7 @@ Activate relevant virtualenvs
     :config
     (evil-set-initial-state 'ess-view-data-mode 'emacs))
 
-  (use-package ess-smart-underscore :after ess-site)
+  (use-package ess-smart-underscore :after ess-site :disabled)
 
     #+END_SRC
 
@@ -2940,8 +2941,6 @@ Trying to use this
     :after org-roam)
 
   (use-package org-roam-ui
-    :straight
-    (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
     :after org-roam
     :commands org-roam-ui-mode
     :config
@@ -2954,7 +2953,6 @@ Trying to use this
                 (set-process-query-on-exit-flag (get-process "httpd") nil))))
 
   (use-package org-roam-server
-    :disabled t
     :init
     (unless (server-running-p)
       (server-start))
