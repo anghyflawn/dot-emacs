@@ -552,12 +552,6 @@ Magit provides featureful Git integration.
     (add-hook 'magit-process-find-password-functions
               'magit-process-password-auth-source))
 
-  (use-package magithub
-    :after magit
-    :config
-    (magithub-feature-autoinject t)
-    (setq magithub-clone-default-directory "~/src"))
-
   (use-package forge
     :disabled
     :after magit
@@ -1035,19 +1029,23 @@ Sidebar contents
    
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package tex-site
-    :straight auctex
+    :straight (auctex :type git
+  		    :host github
+  		    :repo "emacs-straight/auctex"
+  		    :files ("*" (:exclude ".git"))
+  		    :pre-build ("make" "tex-site.el"))
     :mode ("\\.tex\\'" . LaTeX-mode)
     :commands (LaTeX-mode latex-mode plain-tex-mode)
     :init
     (defun insert-feature (arg feature value)
       "This just saves some typing, feel free to comment
-                       out."
+  		     out."
       (interactive "P\nMFeature: \nMValue: ")
       (insert (format
-               (if arg
-                   "\\mbox{\\ensuremath{%s}%s}"
-                 "\\mbox{[\\ensuremath{%s}%s]}")
-               value feature)))
+  	     (if arg
+  		 "\\mbox{\\ensuremath{%s}%s}"
+  	       "\\mbox{[\\ensuremath{%s}%s]}")
+  	     value feature)))
     (setq-default my-alternative-input-method "ipa-x-sampa")
 
     (defun LaTeX-narrow-to-subtree ()
@@ -1112,7 +1110,7 @@ Sidebar contents
                 (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))))
 
   (use-package auctex-latexmk
-    :disabled t
+    :disabled 
     :after tex-site
     :config
     (add-hook 'LaTeX-mode-hook
@@ -2573,7 +2571,7 @@ I use [[http://www.djcb.org/mu4e][mu4e]] to read my email
 
   (use-package mu4e-alert
     :bind (("<f7>" . mu4e-alert-view-unread-mails))
-    :commands (mu4e)
+    :commands mu4e
     :config
     (mu4e-alert-enable-mode-line-display)
     (mu4e-alert-set-default-style 'notifications)

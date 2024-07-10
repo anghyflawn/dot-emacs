@@ -7,8 +7,7 @@
 
 ;;; Code:
 
-;; Cask manages our package dependencies
-
+(setq straight-recipes-gnu-elpa-use-mirror t)
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
