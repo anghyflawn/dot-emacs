@@ -21,7 +21,6 @@
  ("company-box" . "79abd77f3357279c2726b74f8b20df27b71aa867")
  ("company-mode" . "35408c0ac3a730908fbce0810f8d159eb353c1d5")
  ("company-org-roam" . "1132663bd68022aa7ea005ff53c7c7571890769d")
- ("compat" . "056e3ccffc716990dcb7b33273453d5fce0402de")
  ("csv-mode" . "e13282b678af6b9ba74e5232610c6a4406c87877")
  ("dash.el" . "0ac1ecf6b56eb67bb81a3cf70f8d4354b5782341")
  ("deft" . "28be94d89bff2e1c7edef7244d7c5ba0636b1296")
