@@ -186,7 +186,7 @@ Don't show symlinked filenames
 Some packages to fix the mode-line
 
 #+begin_src emacs-lisp :noweb-ref final-packages
-  (unless (eq system-type 'darwin)
+  ;; (unless (eq system-type 'darwin)
     (use-package minions
       :after doom-modeline
       :config
@@ -213,7 +213,7 @@ Some packages to fix the mode-line
             doom-modeline-indent-info nil
             doom-modeline-workspace-name t
             doom-modeline-modal-icon t
-            doom-modeline-mu4e (eq system-type 'gnu/linux))))
+            doom-modeline-mu4e (eq system-type 'gnu/linux)));)
     #+end_src
 
 ** Unneeded chrome
@@ -472,56 +472,58 @@ Even so, ~ansi-term~ doesn't obey:
   (ad-activate 'ansi-term)
 #+END_SRC
 
-** COMMENT Spelling
+** Spelling
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
-  (use-package flyspell
-    :hook
-    ((text-mode-hook . flyspell-mode)
-     (prog-mode-hook . flyspell-mode))
-    :config
-    (setq ispell-program-name (if (eq system-type 'darwin)
-                                  "/opt/homebrew/bin/aspell"
-                                "/usr/bin/aspell")
-          ispell-really-aspell t)
-    (add-to-list 'ispell-dictionary-alist
-                 '("nynorsk"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "nynorsk") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("gaidhlig"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "gd") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("gaeilge"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "ga") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("bokmal"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "nb") nil utf-8))
-    (add-to-list 'ispell-dictionary-alist
-                 '("cymraeg"
-                   "[[:alpha:]]"
-                   "[^[:alpha:]]"
-                   "[']" t ("-C" "-d" "cy") nil utf-8))
-  
-    (setq-default flyspell-default-dictionary "en_GB-ize-w_accents"))                 
+  (when (eq system-type 'darwin)
+    (use-package flyspell
+      :hook
+      ((text-mode-hook . flyspell-mode)
+       (prog-mode-hook . flyspell-mode))
+      :config
+      (setq ispell-program-name (if (eq system-type 'darwin)
+  				  "/opt/homebrew/bin/aspell"
+  				"/usr/bin/aspell")
+  	  ispell-really-aspell t)
+      (add-to-list 'ispell-dictionary-alist
+  		 '("nynorsk"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "nynorsk") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("gaidhlig"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "gd") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("gaeilge"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "ga") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("bokmal"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "nb") nil utf-8))
+      (add-to-list 'ispell-dictionary-alist
+  		 '("cymraeg"
+  		   "[[:alpha:]]"
+  		   "[^[:alpha:]]"
+  		   "[']" t ("-C" "-d" "cy") nil utf-8))
+
+      (setq-default flyspell-default-dictionary "en_GB-ize-w_accents")))                 
 #+END_SRC
 
 ** Alternative spelling setup
 
 #+begin_src emacs-lisp :noweb-ref editing
-  (use-package jinx
-    :hook (emacs-startup . global-jinx-mode)
-    :bind ([remap ispell-word] . jinx-correct)
-    :after helm
-    :config
-    (setq jinx-languages "en_GB"))
+    (unless (eq system-type 'darwin)
+      (use-package jinx
+        :after helm
+        :hook (emacs-startup . global-jinx-mode)
+        :bind ([remap ispell-word] . jinx-correct)
+        :config
+        (setq jinx-languages "en_GB")))
 #+end_src
 ** Syntax checking
 
@@ -1142,13 +1144,14 @@ Sidebar contents
                 (auctex-latexmk-setup)
                 (setq auctex-latexmk-inherit-TeX-PDF-mode t))))
 
-  (use-package procress
-    :straight (:host github :repo "haji-ali/procress")
-    :commands procress-auctex-mode
-    :init
-    (add-hook 'LaTeX-mode-hook #'procress-auctex-mode)
-    :config
-    (procress-load-default-svg-images))
+  (unless (eq system-type 'darwin)
+    (use-package procress
+      :straight (:host github :repo "haji-ali/procress")
+      :commands procress-auctex-mode
+      :init
+      (add-hook 'LaTeX-mode-hook #'procress-auctex-mode)
+      :config
+      (procress-load-default-svg-images)))
 
 #+END_SRC
 
@@ -3001,20 +3004,37 @@ Trying to use this
       :config
       (push 'company-org-roam company-backends))
 
-    (use-package websocket
-      :after org-roam)
+  (use-package org-roam-ui
+    :after org-roam
+    :commands org-roam-ui-mode
+    :config
+    (defun org-roam-ui-browse ()
+      (interactive)
+      (browse-url "http://127.0.0.1:35901/"))
+    (bind-keys ("C-c n s" . org-roam-ui-browse))
+    (add-hook 'org-roam-ui-mode-hook
+              (lambda ()
+                (set-process-query-on-exit-flag (get-process "httpd") nil))))
 
-    (use-package org-roam-ui
-      :after org-roam
-      :commands org-roam-ui-mode
-      :config
-      (defun org-roam-ui-browse ()
-        (interactive)
-        (browse-url "http://127.0.0.1:35901/"))
-      (bind-keys ("C-c n s" . org-roam-ui-browse))
-      (add-hook 'org-roam-ui-mode-hook
-                (lambda ()
-                  (set-process-query-on-exit-flag (get-process "httpd") nil))))
+  (use-package org-roam-server
+    :init
+    (unless (server-running-p)
+      (server-start))
+    (add-hook 'org-roam-server-mode-hook
+              (lambda ()
+                (set-process-query-on-exit-flag (get-process "httpd") nil)))
+    :config
+    (setq org-roam-server-host "127.0.0.1"
+          org-roam-server-port 34896
+          org-roam-server-authenticate nil
+          org-roam-server-export-inline-images t
+          org-roam-server-serve-files nil
+          org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
+          org-roam-server-network-poll t
+          org-roam-server-network-arrows nil
+          org-roam-server-network-label-truncate t
+          org-roam-server-network-label-truncate-length 60
+          org-roam-server-network-label-wrap-length 20)
 
     (use-package org-roam-server
       :disabled t
