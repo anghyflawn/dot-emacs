@@ -626,6 +626,29 @@ various templating languages.
                                (set-fill-column 120))))
 #+END_SRC
 
+
+*** Tree-sitter setup
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package treesit-auto
+    :custom (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode 1))
+#+end_src
+
+*** Typst
+
+#+begin_src emacs-lisp :noweb-ref editing
+  (use-package typst-ts-mode
+    :straight '(:type git :host codeberg :repo "meow_king/typst-ts-mode"
+  		    :files (:defaults "*.el"))
+    :custom
+    (typst-ts-mode-enable-raw-blocks-highlight t)
+    :config
+    (keymap-set typst-ts-mode-map "C-c C-c" #'typst-ts-tmenu)) 
+#+end_src
+
 *** Python
 
 Basic python setup
@@ -674,7 +697,7 @@ Activate relevant virtualenvs
   (use-package ess-r-mode
     :straight ess
     :mode ("\\.R\\'" . ess-r-mode)
-    :interpreter ("R" . inferior-ess-R-mode)
+    :interpreter ("R" . inferior-ess-r-mode)
     :config
     (defun my-inferior-ess-init ()
       (setq-local ansi-color-for-comint-mode 'filter))
@@ -751,6 +774,7 @@ This is the recommended solution for Rmarkdown files.
 #+BEGIN_SRC emacs-lisp :noweb-ref ess
   (use-package polymode 
     :config
+    (setq-default polymode-lsp-integration nil) ; otherwise polymode is unusable
     (setq pm-weaver "knitR-ESS"
           polymode-weaver-output-file-format "%s"
           polymode-exporter-output-file-format "%s")
@@ -812,8 +836,8 @@ Language server protocol setup
 
   (use-package lsp-latex
     :commands lsp
-    :bind (:map LaTeX-mode-map
-                (("C-c C-'" . lsp-ui-imenu)))
+    ;; :bind (:map LaTeX-mode-map
+    ;;             (("C-c C-'" . lsp-ui-imenu)))
     :config
     (setq lsp-latex-build-args
           (cons "-lualatex" (remove "-pdf" lsp-latex-build-args))))
@@ -1063,7 +1087,7 @@ Sidebar contents
     (add-hook 'LaTeX-mode-hook
               (defun my-LaTeX-mode-hook ()
                 (setq font-latex-match-function-keywords '(("ipa" "{")
-                                                           ("twe" "{{{")
+                                                           ("twe" "[{{{")
                                                            ("mbi" "{{")
                                                            ("x" "[{{")
                                                            ("xt" "[{{")
@@ -1608,7 +1632,6 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref org
   (use-package org-ref
-    :disabled
     :after (org oc)
     :bind (:map org-mode-map
                 (("C-c )" . org-ref-insert-link-hydra/body)))
@@ -1641,6 +1664,7 @@ and inserts it at point.
 
 #+BEGIN_SRC emacs-lisp :noweb-ref editing
   (use-package helm-bibtex
+    :straight (:host github :repo "tmalsburg/helm-bibtex")
     :after oc-csl
     :bind
     ;; (:map LaTeX-mode-map (("C-c ]" . helm-bibtex)))
@@ -2827,10 +2851,11 @@ Trying to use this
   	      ("M-P" . projectile-persp-switch-project)))
 
 
-  (advice-add 'mu4e :before
-   (lambda (&rest r)
-     (persp-switch "main"))
-   '((name . "switch-to-main-perspective")))
+  (cl-loop for command in '(mu4e mu4e-alert-view-unread-mails) do
+  	 (advice-add command :before
+  		     (lambda (&rest r)
+  		       (persp-switch "main"))
+  		     '((name . "switch-to-main-perspective"))))
 #+end_src
 ** COMMENT Treemacs
 
@@ -2925,10 +2950,11 @@ Trying to use this
     :diminish projectile-mode
     :init
     (projectile-mode +1)
-    (setq projectile-project-search-path private/projectile-project-search-path))
+    (setq projectile-project-search-path private/projectile-project-search-path)
+    :config
+    (setq projectile-indexing-method 'hybrid))
 
   (use-package helm-projectile
-    :disabled nil
     :config
     (setq projectile-completion-system 'helm)
     (helm-projectile-on)
@@ -2943,95 +2969,94 @@ Trying to use this
   (use-package org-roam
     :after org
     :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n g" . org-roam-graph)
-           ("C-c n i" . org-roam-node-insert)
-           ("C-c n c" . org-roam-capture))
+  	 ("C-c n f" . org-roam-node-find)
+  	 ("C-c n g" . org-roam-graph)
+  	 ("C-c n i" . org-roam-node-insert)
+  	 ("C-c n c" . org-roam-capture))
     :init
     (setq org-roam-directory private/org-roam-directory
-          org-roam-v2-ack t)
+  	;; org-roam-database-connector 'sqlite-builtin
+  	org-roam-v2-ack t)
     :config
     (org-roam-setup)
+    (org-roam-db-autosync-mode)
     (require 'org-roam-protocol))
 
-  
-  (use-package org-roam-bibtex
-    :disabled nil
-    :after helm-bibtex
-    :config
-    (org-roam-bibtex-mode)
-    ;; Remove the C-c ) binding, which conflicts with RefTeX
-    (eval-after-load "org-roam-bibtex"
-      '(define-key org-roam-bibtex-mode-map (kbd "C-c )") nil))
-    (bind-keys :map org-mode-map
-               ("C-c n a" . orb-note-actions)
-               :map org-roam-bibtex-mode-map
-               ("C-c n a" . orb-note-actions)
-               ("C-c n i" . orb-insert-link)
-               ("C-c n C-f" . orb-find-note-file)))
 
-  (use-package company-org-roam
-    :config
-    (push 'company-org-roam company-backends))
+    (use-package org-roam-bibtex
+      :after helm-bibtex
+      :config
+      (org-roam-bibtex-mode)
+      ;; Remove the C-c ) binding, which conflicts with RefTeX
+      (eval-after-load "org-roam-bibtex"
+        '(define-key org-roam-bibtex-mode-map (kbd "C-c )") nil))
+      (bind-keys :map org-mode-map
+                 ("C-c n a" . orb-note-actions)
+                 :map org-roam-bibtex-mode-map
+                 ("C-c n a" . orb-note-actions)
+                 ("C-c n i" . orb-insert-link)
+                 ("C-c n C-f" . orb-find-note-file)))
 
-  (use-package websocket
-    :after org-roam)
+    (use-package company-org-roam
+      :config
+      (push 'company-org-roam company-backends))
 
-  (use-package org-roam-ui
-    :straight
-    (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
-    :after org-roam
-    :commands org-roam-ui-mode
-    :config
-    (defun org-roam-ui-browse ()
-      (interactive)
-      (browse-url "http://127.0.0.1:35901/"))
-    (bind-keys ("C-c n s" . org-roam-ui-browse))
-    (add-hook 'org-roam-ui-mode-hook
-              (lambda ()
-                (set-process-query-on-exit-flag (get-process "httpd") nil))))
+    (use-package websocket
+      :after org-roam)
 
-  (use-package org-roam-server
-    :disabled t
-    :init
-    (unless (server-running-p)
-      (server-start))
-    (add-hook 'org-roam-server-mode-hook
-              (lambda ()
-                (set-process-query-on-exit-flag (get-process "httpd") nil)))
-    :config
-    (setq org-roam-server-host "127.0.0.1"
-          org-roam-server-port 34896
-          org-roam-server-authenticate nil
-          org-roam-server-export-inline-images t
-          org-roam-server-serve-files nil
-          org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
-          org-roam-server-network-poll t
-          org-roam-server-network-arrows nil
-          org-roam-server-network-label-truncate t
-          org-roam-server-network-label-truncate-length 60
-          org-roam-server-network-label-wrap-length 20)
+    (use-package org-roam-ui
+      :after org-roam
+      :commands org-roam-ui-mode
+      :config
+      (defun org-roam-ui-browse ()
+        (interactive)
+        (browse-url "http://127.0.0.1:35901/"))
+      (bind-keys ("C-c n s" . org-roam-ui-browse))
+      (add-hook 'org-roam-ui-mode-hook
+                (lambda ()
+                  (set-process-query-on-exit-flag (get-process "httpd") nil))))
 
-    (defun org-roam-ui-browse ()
-      (interactive)
-      (browse-url "http://127.0.0.1:35901/"))
+    (use-package org-roam-server
+      :disabled t
+      :init
+      (unless (server-running-p)
+        (server-start))
+      (add-hook 'org-roam-server-mode-hook
+                (lambda ()
+                  (set-process-query-on-exit-flag (get-process "httpd") nil)))
+      :config
+      (setq org-roam-server-host "127.0.0.1"
+            org-roam-server-port 34896
+            org-roam-server-authenticate nil
+            org-roam-server-export-inline-images t
+            org-roam-server-serve-files nil
+            org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
+            org-roam-server-network-poll t
+            org-roam-server-network-arrows nil
+            org-roam-server-network-label-truncate t
+            org-roam-server-network-label-truncate-length 60
+            org-roam-server-network-label-wrap-length 20)
 
-    (bind-keys :map org-roam-mode-map
-               ("C-c n s" . org-roam-ui-browse))
+      (defun org-roam-ui-browse ()
+        (interactive)
+        (browse-url "http://127.0.0.1:35901/"))
 
-    :hook
-    (org-roam-mode . org-roam-server-mode))
+      (bind-keys :map org-roam-mode-map
+                 ("C-c n s" . org-roam-ui-browse))
 
-  (use-package deft
-    :after org
-    :bind
-    ("C-c n d" . deft)
-    :custom
-    (deft-recursive t)
-    (deft-use-filter-string-for-filename t)
-    (deft-strip-summary-regexp ":PROPERTIES:\n\\(.+\n\\)+:END:\n")
-    (deft-default-extension "org")
-    (deft-directory private/org-roam-directory))
+      :hook
+      (org-roam-mode . org-roam-server-mode))
+
+    (use-package deft
+      :after org
+      :bind
+      ("C-c n d" . deft)
+      :custom
+      (deft-recursive t)
+      (deft-use-filter-string-for-filename t)
+      (deft-strip-summary-regexp ":PROPERTIES:\n\\(.+\n\\)+:END:\n")
+      (deft-default-extension "org")
+      (deft-directory private/org-roam-directory))
 #+END_SRC
 
 ** COMMENT Subed

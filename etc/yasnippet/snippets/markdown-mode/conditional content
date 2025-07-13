@@ -1,0 +1,8 @@
+# key: cc
+# name: conditional content
+# --
+::: {.content-${1:$$(yas-choose-value '("hidden" "visible"))} when-${2:$$(yas-choose-value '("format" "profile" "meta"))}="$3"}
+
+`yas-selected-text`$0
+
+:::

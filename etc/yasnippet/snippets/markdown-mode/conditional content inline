@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: conditional content inline
+# key: ccs
+# --
+[`yas-selected-text`$0]{.content-${1:$$(yas-choose-value '("hidden" "visible"))} when-${2:$$(yas-choose-value '("format" "profile" "meta"))}="$3"}
